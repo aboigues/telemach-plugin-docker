@@ -77,7 +77,7 @@ func run(t *testing.T, shell string, e env, extraEnv []string, body string) (std
 	if _, lookErr := exec.LookPath(shell); lookErr != nil {
 		t.Skipf("%s non installé", shell)
 	}
-	script, scriptErr := shellinit.Script(shell)
+	script, scriptErr := shellinit.Script(shell, os.Getenv("TELEMACH_TEST_BIN"))
 	if scriptErr != nil {
 		t.Fatal(scriptErr)
 	}
@@ -180,7 +180,7 @@ func TestInterruptCleansUp(t *testing.T) {
 		if _, err := exec.LookPath(shell); err != nil {
 			t.Skipf("%s non installé", shell)
 		}
-		script, _ := shellinit.Script(shell)
+		script, _ := shellinit.Script(shell, "")
 		initFile := filepath.Join(t.TempDir(), "init.sh")
 		if err := os.WriteFile(initFile, []byte(script), 0o600); err != nil {
 			t.Fatal(err)
@@ -297,7 +297,7 @@ func TestVersionReadOnce(t *testing.T) {
 }
 
 func TestUnsupportedShell(t *testing.T) {
-	if _, err := shellinit.Script("fish"); err == nil || !strings.Contains(err.Error(), "non pris en charge") {
+	if _, err := shellinit.Script("fish", ""); err == nil || !strings.Contains(err.Error(), "non pris en charge") {
 		t.Errorf("erreur en français attendue pour fish, obtenu %v", err)
 	}
 }
@@ -315,6 +315,29 @@ func TestTelemachSubcommandNotExplained(t *testing.T) {
 		}
 		if strings.Contains(readLog(t, e), "telemach explain") {
 			t.Error("explain ne doit pas être appelé pour docker telemach")
+		}
+	})
+}
+
+// Le binaire installé dans ~/.docker/cli-plugins n'est pas dans le PATH : le script généré
+// doit l'appeler par son chemin absolu, même s'il contient espace ou apostrophe (LL-006).
+func TestBinaryOutsidePath(t *testing.T) {
+	forEachShell(t, func(t *testing.T, shell string) {
+		e := setup(t, false) // aucun docker-telemach dans le PATH
+		plugins := filepath.Join(t.TempDir(), "cli-plugins avec espace et l'apostrophe")
+		if err := os.MkdirAll(plugins, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(plugins, "docker-telemach"), []byte(fakeTelemach), 0o700); err != nil { //nolint:gosec // script de test
+			t.Fatal(err)
+		}
+		t.Setenv("TELEMACH_TEST_BIN", filepath.Join(plugins, "docker-telemach"))
+		stdout, _, err := run(t, shell, e, []string{"FAKE_RC=125"}, `docker run nginx; echo "rc=$?"`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasSuffix(stdout, "rc=125\n") || !strings.Contains(readLog(t, e), "telemach explain --exit-code 125") {
+			t.Errorf("explain doit être appelé par son chemin absolu :\nstdout=%q\n%s", stdout, readLog(t, e))
 		}
 	})
 }

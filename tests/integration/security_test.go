@@ -46,14 +46,15 @@ func TestSC007NoCommandExecuted(t *testing.T) {
 		t.Fatal(err)
 	}
 	composeDir, _ := filepath.Abs(filepath.Join("..", "..", "testdata", "compose", "tab-indent"))
-	cmd := exec.Command("bash", "-c", `eval "$(docker-telemach shell-init bash)"
+	cmd := exec.Command("bash", "-c", `eval "$("$TELEMACH" shell-init bash)"
 docker logs web
 docker-telemach check "$COMPOSE_DIR"
 docker-telemach deepen --exercise
 true`)
 	cmd.Env = append(os.Environ(),
 		"PATH="+fakeDir+string(os.PathListSeparator)+h.bin+string(os.PathListSeparator)+"/usr/bin:/bin",
-		"XDG_STATE_HOME="+h.state, "NO_COLOR=1", "COMPOSE_DIR="+composeDir)
+		"XDG_STATE_HOME="+h.state, "NO_COLOR=1", "COMPOSE_DIR="+composeDir,
+		"TELEMACH="+filepath.Join(h.bin, "docker-telemach"))
 	out, _ := cmd.CombinedOutput()
 	data, _ := os.ReadFile(logFile)
 	calls := strings.Split(strings.TrimSpace(string(data)), "\n")
