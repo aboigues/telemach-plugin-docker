@@ -40,7 +40,8 @@ func RenderExplanation(w io.Writer, d diagnose.Diagnosis, original string, o Opt
 
 	if o.Repeated {
 		b.WriteString(t.Title(SymbolError+" "+summary) + "\n")
-		b.WriteString(t.Dim(LabelRepeated+" : l'explication complète a été affichée juste avant.") + "\n")
+		b.WriteString(t.Dim(LabelRepeated+" (moins de 10 minutes).") + "\n")
+		b.WriteString(t.Hint(LabelLast+" : docker telemach last") + "\n")
 		b.WriteString(t.Hint(LabelDeepen+" : docker telemach deepen") + "\n")
 		_, err := io.WriteString(w, b.String())
 		return err

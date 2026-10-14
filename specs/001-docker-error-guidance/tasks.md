@@ -379,6 +379,18 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 
 ---
 
+## Phase 7: Évolution — réafficher la dernière explication (FR-009a)
+
+**Purpose**: demande de l'utilisateur du 2026-10-14 (option 2) : après une erreur répétée,
+pouvoir réafficher l'explication complète.
+
+- [X] T079 Étendre `LastDiagnosis` (`internal/state/state.go`, schéma 2) avec l'origine, le code de sortie, la version de Docker, le message d'origine déjà masqué (64 Kio maximum) et le projet Compose ; les sauvegarder dans `cmd/docker-telemach/explain.go`
+- [X] T080 Implémenter `cmd/docker-telemach/last.go` (`docker telemach last`), qui réutilise le rendu d'`explain` (réanalyse Compose comprise)
+- [X] T081 Version courte d'une erreur répétée : renvoi à `docker telemach last` (`internal/render/explanation.go`, golden régénéré)
+- [X] T082 Écrire `cmd/docker-telemach/last_test.go` (sans historique, sortie identique à l'explication complète, secret absent du disque, cas Compose) et mettre à jour README, spec, contrat, modèle de données et quickstart
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

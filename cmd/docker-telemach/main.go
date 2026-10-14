@@ -116,7 +116,7 @@ func (a *app) rootCommand() *cobra.Command {
 			return plugin.WriteMetadata(a.stdout, version)
 		},
 	})
-	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.deepenCommand())
+	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.lastCommand(), a.deepenCommand())
 	return root
 }
 

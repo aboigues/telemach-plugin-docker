@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/spf13/cobra"
@@ -88,8 +89,35 @@ func (a *app) explain(f explainFlags, args []string) error {
 	if err != nil {
 		return err
 	}
-	_ = a.store.Save(state.LastDiagnosis{Fingerprint: d.Fingerprint, EntryID: entryID, Captures: d.Captures, RecordedAt: now})
+	last := state.LastDiagnosis{
+		Fingerprint: d.Fingerprint, EntryID: entryID, Captures: d.Captures, RecordedAt: now,
+		Origin: string(d.Origin), Confidence: string(d.Confidence), ExitCode: f.exitCode,
+		Interactive: in.Interactive, DockerVersion: dockerVersion, Stderr: stderr,
+		Family: string(cmd.Family), Subcommand: cmd.Subcommand,
+	}
+	if d.Entry != nil {
+		last.MatchedEntryID = d.Entry.ID
+	}
+	if cmd.Family == command.FamilyCompose {
+		last.ComposeDir, last.ComposeFiles = a.composeDir(cmd), cmd.ComposeFiles
+	}
+	_ = a.store.Save(last)
 	return nil
+}
+
+// composeDir renvoie le dossier du projet Compose : --project-directory, sinon le dossier
+// courant, sous forme absolue.
+func (a *app) composeDir(cmd command.Command) string {
+	dir := cmd.Flags["project-directory"]
+	if dir == "" {
+		if wd, err := a.getwd(); err == nil {
+			dir = wd
+		}
+	}
+	if abs, err := filepath.Abs(dir); err == nil {
+		return abs
+	}
+	return dir
 }
 
 // renderDiagnosis affiche le diagnostic. Pour docker compose, les fichiers Compose sont
@@ -105,12 +133,7 @@ func (a *app) renderDiagnosis(w io.Writer, in diagnose.Input, d diagnose.Diagnos
 	if in.Command.Family != command.FamilyCompose {
 		return entryID, render.RenderExplanation(w, d, stderr, opts)
 	}
-	dir := in.Command.Flags["project-directory"]
-	if dir == "" {
-		if wd, err := a.getwd(); err == nil {
-			dir = wd
-		}
-	}
+	dir := a.composeDir(in.Command)
 	issues := compose.Analyze(dir, in.Command.ComposeFiles)
 	cat, _ := catalog.Default()
 	if blocking(issues) {

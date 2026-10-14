@@ -22,6 +22,7 @@ const (
 	LabelExample   = "▶ Exemple"
 	LabelDocLink   = "📖 Documentation"
 	LabelRepeated  = "↺ Même erreur que précédemment"
+	LabelLast      = "↺ Explication complète"
 	LabelProblem   = "✖ Problème"
 	LabelFixedPart = "💡 Version corrigée"
 )

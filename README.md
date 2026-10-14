@@ -57,6 +57,9 @@ raisonner ainsi :
 | ⚠ **Anti-pattern** | la « solution rapide » à éviter, et pourquoi (`chmod 666`, `rm -f`…) |
 | ➜ **Pour aller plus loin** | `docker telemach deepen` : le concept détaillé, un exemple, un exercice |
 
+Si la même erreur se répète dans les 10 minutes, TELEMACH n'affiche qu'un rappel court ;
+`docker telemach last` réaffiche alors l'explication complète.
+
 Le message Docker d'origine reste affiché, atténué, avec les éléments importants (port,
 image, chemin) surlignés : on apprend aussi à lire soi-même les erreurs Docker.
 
@@ -205,6 +208,7 @@ go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach
 | Commande | Rôle |
 |----------|------|
 | `docker telemach check [-f fichier]... [dossier]` | Vérifie un projet Compose **avant** de le lancer (code 0 : aucun problème, 1 : problème trouvé, 2 : fichier introuvable) |
+| `docker telemach last` | Réaffiche l'explication complète de la dernière erreur (après une erreur répétée, ou si tu as effacé ton terminal) |
 | `docker telemach deepen [--exercise]` | Approfondit le concept de la dernière erreur expliquée |
 | `docker telemach shell-init bash\|zsh` | Affiche le code d'intégration à évaluer dans ton shell |
 | `docker telemach explain …` | Utilisée par l'intégration shell (tu n'as pas à l'appeler) |
