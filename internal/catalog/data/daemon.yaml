@@ -1,0 +1,66 @@
+# Erreurs liées au démon Docker et à la machine hôte.
+- id: daemon.not-running
+  category: daemon
+  patterns:
+    - 'Cannot connect to the Docker daemon at (?P<host>\S+?)\.? Is the docker daemon running'
+    - 'failed to connect to the docker API at (?P<host>[^\s;]+)'
+  concept:
+    name: client & daemon
+    definition: >-
+      La commande « docker » est un client : elle envoie tes demandes au démon Docker
+      (dockerd), un service qui crée et gère réellement les conteneurs.
+  summary: Le client Docker n'arrive pas à joindre le démon Docker.
+  cause: >-
+    Le démon Docker n'est pas démarré, ou le client cherche à le joindre au mauvais endroit
+    (variable DOCKER_HOST ou contexte Docker incorrect).
+  fixes:
+    - description: Vérifier quel contexte et quelle adresse le client utilise.
+      command: docker context ls
+      safe: true
+    - description: Sous Linux, démarrer le service Docker.
+      command: sudo systemctl start docker
+      safe: true
+    - description: Sous macOS, Windows ou WSL2 avec Docker Desktop, lancer Docker Desktop et attendre qu'il soit prêt.
+      safe: true
+  deepen:
+    explanation: >-
+      Le client et le démon communiquent par une API. Le client peut même piloter un démon
+      situé sur une autre machine grâce aux contextes (« docker context »).
+    example: docker version --format 'client {{"{{"}}.Client.Version{{"}}"}} / démon {{"{{"}}.Server.Version{{"}}"}}'
+    exercise: >-
+      Lance « docker version » démon démarré, puis arrêté : quelle partie de la réponse
+      disparaît, et pourquoi ?
+  doc_url: https://docs.docker.com/engine/daemon/start/
+  tests: [daemon-not-running]
+
+- id: daemon.no-space-left
+  category: daemon
+  patterns:
+    - 'no space left on device'
+  concept:
+    name: Docker storage
+    definition: >-
+      Docker stocke les images, les conteneurs, les volumes et le cache de construction sur
+      le disque de la machine. Ces données s'accumulent au fil des essais.
+  summary: Le disque utilisé par Docker est plein.
+  cause: >-
+    Les images, conteneurs arrêtés, volumes et caches de build occupent tout l'espace
+    disponible.
+  fixes:
+    - description: Voir ce qui occupe l'espace.
+      command: docker system df
+      safe: true
+    - description: Supprimer les conteneurs arrêtés, les images inutilisées et le cache de build (les volumes sont conservés).
+      command: docker system prune
+      safe: true
+  deepen:
+    explanation: >-
+      « docker system prune » demande confirmation et ne touche pas aux volumes, qui
+      contiennent souvent des données importantes. L'option « --volumes » les supprime aussi :
+      à n'utiliser qu'en connaissance de cause.
+    example: docker system df -v
+    exercise: >-
+      Lance « docker system df », note l'espace « RECLAIMABLE », puis compare après
+      « docker image prune ».
+  doc_url: https://docs.docker.com/reference/cli/docker/system/prune/
+  tests: [daemon-no-space-left]

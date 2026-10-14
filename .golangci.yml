@@ -16,21 +16,22 @@ linters:
     - revive
     - gocritic
     - bodyclose
-    - misspell
+  # misspell (correcteur anglais) est volontairement désactivé : le contenu pédagogique,
+  # les commentaires et les tests sont en français (principe II) et produiraient des
+  # faux positifs (« conteneurs », « programme »…).
   settings:
-    misspell:
-      # Les identifiants sont en anglais ; les commentaires et messages en français
-      # sont exclus ci-dessous pour éviter les faux positifs.
-      locale: US
+    errcheck:
+      # Écrire un message sur le terminal ne peut pas être rattrapé utilement.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     revive:
       rules:
         - name: exported
           disabled: true
   exclusions:
     rules:
-      # Le contenu pédagogique est en français : misspell ne s'applique qu'au code.
-      - linters: [misspell]
-        source: "(//|\"|`)"
       - path: _test\.go
         linters: [gosec]
 

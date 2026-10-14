@@ -1,0 +1,4 @@
+entry_id: "volume.bind-source-missing"
+origin: docker
+captures:
+  path: "/srv/absent"

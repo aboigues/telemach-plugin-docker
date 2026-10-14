@@ -1,0 +1,23 @@
+[1;38;2;255;122;122m✖ Le programme exécuté dans le conteneur s'est terminé en erreur.[m
+   [2;38;2;138;143;152m(l'erreur vient du programme exécuté dans le conteneur, pas de Docker)[m
+
+[1;38;2;122;162;247m📘 Concept — container exit code[m
+   Quand le programme du conteneur se termine, « docker run » renvoie son code
+   de sortie. Un code autre que 0 signale une erreur de ce programme, pas de
+   Docker.
+
+[1;38;2;224;175;104m🔎 Cause probable[m
+   Docker a bien démarré le conteneur ; c'est l'application elle-même qui a
+   échoué (configuration manquante, service injoignable, bogue…).
+
+[1;38;2;158;206;106m💡 Corrections[m
+   1. Lire les messages de l'application juste au-dessus, ou ses journaux si le
+      conteneur existe encore.
+      [38;2;248;248;242mdocker logs <nom-du-conteneur>[0m
+   2. Lancer un shell dans l'image pour enquêter.
+      [38;2;248;248;242mdocker run --rm -it --entrypoint sh alpine:3.22[0m
+
+[2;38;2;138;143;152m── Message Docker d'origine ────────────────────────────────────────────────────[m
+[2;38;2;138;143;152mbase de données injoignable[m
+
+[3;38;2;125;207;255m➜ Pour aller plus loin : docker telemach deepen[m

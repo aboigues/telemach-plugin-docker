@@ -1,0 +1,1 @@
+Error response from daemon: conflict: unable to delete telemach-corpus-img:1 (must be forced) - container 27616cec0c5b is using its referenced image 3d8ccce58d19

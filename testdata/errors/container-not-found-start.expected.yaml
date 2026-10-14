@@ -1,0 +1,4 @@
+entry_id: "container.not-found"
+origin: docker
+captures:
+  container: "telemach-corpus-absent"

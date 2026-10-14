@@ -26,9 +26,10 @@ func Clean(s string) string {
 		i += size
 		if isControl(r) {
 			// Un CSI codé sur 8 bits (U+009B) ou un OSC (U+009D) introduit aussi une séquence.
-			if r == 0x9b {
+			switch r {
+			case 0x9b:
 				i = skipCSI(s, i)
-			} else if r == 0x9d || r == 0x90 || r == 0x9e || r == 0x9f {
+			case 0x90, 0x9d, 0x9e, 0x9f:
 				i = skipString(s, i)
 			}
 			continue

@@ -1,0 +1,33 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 76B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/alpine:3.22
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+#4 resolve docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 0.0s done
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [2/2] COPY absent.txt /app/
+#6 ERROR: failed to calculate checksum of ref d2bd1mw2n87puzq5pi7duh8en::jexpj39qcgfu1yeqpafssezc6: "/absent.txt": not found
+------
+ > [2/2] COPY absent.txt /app/:
+------
+Dockerfile:2
+--------------------
+   1 |     FROM alpine:3.22
+   2 | >>> COPY absent.txt /app/
+   3 |     
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref d2bd1mw2n87puzq5pi7duh8en::jexpj39qcgfu1yeqpafssezc6: "/absent.txt": not found

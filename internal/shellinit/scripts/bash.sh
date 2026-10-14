@@ -40,13 +40,16 @@ docker() (
 		exit "$__telemach_rc"
 	fi
 
+	# Pièges installés avant la création du fichier : une interruption (Ctrl-C) à n'importe
+	# quel moment ne laisse aucun fichier temporaire derrière elle.
+	__telemach_tmp=""
+	trap 'rm -f -- "$__telemach_tmp"' EXIT
+	trap 'exit 130' INT
+	trap 'exit 143' TERM
 	__telemach_tmp="$(umask 077 && mktemp "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/telemach.XXXXXX")" || {
 		command docker "$@"
 		exit $?
 	}
-	trap 'rm -f -- "$__telemach_tmp"' EXIT
-	trap 'exit 130' INT
-	trap 'exit 143' TERM
 
 	# stderr de docker passe par tee (copie dans le fichier temporaire) ; stdout reste intact
 	# grâce au descripteur 3.

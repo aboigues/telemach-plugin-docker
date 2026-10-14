@@ -1,0 +1,140 @@
+# Erreurs liées au réseau et à la publication de ports.
+- id: run.port-already-allocated
+  category: network
+  applies: [run, create, start]
+  patterns:
+    - 'Bind for [0-9a-fA-F.:\[\]]+:(?P<port>\d+) failed: port is already allocated'
+    - 'listen tcp[46]? [0-9a-fA-F.:\[\]]*:(?P<port>\d+): bind: address already in use'
+  concept:
+    name: port publishing
+    definition: >-
+      L'option « -p PORT_MACHINE:PORT_CONTENEUR » relie un port de ta machine à un port du
+      conteneur. Un port de la machine ne peut être relié qu'une seule fois à la fois.
+  summary: Le port {{.port}} de ta machine est déjà utilisé.
+  cause: >-
+    Un autre conteneur (ou un autre programme de ta machine) écoute déjà sur le port
+    {{.port}}. Docker ne peut pas le publier une deuxième fois.
+  fixes:
+    - description: Voir quel conteneur publie déjà ce port.
+      command: docker ps --filter publish={{.port}}
+      safe: true
+    - description: Publier le conteneur sur un autre port de ta machine (le port du conteneur ne change pas).
+      command: docker run -p {{.alt_port}}:{{.cport}} {{.image}}
+      safe: true
+    - description: Ou arrêter le conteneur qui occupe le port, s'il ne sert plus.
+      command: docker stop <nom-du-conteneur>
+      safe: true
+  deepen:
+    explanation: >-
+      Chaque conteneur a son propre réseau isolé : deux conteneurs peuvent tous les deux
+      écouter sur leur port 80 interne sans conflit. Le conflit n'existe que du côté de ta
+      machine, où chaque port ne peut être « publié » que par un seul conteneur. C'est le
+      rôle de la partie gauche de « -p 8081:80 ».
+    example: |-
+      docker run -d --name web1 -p 8081:8080 nginxinc/nginx-unprivileged:1.29-alpine
+      docker run -d --name web2 -p 8082:8080 nginxinc/nginx-unprivileged:1.29-alpine
+      docker ps --format '{{"{{"}}.Names{{"}}"}} → {{"{{"}}.Ports{{"}}"}}'
+    exercise: >-
+      Lance deux conteneurs nginx-unprivileged publiés sur les ports 8081 et 8082 de ta
+      machine, ouvre http://localhost:8081 et http://localhost:8082, puis supprime-les avec
+      « docker rm -f web1 web2 ».
+  doc_url: https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/
+  tests: [run-port-allocated]
+
+- id: run.invalid-port-spec
+  category: network
+  applies: [run, create]
+  patterns:
+    - 'invalid hostPort: (?P<port>\S+)'
+    - 'invalid containerPort: (?P<port>\S+)'
+    - 'Invalid (?:hostPort|containerPort|port)[^\n]*?: (?P<port>\S+)'
+  concept:
+    name: port number
+    definition: >-
+      Un numéro de port est un entier compris entre 1 et 65535. L'option « -p » attend la
+      forme PORT_MACHINE:PORT_CONTENEUR, par exemple « -p 8080:80 ».
+  summary: La valeur « {{.port}} » n'est pas un numéro de port valide.
+  cause: >-
+    Le port indiqué dans l'option « -p » est hors de la plage 1 à 65535 ou mal écrit.
+  fixes:
+    - description: Utiliser un numéro de port compris entre 1 et 65535, au format MACHINE:CONTENEUR.
+      command: docker run -p 8080:80 {{.image}}
+      safe: true
+  deepen:
+    explanation: >-
+      Le format complet de « -p » est [IP:]PORT_MACHINE:PORT_CONTENEUR[/protocole]. Les ports
+      inférieurs à 1024 sont réservés à l'administrateur sur la plupart des systèmes : préfère
+      des ports comme 8080 ou 8443 pour tes essais.
+    example: docker run --rm -d --name essai -p 127.0.0.1:8080:8080 nginxinc/nginx-unprivileged:1.29-alpine
+    exercise: >-
+      Publie un conteneur uniquement sur 127.0.0.1:8080, vérifie avec « docker port essai »
+      qu'il n'est pas accessible depuis une autre machine, puis supprime-le.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [run-invalid-port-spec]
+
+- id: network.not-found
+  category: network
+  patterns:
+    - 'network (?P<network>\S+) not found'
+  concept:
+    name: user-defined network
+    definition: >-
+      Un réseau Docker relie des conteneurs entre eux. Les réseaux personnalisés doivent être
+      créés avec « docker network create » avant d'être utilisés.
+  summary: Le réseau « {{.network}} » n'existe pas.
+  cause: >-
+    La commande demande de connecter le conteneur à un réseau qui n'a pas été créé, ou dont
+    le nom est mal orthographié.
+  fixes:
+    - description: Lister les réseaux existants.
+      command: docker network ls
+      safe: true
+    - description: Créer le réseau s'il doit exister.
+      command: docker network create {{.network}}
+      safe: true
+  deepen:
+    explanation: >-
+      Sur un réseau personnalisé, les conteneurs se trouvent par leur nom grâce au DNS intégré
+      de Docker : un conteneur « api » peut joindre « db » simplement par « db ». Le réseau
+      « bridge » par défaut n'offre pas cette résolution par nom.
+    example: |-
+      docker network create labo
+      docker run -d --name db --network labo --user 1000:1000 alpine:3.22 sleep 300
+      docker run --rm --network labo --user 1000:1000 alpine:3.22 ping -c 1 db
+    exercise: >-
+      Crée un réseau « labo », lance deux conteneurs dessus et vérifie qu'ils se joignent par
+      leur nom ; supprime ensuite les conteneurs puis le réseau.
+  doc_url: https://docs.docker.com/engine/network/
+  tests: [network-not-found]
+
+- id: network.active-endpoints
+  category: network
+  applies: [network rm]
+  patterns:
+    - 'network (?P<network>\S+) has active endpoints'
+  concept:
+    name: network endpoint
+    definition: >-
+      Un « endpoint » est le branchement d'un conteneur sur un réseau. Un réseau ne peut pas
+      être supprimé tant qu'un conteneur y est encore branché.
+  summary: Le réseau « {{.network}} » est encore utilisé par au moins un conteneur.
+  cause: >-
+    Des conteneurs sont toujours connectés à ce réseau ; Docker refuse de le supprimer pour
+    ne pas les couper du réseau.
+  fixes:
+    - description: Voir quels conteneurs utilisent le réseau.
+      command: docker network inspect {{.network}} --format '{{"{{"}}range .Containers{{"}}"}}{{"{{"}}.Name{{"}}"}} {{"{{"}}end{{"}}"}}'
+      safe: true
+    - description: Déconnecter le conteneur, puis supprimer le réseau.
+      command: docker network disconnect {{.network}} <nom-du-conteneur>
+      safe: true
+  deepen:
+    explanation: >-
+      Un conteneur peut être branché sur plusieurs réseaux à la fois. « docker network
+      disconnect » le débranche d'un réseau sans l'arrêter.
+    example: docker network inspect bridge --format '{{"{{"}}json .Containers{{"}}"}}'
+    exercise: >-
+      Crée un réseau, connecte-lui un conteneur, essaie de le supprimer, puis déconnecte le
+      conteneur et supprime le réseau.
+  doc_url: https://docs.docker.com/reference/cli/docker/network/rm/
+  tests: [network-active-endpoints]

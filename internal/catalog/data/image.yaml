@@ -1,0 +1,163 @@
+# Erreurs liées aux images et aux registres.
+- id: image.pull-access-denied
+  category: image
+  patterns:
+    - "pull access denied for (?P<repo>[^,\\s]+), repository does not exist"
+  concept:
+    name: image & registry
+    definition: >-
+      Une image est le modèle à partir duquel un conteneur est créé. Si elle n'est pas
+      présente sur ta machine, Docker la télécharge depuis un registre (Docker Hub par défaut).
+  summary: L'image « {{.repo}} » est introuvable, ni sur ta machine ni sur le registre.
+  cause: >-
+    Le nom de l'image est probablement mal orthographié{{if .suggestion}} (tu pensais
+    peut-être à « {{.suggestion}} »){{end}}, ou l'image est privée et demande une connexion.
+  fixes:
+    - description: Vérifier l'orthographe du nom de l'image{{if .suggestion}}, par exemple « {{.suggestion}} »{{end}}.
+      command: '{{if .suggestion}}docker pull {{.suggestion}}{{else}}docker search {{.repo}}{{end}}'
+      safe: true
+    - description: Si l'image est privée, se connecter au registre avant de la télécharger.
+      command: docker login
+      safe: true
+  deepen:
+    explanation: >-
+      Un nom d'image complet se lit REGISTRE/COMPTE/DÉPÔT:TAG. « nginx » est un raccourci pour
+      « docker.io/library/nginx:latest ». Docker cherche d'abord l'image en local, puis la
+      télécharge (« pull ») si elle est absente.
+    example: |-
+      docker pull nginxinc/nginx-unprivileged:1.29-alpine
+      docker image ls nginxinc/nginx-unprivileged
+    exercise: >-
+      Télécharge l'image « alpine:3.22 », affiche-la avec « docker image ls », puis retrouve
+      son nom complet avec « docker image inspect alpine:3.22 --format '{{"{{"}}.RepoDigests{{"}}"}}' ».
+  doc_url: https://docs.docker.com/reference/cli/docker/image/pull/
+  tests: [image-not-found-typo, image-pull-denied]
+
+- id: image.invalid-reference-format
+  category: image
+  patterns:
+    - 'invalid reference format(?:: repository name \((?P<repo>[^)]+)\) must be lowercase)?'
+  concept:
+    name: image reference
+    definition: >-
+      Une référence d'image (nom et tag) suit des règles strictes : lettres minuscules,
+      chiffres, et les séparateurs « . », « - », « _ », « / » et « : » pour le tag.
+  summary: Le nom d'image indiqué n'est pas un nom valide.
+  cause: >-
+    Le nom contient un caractère interdit, le plus souvent une majuscule{{if .repo}} (« {{.repo}} »){{end}},
+    un espace ou un tag mal placé.
+  fixes:
+    - description: Écrire le nom de l'image en minuscules, sans espace.
+      command: docker run --rm nginxinc/nginx-unprivileged:1.29-alpine
+      safe: true
+  deepen:
+    explanation: >-
+      Le tag vient après « : » et l'empreinte (digest) après « @ » : par exemple
+      « alpine:3.22 » ou « alpine@sha256:… ». Un nom ne peut jamais contenir de majuscule.
+    example: docker image inspect alpine:3.22 --format '{{"{{"}}.Id{{"}}"}}'
+    exercise: >-
+      Essaie « docker pull Alpine » puis « docker pull alpine:3.22 » et compare les messages.
+  doc_url: https://docs.docker.com/reference/cli/docker/image/tag/
+  tests: [image-invalid-reference]
+
+- id: image.manifest-unknown
+  category: image
+  patterns:
+    - 'manifest for (?P<ref>\S+) not found'
+    - 'failed to resolve reference "(?P<ref>[^"]+)"[^\n]*: not found'
+    - 'manifest unknown'
+  concept:
+    name: image tag
+    definition: >-
+      Le tag désigne une version précise d'une image (« alpine:3.22 »). Une image peut exister
+      sans que le tag demandé existe.
+  summary: Le tag demandé n'existe pas pour cette image{{if .ref}} (« {{.ref}} »){{end}}.
+  cause: >-
+    L'image existe sur le registre, mais pas avec ce tag : il est mal écrit, ou cette version
+    n'a jamais été publiée.
+  fixes:
+    - description: Consulter les tags disponibles sur la page de l'image (Docker Hub), puis utiliser un tag existant.
+      command: docker pull alpine:3.22
+      safe: true
+  deepen:
+    explanation: >-
+      Sans tag, Docker utilise « latest », qui change avec le temps. Préciser un tag explicite
+      rend tes conteneurs reproductibles ; une empreinte (digest) le rend même immuable.
+    example: docker pull alpine:3.22
+    exercise: >-
+      Télécharge « alpine:3.22 » puis affiche son empreinte avec « docker image ls --digests alpine ».
+  doc_url: https://docs.docker.com/reference/cli/docker/image/pull/
+  tests: [image-manifest-unknown]
+
+- id: image.in-use
+  category: image
+  applies: [rmi]
+  patterns:
+    - 'conflict: unable to (?:delete|remove) (?P<ref>\S+) \(must be forced\)'
+  concept:
+    name: image layers & containers
+    definition: >-
+      Un conteneur repose sur les couches de son image. Tant qu'un conteneur (même arrêté)
+      utilise une image, celle-ci ne peut pas être supprimée normalement.
+  summary: L'image « {{.ref}} » est encore utilisée par un conteneur.
+  cause: >-
+    Un conteneur, peut-être arrêté, a été créé à partir de cette image. Docker protège
+    l'image pour ne pas casser ce conteneur.
+  fixes:
+    - description: Lister tous les conteneurs, y compris les arrêtés, qui utilisent cette image.
+      command: docker ps -a --filter ancestor={{.ref}}
+      safe: true
+    - description: Supprimer ces conteneurs s'ils ne servent plus, puis l'image.
+      command: docker rm <nom-du-conteneur> && docker rmi {{.ref}}
+      safe: true
+    - description: Forcer la suppression de l'image avec « -f ».
+      command: docker rmi -f {{.ref}}
+      safe: false
+  anti_pattern:
+    description: >-
+      « docker rmi -f » retire l'étiquette de l'image mais laisse des conteneurs qui
+      dépendent d'une image devenue anonyme (<none>) : supprime plutôt les conteneurs inutiles.
+  deepen:
+    explanation: >-
+      « docker ps » n'affiche que les conteneurs en cours d'exécution ; « docker ps -a »
+      montre aussi les conteneurs arrêtés, qui occupent toujours de la place et retiennent
+      leur image.
+    example: docker ps -a --format '{{"{{"}}.Names{{"}}"}} → {{"{{"}}.Image{{"}}"}} ({{"{{"}}.Status{{"}}"}})'
+    exercise: >-
+      Crée un conteneur arrêté avec « docker create --name essai alpine:3.22 », tente
+      « docker rmi alpine:3.22 », puis supprime « essai » et réessaie.
+  doc_url: https://docs.docker.com/reference/cli/docker/image/rm/
+  tests: [image-in-use]
+
+- id: image.push-denied
+  category: image
+  applies: [push]
+  patterns:
+    - 'push access denied'
+    - 'denied: requested access to the resource is denied'
+  concept:
+    name: registry namespace
+    definition: >-
+      Pour publier (« push ») une image, son nom doit commencer par un espace de noms sur
+      lequel tu as les droits, par exemple « ton-compte/mon-image:1.0 » sur Docker Hub.
+  summary: Le registre refuse la publication de cette image.
+  cause: >-
+    Tu n'es pas connecté au registre, ou le nom de l'image ne commence pas par ton compte
+    (une image nommée « mon-image » serait publiée dans l'espace officiel « library »).
+  fixes:
+    - description: Se connecter au registre.
+      command: docker login
+      safe: true
+    - description: Renommer l'image avec ton espace de noms, puis la publier.
+      command: docker tag {{.image}} ton-compte/{{.image}} && docker push ton-compte/{{.image}}
+      safe: true
+  deepen:
+    explanation: >-
+      « docker tag » ne copie rien : il ajoute un nouveau nom à la même image. C'est ce nom
+      qui indique à Docker vers quel registre et quel compte publier.
+    example: docker image ls --format '{{"{{"}}.Repository{{"}}"}}:{{"{{"}}.Tag{{"}}"}} {{"{{"}}.ID{{"}}"}}'
+    exercise: >-
+      Donne un second nom à « alpine:3.22 » avec « docker tag », vérifie que les deux noms
+      ont le même identifiant, puis supprime le second nom avec « docker rmi ».
+  doc_url: https://docs.docker.com/reference/cli/docker/image/push/
+  tests: [image-push-denied]

@@ -14,8 +14,9 @@ const sensitiveName = `[A-Za-z0-9_.-]*(?i:PASSWORD|PASSWD|SECRET|TOKEN|KEY|CREDE
 var (
 	// NOM: "valeur" ou NOM: 'valeur' (YAML, valeur entre guillemets).
 	quotedYAML = regexp.MustCompile(`(` + sensitiveName + `\s*:\s*)(["'])[^"'\n]*(["'])`)
-	// NOM: valeur (YAML, jusqu'à la fin de ligne).
-	plainYAML = regexp.MustCompile(`(` + sensitiveName + `\s*:[ \t]+)([^\s"'#][^\n]*)`)
+	// NOM: valeur (clé YAML en début de ligne, éventuellement après « - », jusqu'à la fin
+	// de ligne). L'ancrage évite de masquer du texte libre comme « unauthorized: … ».
+	plainYAML = regexp.MustCompile(`(?m)^([ \t]*(?:-[ \t]+)?` + sensitiveName + `[ \t]*:[ \t]+)([^\s"'#][^\n]*)`)
 	// NOM=valeur (option -e, fichier .env, liste environment).
 	assignment = regexp.MustCompile(`(` + sensitiveName + `=)([^\s"']+|"[^"\n]*"|'[^'\n]*')`)
 	// schéma://utilisateur:mot-de-passe@hôte

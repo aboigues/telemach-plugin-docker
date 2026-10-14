@@ -164,9 +164,11 @@ func wrap(text string, width int, prefix string) string {
 // wrapRest coupe un paragraphe dont la première ligne est déjà préfixée par l'appelant.
 func wrapRest(text string, width int, prefix string) string {
 	avail := max(width-utf8.RuneCountInString(prefix), 20)
+	// Typographie française : les guillemets restent collés à leur contenu (espace insécable).
+	text = strings.NewReplacer("« ", "«\u00a0", " »", "\u00a0»").Replace(text)
 	var lines []string
 	for _, para := range strings.Split(text, "\n") {
-		words := strings.Fields(para)
+		words := strings.FieldsFunc(para, func(r rune) bool { return r == ' ' || r == '\t' })
 		cur := ""
 		for _, w := range words {
 			if cur != "" && utf8.RuneCountInString(cur)+1+utf8.RuneCountInString(w) > avail {

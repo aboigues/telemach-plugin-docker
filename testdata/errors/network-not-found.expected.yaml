@@ -1,0 +1,4 @@
+entry_id: "network.not-found"
+origin: docker
+captures:
+  network: "telemach-corpus-absent"

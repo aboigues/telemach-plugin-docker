@@ -137,12 +137,15 @@ func TestFailureIsExplained(t *testing.T) {
 		if !strings.Contains(stderr, "port is already allocated") {
 			t.Errorf("le message Docker d'origine doit rester affiché : %q", stderr)
 		}
+		if strings.Contains(stderr, "STDOUT-LINE") {
+			t.Errorf("stdout ne doit jamais être recopié sur stderr : %q", stderr)
+		}
 		log := readLog(t, e)
 		for _, want := range []string{
 			"telemach explain --exit-code 125 --stderr-file ",
 			"--docker-version 29.8.0 -- run -p 8080:80 nginx",
 			"perm=600",
-			"content=Error response from daemon: port is already allocated",
+			"content=Error response from daemon: port is already allocated\n",
 		} {
 			if !strings.Contains(log, want) {
 				t.Errorf("journal sans %q :\n%s", want, log)
@@ -188,12 +191,22 @@ func TestInterruptCleansUp(t *testing.T) {
 		if err := cmd.Start(); err != nil {
 			t.Fatal(err)
 		}
+		// Attendre que docker tourne réellement : son premier message est déjà dans le
+		// fichier temporaire.
 		deadline := time.Now().Add(3 * time.Second)
-		for len(leftovers(t, e)) == 0 && time.Now().Before(deadline) {
+		running := func() bool {
+			for _, f := range leftovers(t, e) {
+				if data, _ := os.ReadFile(f); len(data) > 0 {
+					return true
+				}
+			}
+			return false
+		}
+		for !running() && time.Now().Before(deadline) {
 			time.Sleep(20 * time.Millisecond)
 		}
-		if len(leftovers(t, e)) == 0 {
-			t.Fatal("le fichier temporaire aurait dû être créé")
+		if !running() {
+			t.Fatal("la commande docker aurait dû être en cours")
 		}
 		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 		_ = cmd.Wait()

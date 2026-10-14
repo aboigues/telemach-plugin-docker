@@ -1,0 +1,1 @@
+run --rm --mount type=bind,src=/srv/absent,dst=/data alpine:3.22 true

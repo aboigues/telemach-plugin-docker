@@ -1,0 +1,3 @@
+docker: Error response from daemon: Conflict. The container name "/telemach-corpus-web" is already in use by container "2581e760be93b2301acbc7b2762ee14358ef1b63667a7bcf4a641649336a0594". You have to remove (or rename) that container to be able to reuse that name.
+
+Run 'docker run --help' for more information

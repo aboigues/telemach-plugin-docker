@@ -1,0 +1,104 @@
+# Erreurs de construction d'images (docker build).
+- id: build.dockerfile-not-found
+  category: build
+  applies: [build]
+  patterns:
+    - 'failed to read dockerfile: open (?P<file>\S+): no such file or directory'
+    - 'unable to prepare context: unable to evaluate symlinks in Dockerfile path'
+  concept:
+    name: Dockerfile
+    definition: >-
+      Le Dockerfile est la recette de construction d'une image. Par défaut, « docker build »
+      le cherche sous le nom « Dockerfile » à la racine du contexte de build.
+  summary: Aucun Dockerfile n'a été trouvé dans le dossier de construction.
+  cause: >-
+    Le dossier indiqué ne contient pas de fichier nommé exactement « Dockerfile » (attention à
+    la majuscule et à l'extension), ou le fichier porte un autre nom.
+  fixes:
+    - description: Vérifier le contenu du dossier de construction.
+      command: ls -la
+      safe: true
+    - description: Indiquer explicitement le fichier avec « -f » s'il porte un autre nom.
+      command: docker build -f mon.Dockerfile .
+      safe: true
+  deepen:
+    explanation: >-
+      Le dernier argument de « docker build » (souvent « . ») est le contexte : le dossier
+      envoyé au moteur de build. Le Dockerfile y est cherché par défaut.
+    example: |-
+      printf 'FROM alpine:3.22\nUSER 1000:1000\nCMD ["echo", "bonjour"]\n' > Dockerfile
+      docker build -t essai:1 .
+    exercise: >-
+      Crée un Dockerfile minimal dans un dossier vide, construis l'image « essai:1 », lance-la
+      avec « docker run --rm essai:1 », puis supprime-la.
+  doc_url: https://docs.docker.com/reference/dockerfile/
+  tests: [build-dockerfile-not-found]
+
+- id: build.copy-source-missing
+  category: build
+  applies: [build]
+  patterns:
+    - 'failed to (?:compute cache key|calculate checksum)[^\n]*"(?P<path>/[^"]*)": not found'
+    - 'COPY failed: [^\n]*?(?P<path>/\S+): no such file or directory'
+  concept:
+    name: build context
+    definition: >-
+      Le contexte de build est le dossier envoyé au moteur de construction. Une instruction
+      COPY ne peut copier que des fichiers présents dans ce contexte.
+  summary: Le fichier « {{.path}} » à copier est introuvable dans le contexte de build.
+  cause: >-
+    Le fichier n'existe pas dans le dossier de construction, est exclu par .dockerignore, ou
+    son chemin est écrit par rapport au mauvais dossier.
+  fixes:
+    - description: Vérifier que le fichier est bien dans le dossier passé à « docker build ».
+      command: ls -la .{{.path}}
+      safe: true
+    - description: Vérifier qu'il n'est pas exclu par le fichier .dockerignore.
+      command: cat .dockerignore
+      safe: true
+  deepen:
+    explanation: >-
+      Les chemins sources de COPY sont relatifs à la racine du contexte, jamais au Dockerfile
+      ni à ta machine : « COPY ../secret.txt » est impossible par conception.
+    example: |-
+      printf 'FROM alpine:3.22\nCOPY message.txt /app/\nUSER 1000:1000\nCMD ["cat", "/app/message.txt"]\n' > Dockerfile
+      echo bonjour > message.txt
+      docker build -t essai-copy:1 .
+    exercise: >-
+      Ajoute « message.txt » au fichier .dockerignore, reconstruis l'image et observe
+      l'erreur : comprends-tu pourquoi le fichier « disparaît » ?
+  doc_url: https://docs.docker.com/build/concepts/context/
+  tests: [build-copy-missing]
+
+- id: build.run-failed
+  category: build
+  applies: [build]
+  patterns:
+    - 'process "(?P<cmd>[^"]+)" did not complete successfully: exit code: (?P<code>\d+)'
+    - 'The command ''(?P<cmd>[^'']+)'' returned a non-zero code: (?P<code>\d+)'
+  concept:
+    name: build step
+    definition: >-
+      Chaque instruction RUN d'un Dockerfile exécute une commande dans un conteneur
+      temporaire. Si elle échoue (code de sortie non nul), la construction s'arrête.
+  summary: Une instruction RUN a échoué pendant la construction (code {{.code}}).
+  cause: >-
+    La commande de l'étape {{.step}} s'est terminée avec le code {{.code}} : programme
+    absent de l'image, faute de frappe ou erreur du script.
+  fixes:
+    - description: Lire les lignes d'erreur juste au-dessus de « ERROR » dans la sortie du build.
+      safe: true
+    - description: Relancer le build avec une sortie complète pour voir toute l'étape.
+      command: docker build --progress=plain --no-cache .
+      safe: true
+  deepen:
+    explanation: >-
+      Le code 127 signifie « commande introuvable » : le programme n'est pas installé dans
+      l'image de base. Une image minimale comme alpine contient très peu d'outils ; on les
+      ajoute avec « RUN apk add --no-cache … ».
+    example: docker run --rm --user 1000:1000 alpine:3.22 sh -c 'command -v curl || echo "curl absent"'
+    exercise: >-
+      Dans un Dockerfile basé sur alpine:3.22, ajoute « RUN curl --version », observe
+      l'échec, puis corrige-le avec « RUN apk add --no-cache curl ».
+  doc_url: https://docs.docker.com/reference/dockerfile/
+  tests: [build-run-failed]

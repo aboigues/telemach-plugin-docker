@@ -1,0 +1,4 @@
+entry_id: "volume.in-use"
+origin: docker
+captures:
+  volume: "telemach-corpus-vol"

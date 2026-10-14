@@ -1,0 +1,4 @@
+entry_id: "image.manifest-unknown"
+origin: docker
+captures:
+  ref: "docker.io/library/alpine:9.99.99"

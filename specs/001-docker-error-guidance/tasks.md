@@ -198,7 +198,7 @@ d'abord échouer.
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T035 [P] [US1] Constituer le corpus `testdata/errors/`. Il comporte au moins 30 erreurs **réelles** capturées avec Docker 29.x. Chaque cas est un triplet `<id>.stderr.txt`, `<id>.args` (une ligne d'arguments) et `<id>.expected.yaml` (`entry_id`, `exit_code`, `origin`, `captures`). Cas obligatoires :
+- [X] T035 [P] [US1] Constituer le corpus `testdata/errors/`. Il comporte au moins 30 erreurs **réelles** capturées avec Docker 29.x. Chaque cas est un triplet `<id>.stderr.txt`, `<id>.args` (une ligne d'arguments) et `<id>.expected.yaml` (`entry_id`, `exit_code`, `origin`, `captures`). Cas obligatoires :
   - **Réseau** : port déjà alloué, spécification de port invalide, réseau introuvable, réseau avec des endpoints actifs.
   - **Images** :
     - image introuvable, `pull access denied`, faute de frappe `ngnix` ;
@@ -212,9 +212,9 @@ d'abord échouer.
   - **Exécution** : code 126, code 127 `executable file not found in $PATH`, code 137 (OOM), code 143, code applicatif `3`.
   - **Compose (commandes sans analyse de fichier)** : `docker compose ps` et `docker compose logs` lancés hors d'un projet (`no configuration file provided`), `docker compose down` sur un projet inexistant (`compose-*.stderr.txt`, utilisés par T063).
   - **Non reconnu** : un cas volontairement inconnu.
-- [ ] T036 [P] [US1] Écrire `internal/diagnose/corpus_test.go`. Il parcourt `testdata/errors/`, compare chaque `Diagnosis` à `expected.yaml`, calcule et journalise le taux de reconnaissance (échec si < 90 %, SC-001), et vérifie qu'aucun cas `unknown` n'a de cause (SC-005).
-- [ ] T037 [P] [US1] Écrire `tests/integration/docker_test.go` (`//go:build integration`). Il rejoue les scénarios V1 (port alloué, code 125 préservé), V2 (`ngnix`) et V4 (`exit 3` → origine applicative) contre un vrai démon, via la fonction shell, et nettoie les conteneurs créés.
-- [ ] T038 [P] [US1] Écrire les tests golden `internal/render/explanation_golden_test.go`, qui compare à `testdata/golden/us1/*.golden` en `--color=never` **et** `--color=always`. L'option `-update` régénère les fichiers. Cas couverts : port alloué, image introuvable, démon arrêté, erreur applicative, erreur non reconnue, rendu court en cas de répétition.
+- [X] T036 [P] [US1] Écrire `internal/diagnose/corpus_test.go`. Il parcourt `testdata/errors/`, compare chaque `Diagnosis` à `expected.yaml`, calcule et journalise le taux de reconnaissance (échec si < 90 %, SC-001), et vérifie qu'aucun cas `unknown` n'a de cause (SC-005).
+- [X] T037 [P] [US1] Écrire `tests/integration/docker_test.go` (`//go:build integration`). Il rejoue les scénarios V1 (port alloué, code 125 préservé), V2 (`ngnix`) et V4 (`exit 3` → origine applicative) contre un vrai démon, via la fonction shell, et nettoie les conteneurs créés.
+- [X] T038 [P] [US1] Écrire les tests golden `internal/render/explanation_golden_test.go`, qui compare à `testdata/golden/us1/*.golden` en `--color=never` **et** `--color=always`. L'option `-update` régénère les fichiers. Cas couverts : port alloué, image introuvable, démon arrêté, erreur applicative, erreur non reconnue, rendu court en cas de répétition.
 
 ### Implementation for User Story 1
 
@@ -226,22 +226,22 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 - `DocURL` vers docs.docker.com ;
 - `Tests` pointant vers les cas de T035.
 
-- [ ] T039 [P] [US1] Rédiger `internal/catalog/data/network.yaml` (français) : `run.port-already-allocated` (capture `port` ; corrections : `docker ps --filter publish=<port>` et un autre port hôte, en **reprenant l'image de la commande de l'apprenant** via la capture `image`. Le `Deepen.Example` utilise une image de la liste revue de T068, par exemple `nginxinc/nginx-unprivileged:<tag>-alpine`, avec un tag explicite vérifié au moment de la rédaction), `run.invalid-port-spec`, `network.not-found`, `network.active-endpoints`
-- [ ] T040 [P] [US1] Rédiger `internal/catalog/data/image.yaml` : `image.not-found`, `image.pull-access-denied`, `image.invalid-reference-format`, `image.manifest-unknown`, `image.in-use` (`rmi`), `image.push-denied`, `image.exec-format-error` (option `--platform`)
-- [ ] T041 [P] [US1] Rédiger `internal/catalog/data/container.yaml` : `container.name-conflict`, `container.not-found` (`logs`, `stop`, `start`, `exec`, `rm`), `container.not-running` (`exec`), `container.remove-running` (correction sûre : `docker stop` ; `rm -f` présenté avec mise en garde)
-- [ ] T042 [P] [US1] Rédiger `internal/catalog/data/daemon.yaml` et `internal/catalog/data/permission.yaml` :
+- [X] T039 [P] [US1] Rédiger `internal/catalog/data/network.yaml` (français) : `run.port-already-allocated` (capture `port` ; corrections : `docker ps --filter publish=<port>` et un autre port hôte, en **reprenant l'image de la commande de l'apprenant** via la capture `image`. Le `Deepen.Example` utilise une image de la liste revue de T068, par exemple `nginxinc/nginx-unprivileged:<tag>-alpine`, avec un tag explicite vérifié au moment de la rédaction), `run.invalid-port-spec`, `network.not-found`, `network.active-endpoints`
+- [X] T040 [P] [US1] Rédiger `internal/catalog/data/image.yaml` : `image.not-found`, `image.pull-access-denied`, `image.invalid-reference-format`, `image.manifest-unknown`, `image.in-use` (`rmi`), `image.push-denied`, `image.exec-format-error` (option `--platform`)
+- [X] T041 [P] [US1] Rédiger `internal/catalog/data/container.yaml` : `container.name-conflict`, `container.not-found` (`logs`, `stop`, `start`, `exec`, `rm`), `container.not-running` (`exec`), `container.remove-running` (correction sûre : `docker stop` ; `rm -f` présenté avec mise en garde)
+- [X] T042 [P] [US1] Rédiger `internal/catalog/data/daemon.yaml` et `internal/catalog/data/permission.yaml` :
   - `daemon.not-running` (concept client/démon ; vérification selon Linux, macOS ou WSL2) ;
   - `daemon.no-space-left` ;
   - `permission.socket-denied` : `AntiPattern` pour `sudo chmod 666 /var/run/docker.sock` et pour `sudo docker` systématique. Corrections sûres : mode rootless, ou groupe `docker` en expliquant qu'il donne des droits équivalents à root.
   - `permission.registry-unauthorized`.
-- [ ] T043 [P] [US1] Rédiger `internal/catalog/data/volume.yaml` : `volume.bind-source-missing`, `volume.in-use`
-- [ ] T044 [P] [US1] Rédiger `internal/catalog/data/build.yaml` : `build.dockerfile-not-found`, `build.copy-source-missing` (concept de contexte de build et `.dockerignore`), `build.run-failed` (étape en échec et code renvoyé)
-- [ ] T045 [P] [US1] Rédiger `internal/catalog/data/runtime.yaml`, entrées fondées sur `ExitCodes` (research.md R3) : `runtime.exit-126`, `runtime.exit-127`, `runtime.exit-137` (OOM, option `--memory`), `runtime.exit-143`, `runtime.application-error` (tout autre code de `run` → origine `application`, orienter vers `docker logs`, FR-004)
-- [ ] T046 [US1] Implémenter `internal/diagnose/exitcode.go`. Pour `run`, `start` et `exec`, le code 125 donne l'origine `docker` ; 126, 127, 137 et 143 ont leur entrée dédiée ; tout autre code donne l'origine `application`. Pour les autres sous-commandes, le code de sortie n'indique pas l'origine. Intégrer cette logique dans `Diagnose` (`internal/diagnose/diagnose.go`), avant la recherche par motifs.
-- [ ] T047 [US1] Implémenter `internal/diagnose/suggest.go` : suggestion d'image à partir d'une liste embarquée d'images officielles populaires (`internal/diagnose/data/official-images.txt` : nginx, alpine, ubuntu, debian, postgres, mysql, redis, node, python, golang, httpd, mongo, busybox, traefik…) avec `textdist.Closest` (distance ≤ 2). Injecter le résultat dans la capture `suggestion` de `image.not-found`. **Aucun appel à `docker images` ni au réseau.**
-- [ ] T048 [US1] Implémenter `internal/diagnose/buildstep.go` : dans une sortie `docker build` sur plusieurs étapes, isoler l'étape en échec (`[n/m] RUN …`) et les lignes d'erreur associées, transmises comme captures `step` et `step_error` (edge case « erreur multi-lignes »)
-- [ ] T049 [US1] Brancher la détection des répétitions dans `cmd/docker-telemach/explain.go` : `state.IsRepeat` → rendu court qui renvoie à `docker telemach deepen` ; `state.Save` après chaque diagnostic
-- [ ] T050 [US1] Mettre au point le catalogue et le matcher jusqu'à ce que T036 (≥ 90 %), T038 et T027 passent, puis générer les fichiers golden de `testdata/golden/us1/`
+- [X] T043 [P] [US1] Rédiger `internal/catalog/data/volume.yaml` : `volume.bind-source-missing`, `volume.in-use`
+- [X] T044 [P] [US1] Rédiger `internal/catalog/data/build.yaml` : `build.dockerfile-not-found`, `build.copy-source-missing` (concept de contexte de build et `.dockerignore`), `build.run-failed` (étape en échec et code renvoyé)
+- [X] T045 [P] [US1] Rédiger `internal/catalog/data/runtime.yaml`, entrées fondées sur `ExitCodes` (research.md R3) : `runtime.exit-126`, `runtime.exit-127`, `runtime.exit-137` (OOM, option `--memory`), `runtime.exit-143`, `runtime.application-error` (tout autre code de `run` → origine `application`, orienter vers `docker logs`, FR-004)
+- [X] T046 [US1] Implémenter `internal/diagnose/exitcode.go`. Pour `run`, `start` et `exec`, le code 125 donne l'origine `docker` ; 126, 127, 137 et 143 ont leur entrée dédiée ; tout autre code donne l'origine `application`. Pour les autres sous-commandes, le code de sortie n'indique pas l'origine. Intégrer cette logique dans `Diagnose` (`internal/diagnose/diagnose.go`), avant la recherche par motifs.
+- [X] T047 [US1] Implémenter `internal/diagnose/suggest.go` : suggestion d'image à partir d'une liste embarquée d'images officielles populaires (`internal/diagnose/data/official-images.txt` : nginx, alpine, ubuntu, debian, postgres, mysql, redis, node, python, golang, httpd, mongo, busybox, traefik…) avec `textdist.Closest` (distance ≤ 2). Injecter le résultat dans la capture `suggestion` de `image.not-found`. **Aucun appel à `docker images` ni au réseau.**
+- [X] T048 [US1] Implémenter `internal/diagnose/buildstep.go` : dans une sortie `docker build` sur plusieurs étapes, isoler l'étape en échec (`[n/m] RUN …`) et les lignes d'erreur associées, transmises comme captures `step` et `step_error` (edge case « erreur multi-lignes »)
+- [X] T049 [US1] Brancher la détection des répétitions dans `cmd/docker-telemach/explain.go` : `state.IsRepeat` → rendu court qui renvoie à `docker telemach deepen` ; `state.Save` après chaque diagnostic
+- [X] T050 [US1] Mettre au point le catalogue et le matcher jusqu'à ce que T036 (≥ 90 %), T038 et T027 passent, puis générer les fichiers golden de `testdata/golden/us1/`
 
 **Checkpoint**: MVP. Les scénarios V1 à V5, V10 et V11 du quickstart passent ; SC-001 ≥ 90 %.
 

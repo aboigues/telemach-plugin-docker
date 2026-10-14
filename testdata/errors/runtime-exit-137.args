@@ -1,0 +1,1 @@
+run --rm --init alpine:3.22 sh -c kill -9 $$

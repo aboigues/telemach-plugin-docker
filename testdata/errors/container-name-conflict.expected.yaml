@@ -1,0 +1,4 @@
+entry_id: "container.name-conflict"
+origin: docker
+captures:
+  name: "telemach-corpus-web"

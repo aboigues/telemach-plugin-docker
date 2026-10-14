@@ -1,0 +1,23 @@
+✖ Le programme exécuté dans le conteneur s'est terminé en erreur.
+   (l'erreur vient du programme exécuté dans le conteneur, pas de Docker)
+
+📘 Concept — container exit code
+   Quand le programme du conteneur se termine, « docker run » renvoie son code
+   de sortie. Un code autre que 0 signale une erreur de ce programme, pas de
+   Docker.
+
+🔎 Cause probable
+   Docker a bien démarré le conteneur ; c'est l'application elle-même qui a
+   échoué (configuration manquante, service injoignable, bogue…).
+
+💡 Corrections
+   1. Lire les messages de l'application juste au-dessus, ou ses journaux si le
+      conteneur existe encore.
+      docker logs <nom-du-conteneur>
+   2. Lancer un shell dans l'image pour enquêter.
+      docker run --rm -it --entrypoint sh alpine:3.22
+
+── Message Docker d'origine ────────────────────────────────────────────────────
+base de données injoignable
+
+➜ Pour aller plus loin : docker telemach deepen

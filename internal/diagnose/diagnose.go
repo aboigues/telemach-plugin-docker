@@ -68,6 +68,11 @@ func Diagnose(in Input, cat *catalog.Catalog) Diagnosis {
 		}
 	}
 	d.Origin = originFor(in, d)
+	if d.Entry == nil && cat != nil && d.Origin == OriginApplication {
+		if e, ok := matchFallback(d.Origin, in, cat); ok {
+			d.Entry, d.Confidence = e, Partial
+		}
+	}
 	enrich(in, &d)
 	return d
 }
@@ -105,9 +110,21 @@ func matchPatterns(in Input, cat *catalog.Catalog) (*catalog.Entry, map[string]s
 	return nil, nil, false
 }
 
+// matchExitCode cherche une entrée qui déclare explicitement ce code de sortie.
 func matchExitCode(in Input, cat *catalog.Catalog) (*catalog.Entry, bool) {
 	for _, e := range cat.Entries {
-		if len(e.Compiled()) == 0 && applies(e, in) {
+		if len(e.ExitCodes) > 0 && applies(e, in) {
+			return e, true
+		}
+	}
+	return nil, false
+}
+
+// matchFallback renvoie l'entrée de repli associée à une origine (par exemple une erreur
+// du programme du conteneur dont le code de sortie n'a pas d'entrée dédiée).
+func matchFallback(origin Origin, in Input, cat *catalog.Catalog) (*catalog.Entry, bool) {
+	for _, e := range cat.Entries {
+		if e.Fallback == string(origin) && applies(e, in) {
 			return e, true
 		}
 	}

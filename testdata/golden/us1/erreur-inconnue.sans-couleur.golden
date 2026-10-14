@@ -1,0 +1,9 @@
+✖ Erreur non reconnue
+   TELEMACH ne reconnaît pas encore cette erreur et préfère ne pas deviner sa
+   cause.
+   Commande : docker pull — code de sortie 1 — Docker 29.8.0
+   Piste : relis attentivement le message de Docker ; la documentation
+   officielle est sur https://docs.docker.com/
+
+── Message Docker d'origine ────────────────────────────────────────────────────
+Erreur interne simulée : le flux quantique est désaligné.

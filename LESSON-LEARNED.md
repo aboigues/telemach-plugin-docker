@@ -33,6 +33,36 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-003 — Fichier temporaire non supprimé après Ctrl-C (course entre mktemp et trap)
+
+- **Date** : 2026-10-14
+- **Catégorie** : bug
+- **Contexte** : intégration shell (T032), test `TestInterruptCleansUp` instable sous bash.
+- **Cause racine** : le `trap` de nettoyage était installé *après* `mktemp` ; un SIGINT reçu
+  entre les deux laissait le fichier (contenant potentiellement un message d'erreur).
+- **Impact** : fichier `telemach.*` résiduel dans `$XDG_RUNTIME_DIR`. Détecté en test.
+- **Correctif** : pièges installés avant la création du fichier ; le test attend que la
+  commande tourne réellement avant d'envoyer le signal.
+- **Règle préventive** : toujours installer le `trap` de nettoyage **avant** de créer la
+  ressource à nettoyer, et tester l'interruption à plusieurs moments.
+- **Suivi** : automatisé — `tests/shell` (`TestInterruptCleansUp`, bash et zsh).
+
+### LL-002 — zsh duplique stdout avec MULTIOS
+
+- **Date** : 2026-10-14
+- **Catégorie** : bug
+- **Contexte** : intégration shell zsh (T032), redirection `{ cmd 2>&1 1>&3 3>&- | tee … >&2; } 3>&1`.
+- **Cause racine** : l'option zsh `MULTIOS` (active par défaut) transforme une seconde
+  redirection de stdout en duplication : la sortie standard de docker partait à la fois
+  vers le terminal, le fichier temporaire et stderr.
+- **Impact** : sortie standard affichée deux fois et mélangée au message d'erreur analysé.
+  Détecté par `TestFailureIsExplained/zsh` avant toute fusion.
+- **Correctif** : `setopt NO_MULTIOS` dans la fonction (exécutée en sous-shell, sans effet
+  sur les options de l'utilisateur) ; le test vérifie que stdout n'apparaît jamais sur stderr.
+- **Règle préventive** : tout code shell partagé entre bash et zsh doit être testé sous les
+  **deux** shells, avec des assertions sur stdout **et** stderr, pas seulement sur stdout.
+- **Suivi** : automatisé — `tests/shell` exécuté sous bash et zsh en CI.
+
 ### LL-001 — golangci-lint refuse un module dont la version de Go est plus récente
 
 - **Date** : 2026-10-14

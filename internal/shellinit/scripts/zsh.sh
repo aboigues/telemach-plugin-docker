@@ -9,6 +9,9 @@ __telemach_docker_version="$(command docker --version 2>/dev/null | sed -n 's/^D
 
 # Fonction exécutée dans un sous-shell : ses pièges (trap) restent locaux.
 docker() (
+	# Sans MULTIOS, « 1>&3 » redirige stdout au lieu de le dupliquer (comportement de bash).
+	# La fonction s'exécute dans un sous-shell : l'option du shell de l'utilisateur est intacte.
+	setopt NO_MULTIOS
 	# « docker telemach … » n'est jamais expliqué par TELEMACH lui-même.
 	if [[ "${TELEMACH_DISABLE:-}" == "1" || "${1:-}" == "telemach" ]] || ! command -v docker-telemach >/dev/null 2>&1; then
 		command docker "$@"
@@ -40,13 +43,16 @@ docker() (
 		exit "$__telemach_rc"
 	fi
 
+	# Pièges installés avant la création du fichier : une interruption (Ctrl-C) à n'importe
+	# quel moment ne laisse aucun fichier temporaire derrière elle.
+	__telemach_tmp=""
+	trap 'rm -f -- "$__telemach_tmp"' EXIT
+	trap 'exit 130' INT
+	trap 'exit 143' TERM
 	__telemach_tmp="$(umask 077 && mktemp "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/telemach.XXXXXX")" || {
 		command docker "$@"
 		exit $?
 	}
-	trap 'rm -f -- "$__telemach_tmp"' EXIT
-	trap 'exit 130' INT
-	trap 'exit 143' TERM
 
 	# stderr de docker passe par tee (copie dans le fichier temporaire) ; stdout reste intact
 	# grâce au descripteur 3.

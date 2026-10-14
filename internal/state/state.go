@@ -58,7 +58,7 @@ func (s Store) Save(d LastDiagnosis) error {
 	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
 		return err
 	}
-	if err := os.Chmod(s.Dir, 0o700); err != nil {
+	if err := os.Chmod(s.Dir, 0o700); err != nil { //nolint:gosec // un répertoire privé a besoin du droit x
 		return err
 	}
 	data, err := json.Marshal(d)

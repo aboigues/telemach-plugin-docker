@@ -36,7 +36,7 @@ func writeStderr(t *testing.T, content string) string {
 func TestExplainUnknown(t *testing.T) {
 	a, _, errb := testApp(t, nil)
 	f := writeStderr(t, "erreur totalement inventée\n")
-	code := run(a, []string{"explain", "--color=never", "--exit-code", "1", "--stderr-file", f, "--docker-version", "29.8.0", "--", "run", "x"})
+	code := run(a, []string{"explain", "--color=never", "--exit-code", "1", "--stderr-file", f, "--docker-version", "29.8.0", "--", "pull", "x"})
 	if code != 0 {
 		t.Fatalf("code = %d, attendu 0 ; sortie :\n%s", code, errb)
 	}

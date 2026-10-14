@@ -97,8 +97,11 @@ func validate(e *Entry) []error {
 	if !Categories[e.Category] {
 		fail("catégorie inconnue %q", e.Category)
 	}
-	if len(e.Patterns) == 0 && len(e.ExitCodes) == 0 {
-		fail("au moins un motif est requis (ou des codes de sortie)")
+	if len(e.Patterns) == 0 && len(e.ExitCodes) == 0 && e.Fallback == "" {
+		fail("au moins un motif est requis (ou des codes de sortie, ou fallback)")
+	}
+	if e.Fallback != "" && e.Fallback != "application" {
+		fail("fallback inconnu %q (valeur possible : application)", e.Fallback)
 	}
 	e.compiled = nil
 	for _, p := range e.Patterns {
@@ -147,7 +150,11 @@ func validate(e *Entry) []error {
 			fail("%s ne semble pas rédigé en français : %q", field.name, field.text)
 		}
 	}
-	for _, tpl := range append([]string{e.Summary, e.Cause}, fixCommands(e)...) {
+	texts := append([]string{e.Summary, e.Cause, e.Deepen.Explanation, e.Deepen.Example, e.Deepen.Exercise}, fixCommands(e)...)
+	if e.AntiPattern != nil {
+		texts = append(texts, e.AntiPattern.Description)
+	}
+	for _, tpl := range texts {
 		if _, err := template.New("").Parse(tpl); err != nil {
 			fail("gabarit invalide %q : %v", tpl, err)
 		}
@@ -191,8 +198,13 @@ func Render(tpl string, captures map[string]string) string {
 	var b strings.Builder
 	if err := t.Execute(&b, captures); err != nil {
 		fallback := map[string]string{}
+		for _, name := range conditionFields(tpl) {
+			fallback[name] = ""
+		}
 		for _, name := range templateFields(tpl) {
-			fallback[name] = "…"
+			if _, isCond := fallback[name]; !isCond {
+				fallback[name] = "…"
+			}
 		}
 		for k, v := range captures {
 			fallback[k] = v
@@ -205,7 +217,18 @@ func Render(tpl string, captures map[string]string) string {
 	return b.String()
 }
 
-var fieldPattern = regexp.MustCompile(`\{\{\s*\.([A-Za-z0-9_]+)\s*\}\}`)
+var (
+	fieldPattern = regexp.MustCompile(`\{\{\s*\.([A-Za-z0-9_]+)\s*\}\}`)
+	condPattern  = regexp.MustCompile(`\{\{-?\s*(?:if|with)\s+\.([A-Za-z0-9_]+)`)
+)
+
+func conditionFields(tpl string) []string {
+	var out []string
+	for _, m := range condPattern.FindAllStringSubmatch(tpl, -1) {
+		out = append(out, m[1])
+	}
+	return out
+}
 
 func templateFields(tpl string) []string {
 	var out []string

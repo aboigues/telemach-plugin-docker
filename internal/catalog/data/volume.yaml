@@ -1,0 +1,64 @@
+# Erreurs liées aux volumes et aux montages.
+- id: volume.bind-source-missing
+  category: volume
+  applies: [run, create]
+  patterns:
+    - 'bind source path does not exist: (?P<path>\S+)'
+  concept:
+    name: bind mount
+    definition: >-
+      Un « bind mount » rend un dossier de ta machine visible dans le conteneur. Avec
+      « --mount type=bind », le dossier source doit déjà exister.
+  summary: Le dossier « {{.path}} » à monter n'existe pas sur ta machine.
+  cause: >-
+    Le chemin source est mal écrit, relatif au mauvais dossier, ou le dossier n'a pas encore
+    été créé.
+  fixes:
+    - description: Créer le dossier (ou corriger le chemin), puis relancer.
+      command: mkdir -p {{.path}}
+      safe: true
+    - description: Utiliser un chemin absolu construit à partir du dossier courant.
+      command: docker run --mount type=bind,src="$(pwd)"/donnees,dst=/data {{.image}}
+      safe: true
+  deepen:
+    explanation: >-
+      L'ancienne syntaxe « -v SOURCE:CIBLE » crée silencieusement un dossier vide si la source
+      manque ; « --mount » préfère échouer, ce qui évite de travailler sur un dossier vide
+      sans le savoir.
+    example: docker run --rm --user 1000:1000 --mount type=bind,src="$(pwd)",dst=/travail,readonly alpine:3.22 ls /travail
+    exercise: >-
+      Monte ton dossier courant en lecture seule dans un conteneur, liste son contenu, puis
+      essaie d'y créer un fichier : que se passe-t-il ?
+  doc_url: https://docs.docker.com/engine/storage/bind-mounts/
+  tests: [volume-bind-source-missing]
+
+- id: volume.in-use
+  category: volume
+  applies: [volume rm]
+  patterns:
+    - 'remove (?P<volume>\S+): volume is in use'
+  concept:
+    name: volume
+    definition: >-
+      Un volume est un espace de stockage géré par Docker, qui survit aux conteneurs. Il ne
+      peut pas être supprimé tant qu'un conteneur l'utilise.
+  summary: Le volume « {{.volume}} » est encore utilisé par un conteneur.
+  cause: >-
+    Au moins un conteneur, démarré ou arrêté, monte ce volume.
+  fixes:
+    - description: Trouver les conteneurs qui utilisent le volume.
+      command: docker ps -a --filter volume={{.volume}}
+      safe: true
+    - description: Supprimer ces conteneurs s'ils ne servent plus, puis le volume.
+      command: docker rm <nom-du-conteneur> && docker volume rm {{.volume}}
+      safe: true
+  deepen:
+    explanation: >-
+      Supprimer un volume efface définitivement ses données. C'est pourquoi Docker refuse
+      tant qu'un conteneur y est attaché, même arrêté.
+    example: docker volume inspect {{.volume}}
+    exercise: >-
+      Crée un volume, écris un fichier dedans avec un premier conteneur, puis relis-le avec
+      un second conteneur : les données ont-elles survécu ?
+  doc_url: https://docs.docker.com/engine/storage/volumes/
+  tests: [volume-in-use]

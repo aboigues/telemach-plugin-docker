@@ -1,0 +1,1 @@
+run --rm alpine:3.22 /etc/passwd

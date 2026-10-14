@@ -1,0 +1,1 @@
+run --rm -p 99999:80 nginx:1.29-alpine

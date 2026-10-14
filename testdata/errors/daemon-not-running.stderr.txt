@@ -1,0 +1,1 @@
+failed to connect to the docker API at unix:///tmp/telemach-corpus-absent.sock; check if the path is correct and if the daemon is running: dial unix /tmp/telemach-corpus-absent.sock: connect: no such file or directory
