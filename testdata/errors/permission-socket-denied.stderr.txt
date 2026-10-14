@@ -1,1 +1,1 @@
-permission denied while trying to connect to the docker API at unix:///tmp/tmp.wGZP2KjyJC/denied.sock
+permission denied while trying to connect to the docker API at unix:///tmp/tmp.EoSjtL8mU3/denied.sock

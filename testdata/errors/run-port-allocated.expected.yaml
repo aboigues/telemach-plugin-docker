@@ -2,4 +2,4 @@ entry_id: "run.port-already-allocated"
 origin: docker
 captures:
   port: "18080"
-  image: "nginx:1.29-alpine"
+  image: "nginx:1.30-alpine"

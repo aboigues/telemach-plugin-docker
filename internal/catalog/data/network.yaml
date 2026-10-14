@@ -31,8 +31,8 @@
       machine, où chaque port ne peut être « publié » que par un seul conteneur. C'est le
       rôle de la partie gauche de « -p 8081:80 ».
     example: |-
-      docker run -d --name web1 -p 8081:8080 nginxinc/nginx-unprivileged:1.29-alpine
-      docker run -d --name web2 -p 8082:8080 nginxinc/nginx-unprivileged:1.29-alpine
+      docker run -d --name web1 -p 8081:8080 nginxinc/nginx-unprivileged:1.30-alpine
+      docker run -d --name web2 -p 8082:8080 nginxinc/nginx-unprivileged:1.30-alpine
       docker ps --format '{{"{{"}}.Names{{"}}"}} → {{"{{"}}.Ports{{"}}"}}'
     exercise: >-
       Lance deux conteneurs nginx-unprivileged publiés sur les ports 8081 et 8082 de ta
@@ -65,7 +65,7 @@
       Le format complet de « -p » est [IP:]PORT_MACHINE:PORT_CONTENEUR[/protocole]. Les ports
       inférieurs à 1024 sont réservés à l'administrateur sur la plupart des systèmes : préfère
       des ports comme 8080 ou 8443 pour tes essais.
-    example: docker run --rm -d --name essai -p 127.0.0.1:8080:8080 nginxinc/nginx-unprivileged:1.29-alpine
+    example: docker run --rm -d --name essai -p 127.0.0.1:8080:8080 nginxinc/nginx-unprivileged:1.30-alpine
     exercise: >-
       Publie un conteneur uniquement sur 127.0.0.1:8080, vérifie avec « docker port essai »
       qu'il n'est pas accessible depuis une autre machine, puis supprime-le.
@@ -99,8 +99,8 @@
       « bridge » par défaut n'offre pas cette résolution par nom.
     example: |-
       docker network create labo
-      docker run -d --name db --network labo --user 1000:1000 alpine:3.22 sleep 300
-      docker run --rm --network labo --user 1000:1000 alpine:3.22 ping -c 1 db
+      docker run -d --name db --network labo --user 1000:1000 alpine:3.24 sleep 300
+      docker run --rm --network labo --user 1000:1000 alpine:3.24 ping -c 1 db
     exercise: >-
       Crée un réseau « labo », lance deux conteneurs dessus et vérifie qu'ils se joignent par
       leur nom ; supprime ensuite les conteneurs puis le réseau.

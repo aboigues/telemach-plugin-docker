@@ -336,12 +336,12 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T067 [P] [US3] Écrire `cmd/docker-telemach/deepen_test.go` (avec un `XDG_STATE_HOME` temporaire). Cas couverts :
+- [X] T067 [P] [US3] Écrire `cmd/docker-telemach/deepen_test.go` (avec un `XDG_STATE_HOME` temporaire). Cas couverts :
   - sans diagnostic récent : message expliquant comment en obtenir un, code `0` ;
   - avec `LastDiagnosis` pointant sur `run.port-already-allocated` : explication et exemple ;
   - avec `--exercise` : l'exercice s'ajoute ;
   - `EntryID` inconnu du catalogue : traité comme « pas de diagnostic ».
-- [ ] T068 [P] [US3] Écrire `internal/catalog/safety_test.go` (FR-010, principe III de la constitution v1.1.0). Il vérifie, pour chaque entrée, `Deepen.Example`, `Deepen.Exercise` et toute `Fix` marquée `Safe: true`. Les valeurs issues de la commande de l'apprenant (gabarits `{{.image}}`…) sont exclues : elles reprennent sa commande et ne sont pas des exemples produits.
+- [X] T068 [P] [US3] Écrire `internal/catalog/safety_test.go` (FR-010, principe III de la constitution v1.1.0). Il vérifie, pour chaque entrée, `Deepen.Example`, `Deepen.Exercise` et toute `Fix` marquée `Safe: true`. Les valeurs issues de la commande de l'apprenant (gabarits `{{.image}}`…) sont exclues : elles reprennent sa commande et ne sont pas des exemples produits.
   - **Échec bloquant** :
     - présence de `--privileged`, `chmod 666`, `--user root`, `-u 0` ou `--network host` ;
     - secret littéral (détecté par `redact`) ;
@@ -352,9 +352,9 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 
 ### Implementation for User Story 3
 
-- [ ] T069 [US3] Implémenter `internal/render/deepen.go` : `func RenderDeepen(w io.Writer, e *catalog.CatalogEntry, captures map[string]string, exercise bool, opts Options)`. Afficher le titre du concept, `Explanation`, `Example` coloré par chroma (lexer `bash`, `yaml` ou `docker` selon le contenu), `Exercise` si demandé, puis `DocURL`. Ajouter des golden files dans `testdata/golden/us3/`.
-- [ ] T070 [US3] Implémenter `cmd/docker-telemach/deepen.go` : `docker telemach deepen [--exercise]`, qui lit `state.Load()` et retrouve l'entrée par `EntryID` dans le catalogue. Sortie colorée selon `render.ResolveColor` (FR-007a). Faire passer T067.
-- [ ] T071 [US3] Relire et compléter le champ `Deepen` de toutes les entrées de `internal/catalog/data/*.yaml` : chaque `Example` est exécutable tel quel et chaque `Exercise` est court, sans risque et vérifiable. Faire passer T068.
+- [X] T069 [US3] Implémenter `internal/render/deepen.go` : `func RenderDeepen(w io.Writer, e *catalog.CatalogEntry, captures map[string]string, exercise bool, opts Options)`. Afficher le titre du concept, `Explanation`, `Example` coloré par chroma (lexer `bash`, `yaml` ou `docker` selon le contenu), `Exercise` si demandé, puis `DocURL`. Ajouter des golden files dans `testdata/golden/us3/`.
+- [X] T070 [US3] Implémenter `cmd/docker-telemach/deepen.go` : `docker telemach deepen [--exercise]`, qui lit `state.Load()` et retrouve l'entrée par `EntryID` dans le catalogue. Sortie colorée selon `render.ResolveColor` (FR-007a). Faire passer T067.
+- [X] T071 [US3] Relire et compléter le champ `Deepen` de toutes les entrées de `internal/catalog/data/*.yaml` : chaque `Example` est exécutable tel quel et chaque `Exercise` est court, sans risque et vérifiable. Faire passer T068.
 
 **Checkpoint**: le scénario V9 passe ; les trois histoires fonctionnent.
 

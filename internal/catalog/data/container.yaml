@@ -28,9 +28,9 @@
       Sans « --name », Docker invente un nom (comme « naughty_poitras »). L'option « --rm »
       supprime automatiquement le conteneur à son arrêt : pratique pour les essais, le nom est
       alors libéré tout de suite.
-    example: docker run --rm --name essai --user 1000:1000 alpine:3.22 echo bonjour
+    example: docker run --rm --name essai --user 1000:1000 alpine:3.24 echo bonjour
     exercise: >-
-      Lance deux fois « docker run --rm --name essai alpine:3.22 true » : pourquoi la seconde
+      Lance deux fois « docker run --rm --name essai --user 1000:1000 alpine:3.24 true » : pourquoi la seconde
       fonctionne-t-elle grâce à « --rm » ?
   doc_url: https://docs.docker.com/reference/cli/docker/container/run/
   tests: [container-name-conflict]
@@ -59,7 +59,7 @@
       (quelques caractères suffisent s'ils sont uniques).
     example: docker ps -a --format '{{"{{"}}.ID{{"}}"}} {{"{{"}}.Names{{"}}"}}'
     exercise: >-
-      Lance « docker run -d --name essai alpine:3.22 sleep 60 », arrête-le en utilisant
+      Lance « docker run -d --name essai --user 1000:1000 alpine:3.24 sleep 60 », arrête-le en utilisant
       seulement les 4 premiers caractères de son identifiant, puis supprime-le.
   doc_url: https://docs.docker.com/reference/cli/docker/container/ls/
   tests: [container-not-found-logs, container-not-found-stop, container-not-found-start, container-not-found-exec]
@@ -93,10 +93,10 @@
       Un conteneur vit tant que son processus principal (PID 1) vit. Une image comme alpine
       lance « sh » par défaut, qui se termine aussitôt sans terminal : le conteneur s'arrête.
     example: |-
-      docker run -d --name essai --user 1000:1000 alpine:3.22 sleep 300
+      docker run -d --name essai --user 1000:1000 alpine:3.24 sleep 300
       docker exec essai ps
     exercise: >-
-      Lance « docker run -d alpine:3.22 », observe son état avec « docker ps -a », puis lance
+      Lance « docker run -d --user 1000:1000 alpine:3.24 », observe son état avec « docker ps -a », puis lance
       un conteneur qui reste démarré avec « sleep 300 » et entres-y avec « docker exec ».
   doc_url: https://docs.docker.com/reference/cli/docker/container/exec/
   tests: [container-not-running-exec]
@@ -133,7 +133,7 @@
       bien écrit profite de ce délai pour se terminer proprement.
     example: docker stop --time 30 essai
     exercise: >-
-      Lance « docker run -d --name essai alpine:3.22 sleep 300 », chronomètre « docker stop
+      Lance « docker run -d --name essai --user 1000:1000 alpine:3.24 sleep 300 », chronomètre « docker stop
       essai » : pourquoi faut-il environ 10 secondes ? (indice : sleep ignore SIGTERM en PID 1).
   doc_url: https://docs.docker.com/reference/cli/docker/container/rm/
   tests: [container-remove-running]

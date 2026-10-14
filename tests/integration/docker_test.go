@@ -61,10 +61,10 @@ func docker(t *testing.T, args ...string) {
 // V1 — port déjà utilisé : explication en français et code 125 préservé.
 func TestV1PortAllocated(t *testing.T) {
 	h := newHarness(t)
-	docker(t, "run", "-d", "--name", "telemach-it-web", "-p", "18090:8080", "nginxinc/nginx-unprivileged:1.29-alpine")
+	docker(t, "run", "-d", "--name", "telemach-it-web", "-p", "18090:8080", "nginxinc/nginx-unprivileged:1.30-alpine")
 	t.Cleanup(func() { _ = exec.Command("docker", "rm", "-f", "telemach-it-web").Run() })
 
-	stdout, stderr := h.shell(t, `docker run --rm -p 18090:8080 nginxinc/nginx-unprivileged:1.29-alpine; echo "rc=$?"`)
+	stdout, stderr := h.shell(t, `docker run --rm -p 18090:8080 nginxinc/nginx-unprivileged:1.30-alpine; echo "rc=$?"`)
 	if !strings.Contains(stdout, "rc=125") {
 		t.Errorf("code 125 attendu : %q", stdout)
 	}
@@ -89,7 +89,7 @@ func TestV2ImageTypo(t *testing.T) {
 // V4 — erreur applicative : l'origine est le programme du conteneur, pas Docker.
 func TestV4ApplicationError(t *testing.T) {
 	h := newHarness(t)
-	stdout, stderr := h.shell(t, `docker run --rm --user 1000:1000 alpine:3.22 sh -c 'exit 3'; echo "rc=$?"`)
+	stdout, stderr := h.shell(t, `docker run --rm --user 1000:1000 alpine:3.24 sh -c 'exit 3'; echo "rc=$?"`)
 	if !strings.Contains(stdout, "rc=3") {
 		t.Errorf("code 3 attendu : %q", stdout)
 	}

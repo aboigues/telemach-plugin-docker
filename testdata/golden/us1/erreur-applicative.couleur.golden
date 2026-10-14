@@ -15,7 +15,7 @@
       conteneur existe encore.
       [38;2;248;248;242mdocker logs <nom-du-conteneur>[0m
    2. Lancer un shell dans l'image pour enquêter.
-      [38;2;248;248;242mdocker run --rm -it --entrypoint sh alpine:3.22[0m
+      [38;2;248;248;242mdocker run --rm -it --entrypoint sh alpine:3.24[0m
 
 [2;38;2;138;143;152m── Message Docker d'origine ────────────────────────────────────────────────────[m
 [2;38;2;138;143;152mbase de données injoignable[m

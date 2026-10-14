@@ -25,11 +25,11 @@
       « docker.io/library/nginx:latest ». Docker cherche d'abord l'image en local, puis la
       télécharge (« pull ») si elle est absente.
     example: |-
-      docker pull nginxinc/nginx-unprivileged:1.29-alpine
+      docker pull nginxinc/nginx-unprivileged:1.30-alpine
       docker image ls nginxinc/nginx-unprivileged
     exercise: >-
-      Télécharge l'image « alpine:3.22 », affiche-la avec « docker image ls », puis retrouve
-      son nom complet avec « docker image inspect alpine:3.22 --format '{{"{{"}}.RepoDigests{{"}}"}}' ».
+      Télécharge l'image « alpine:3.24 », affiche-la avec « docker image ls », puis retrouve
+      son nom complet avec « docker image inspect alpine:3.24 --format '{{"{{"}}.RepoDigests{{"}}"}}' ».
   doc_url: https://docs.docker.com/reference/cli/docker/image/pull/
   tests: [image-not-found-typo, image-pull-denied]
 
@@ -48,15 +48,15 @@
     un espace ou un tag mal placé.
   fixes:
     - description: Écrire le nom de l'image en minuscules, sans espace.
-      command: docker run --rm nginxinc/nginx-unprivileged:1.29-alpine
+      command: docker run --rm nginxinc/nginx-unprivileged:1.30-alpine
       safe: true
   deepen:
     explanation: >-
       Le tag vient après « : » et l'empreinte (digest) après « @ » : par exemple
-      « alpine:3.22 » ou « alpine@sha256:… ». Un nom ne peut jamais contenir de majuscule.
-    example: docker image inspect alpine:3.22 --format '{{"{{"}}.Id{{"}}"}}'
+      « alpine:3.24 » ou « alpine@sha256:… ». Un nom ne peut jamais contenir de majuscule.
+    example: docker image inspect alpine:3.24 --format '{{"{{"}}.Id{{"}}"}}'
     exercise: >-
-      Essaie « docker pull Alpine » puis « docker pull alpine:3.22 » et compare les messages.
+      Essaie « docker pull Alpine » puis « docker pull alpine:3.24 » et compare les messages.
   doc_url: https://docs.docker.com/reference/cli/docker/image/tag/
   tests: [image-invalid-reference]
 
@@ -69,7 +69,7 @@
   concept:
     name: image tag
     definition: >-
-      Le tag désigne une version précise d'une image (« alpine:3.22 »). Une image peut exister
+      Le tag désigne une version précise d'une image (« alpine:3.24 »). Une image peut exister
       sans que le tag demandé existe.
   summary: Le tag demandé n'existe pas pour cette image{{if .ref}} (« {{.ref}} »){{end}}.
   cause: >-
@@ -77,15 +77,15 @@
     n'a jamais été publiée.
   fixes:
     - description: Consulter les tags disponibles sur la page de l'image (Docker Hub), puis utiliser un tag existant.
-      command: docker pull alpine:3.22
+      command: docker pull alpine:3.24
       safe: true
   deepen:
     explanation: >-
       Sans tag, Docker utilise « latest », qui change avec le temps. Préciser un tag explicite
       rend tes conteneurs reproductibles ; une empreinte (digest) le rend même immuable.
-    example: docker pull alpine:3.22
+    example: docker pull alpine:3.24
     exercise: >-
-      Télécharge « alpine:3.22 » puis affiche son empreinte avec « docker image ls --digests alpine ».
+      Télécharge « alpine:3.24 » puis affiche son empreinte avec « docker image ls --digests alpine ».
   doc_url: https://docs.docker.com/reference/cli/docker/image/pull/
   tests: [image-manifest-unknown]
 
@@ -124,8 +124,8 @@
       leur image.
     example: docker ps -a --format '{{"{{"}}.Names{{"}}"}} → {{"{{"}}.Image{{"}}"}} ({{"{{"}}.Status{{"}}"}})'
     exercise: >-
-      Crée un conteneur arrêté avec « docker create --name essai alpine:3.22 », tente
-      « docker rmi alpine:3.22 », puis supprime « essai » et réessaie.
+      Crée un conteneur arrêté avec « docker create --name essai --user 1000:1000 alpine:3.24 », tente
+      « docker rmi alpine:3.24 », puis supprime « essai » et réessaie.
   doc_url: https://docs.docker.com/reference/cli/docker/image/rm/
   tests: [image-in-use]
 
@@ -157,7 +157,7 @@
       qui indique à Docker vers quel registre et quel compte publier.
     example: docker image ls --format '{{"{{"}}.Repository{{"}}"}}:{{"{{"}}.Tag{{"}}"}} {{"{{"}}.ID{{"}}"}}'
     exercise: >-
-      Donne un second nom à « alpine:3.22 » avec « docker tag », vérifie que les deux noms
+      Donne un second nom à « alpine:3.24 » avec « docker tag », vérifie que les deux noms
       ont le même identifiant, puis supprime le second nom avec « docker rmi ».
   doc_url: https://docs.docker.com/reference/cli/docker/image/push/
   tests: [image-push-denied]

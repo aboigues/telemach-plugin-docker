@@ -33,6 +33,23 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-004 — Tags d'images d'exemple choisis de mémoire, sans vérification
+
+- **Date** : 2026-10-14
+- **Catégorie** : processus
+- **Contexte** : rédaction du catalogue (T039–T045) et du corpus.
+- **Cause racine** : les tags `alpine:3.22` et `nginx…:1.29-alpine` ont été écrits de
+  mémoire, alors que la règle impose de vérifier la dernière version stable réelle.
+- **Impact** : exemples pédagogiques en retard de deux versions d'alpine ; détecté avant
+  fusion, en vérifiant les tags sur Docker Hub pour le test de sécurité des exemples.
+- **Correctif** : passage à `alpine:3.24`, nginx branche stable `1.30-alpine`
+  (`1.31` = mainline), `postgres:18-alpine`, `redis:8-alpine` ; corpus recapturé.
+- **Règle préventive** : avant d'écrire un tag d'image, consulter le registre (Docker Hub)
+  pour connaître la dernière version stable ; pour nginx, la branche stable a un numéro
+  mineur pair.
+- **Suivi** : partiellement automatisé — `internal/catalog/safety_test.go` signale les tags
+  absents ou `latest` ; la fraîcheur des tags reste à vérifier à chaque revue trimestrielle.
+
 ### LL-003 — Fichier temporaire non supprimé après Ctrl-C (course entre mktemp et trap)
 
 - **Date** : 2026-10-14

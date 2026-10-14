@@ -1,1 +1,1 @@
-run --rm alpine:3.22 commande-inexistante
+run --rm alpine:3.24 commande-inexistante

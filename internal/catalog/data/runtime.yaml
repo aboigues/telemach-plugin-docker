@@ -26,9 +26,9 @@
       Les codes 126 et 127 viennent de la convention des shells : 126 = trouvé mais non
       exécutable, 127 = introuvable. Docker les renvoie quand le programme du conteneur ne
       peut pas démarrer.
-    example: docker run --rm --user 1000:1000 alpine:3.22 ls -l /bin/sh /etc/passwd
+    example: docker run --rm --user 1000:1000 alpine:3.24 ls -l /bin/sh /etc/passwd
     exercise: >-
-      Compare les droits de /bin/sh et de /etc/passwd dans alpine:3.22 : lequel porte le
+      Compare les droits de /bin/sh et de /etc/passwd dans alpine:3.24 : lequel porte le
       droit « x » d'exécution ?
   doc_url: https://docs.docker.com/reference/cli/docker/container/run/
   tests: [runtime-exit-126]
@@ -59,9 +59,9 @@
       Les images minimales (alpine, distroless) contiennent très peu d'outils : c'est voulu,
       pour réduire leur taille et leur surface d'attaque. On ajoute seulement ce dont
       l'application a besoin.
-    example: docker run --rm --user 1000:1000 alpine:3.22 ls /bin
+    example: docker run --rm --user 1000:1000 alpine:3.24 ls /bin
     exercise: >-
-      Liste les programmes de /bin dans alpine:3.22 : « bash » y est-il ? Quelle commande
+      Liste les programmes de /bin dans alpine:3.24 : « bash » y est-il ? Quelle commande
       utiliser à la place ?
   doc_url: https://docs.docker.com/reference/cli/docker/container/run/
   tests: [runtime-exit-127]
@@ -90,7 +90,7 @@
     explanation: >-
       Un code de sortie supérieur à 128 indique une mort par signal : code − 128 = numéro du
       signal. 137 → 9 (SIGKILL), 143 → 15 (SIGTERM).
-    example: docker run --rm --init --user 1000:1000 alpine:3.22 sh -c 'kill -9 $$'; echo "code $?"
+    example: docker run --rm --init --user 1000:1000 alpine:3.24 sh -c 'kill -9 $$'; echo "code $?"
     exercise: >-
       Lance l'exemple puis remplace « -9 » par « -15 » : quel code obtiens-tu, et pourquoi ?
   doc_url: https://docs.docker.com/engine/containers/resource_constraints/
@@ -117,9 +117,9 @@
     explanation: >-
       SIGTERM laisse au programme le temps de se terminer proprement (fermer ses fichiers,
       finir ses requêtes). C'est le signal envoyé par « docker stop » avant SIGKILL.
-    example: docker run --rm --init --user 1000:1000 alpine:3.22 sh -c 'kill -15 $$'; echo "code $?"
+    example: docker run --rm --init --user 1000:1000 alpine:3.24 sh -c 'kill -15 $$'; echo "code $?"
     exercise: >-
-      Lance « docker run -d --init --name essai alpine:3.22 sleep 300 », arrête-le avec
+      Lance « docker run -d --init --name essai --user 1000:1000 alpine:3.24 sleep 300 », arrête-le avec
       « docker stop essai » puis lis son code avec « docker inspect essai --format
       '{{"{{"}}.State.ExitCode{{"}}"}}' ».
   doc_url: https://docs.docker.com/reference/cli/docker/container/stop/
@@ -150,7 +150,7 @@
       « docker run » transmet le code de sortie du programme principal du conteneur. Les codes
       125, 126 et 127 sont réservés à Docker et au lancement ; les autres viennent de ton
       application.
-    example: docker run --rm --user 1000:1000 alpine:3.22 sh -c 'exit 3'; echo "code $?"
+    example: docker run --rm --user 1000:1000 alpine:3.24 sh -c 'exit 3'; echo "code $?"
     exercise: >-
       Lance l'exemple avec plusieurs valeurs (0, 1, 42) et vérifie que le code affiché est
       toujours celui choisi par le programme.

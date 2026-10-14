@@ -15,7 +15,7 @@
       conteneur existe encore.
       docker logs <nom-du-conteneur>
    2. Lancer un shell dans l'image pour enquêter.
-      docker run --rm -it --entrypoint sh alpine:3.22
+      docker run --rm -it --entrypoint sh alpine:3.24
 
 ── Message Docker d'origine ────────────────────────────────────────────────────
 base de données injoignable

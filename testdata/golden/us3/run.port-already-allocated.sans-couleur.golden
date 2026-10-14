@@ -1,0 +1,21 @@
+📘 Concept — port publishing
+   L'option « -p PORT_MACHINE:PORT_CONTENEUR » relie un port de ta machine à un
+   port du conteneur. Un port de la machine ne peut être relié qu'une seule fois
+   à la fois.
+
+   Chaque conteneur a son propre réseau isolé : deux conteneurs peuvent tous les
+   deux écouter sur leur port 80 interne sans conflit. Le conflit n'existe que
+   du côté de ta machine, où chaque port ne peut être « publié » que par un seul
+   conteneur. C'est le rôle de la partie gauche de « -p 8081:80 ».
+
+▶ Exemple
+     docker run -d --name web1 -p 8081:8080 nginxinc/nginx-unprivileged:1.30-alpine
+     docker run -d --name web2 -p 8082:8080 nginxinc/nginx-unprivileged:1.30-alpine
+     docker ps --format '{{.Names}} → {{.Ports}}'
+
+🧪 Exercice
+   Lance deux conteneurs nginx-unprivileged publiés sur les ports 8081 et 8082
+   de ta machine, ouvre http://localhost:8081 et http://localhost:8082, puis
+   supprime-les avec « docker rm -f web1 web2 ».
+
+📖 Documentation : https://docs.docker.com/get-started/docker-concepts/running-containers/publishing-ports/

@@ -3,7 +3,7 @@
 
      1 │ services:
    ➤ 2 │   web
-     3 │     image: nginx:1.29-alpine
+     3 │     image: nginx:1.30-alpine
 
    💡 Version corrigée
      2 │   web:

@@ -24,8 +24,9 @@
     explanation: >-
       L'ancienne syntaxe « -v SOURCE:CIBLE » crée silencieusement un dossier vide si la source
       manque ; « --mount » préfère échouer, ce qui évite de travailler sur un dossier vide
-      sans le savoir.
-    example: docker run --rm --user 1000:1000 --mount type=bind,src="$(pwd)",dst=/travail,readonly alpine:3.22 ls /travail
+      sans le savoir. Avec « --user "$(id -u):$(id -g)" », le conteneur utilise ton propre
+      identifiant : il lit tes fichiers sans être root.
+    example: docker run --rm --user "$(id -u):$(id -g)" --mount type=bind,src="$(pwd)",dst=/travail,readonly alpine:3.24 ls /travail
     exercise: >-
       Monte ton dossier courant en lecture seule dans un conteneur, liste son contenu, puis
       essaie d'y créer un fichier : que se passe-t-il ?

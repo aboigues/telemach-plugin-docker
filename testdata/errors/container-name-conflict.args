@@ -1,1 +1,1 @@
-run --name telemach-corpus-web nginx:1.29-alpine
+run --name telemach-corpus-web nginx:1.30-alpine

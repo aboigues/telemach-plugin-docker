@@ -51,19 +51,28 @@ func redactText(s string) string {
 	})
 	s = plainYAML.ReplaceAllStringFunc(s, func(m string) string {
 		sub := plainYAML.FindStringSubmatch(m)
-		if strings.Contains(sub[2], Mask) || isReference(sub[2]) {
+		if strings.Contains(sub[2], Mask) || isReference(sub[2]) || isFileVariable(sub[1]) {
 			return m // déjà masqué, ou simple référence à une variable
 		}
 		return sub[1] + Mask
 	})
 	s = assignment.ReplaceAllStringFunc(s, func(m string) string {
 		sub := assignment.FindStringSubmatch(m)
-		if isReference(sub[2]) {
+		if isReference(sub[2]) || isFileVariable(sub[1]) {
 			return m
 		}
 		return sub[1] + Mask
 	})
 	return passwordFlagEq.ReplaceAllString(s, "${1}"+Mask)
+}
+
+// isFileVariable indique une variable *_FILE, qui contient le chemin d'un fichier de
+// secret (convention des images officielles) et non le secret lui-même.
+func isFileVariable(prefix string) bool {
+	name := strings.TrimRight(strings.TrimLeft(prefix, " \t-"), " \t:=")
+	upper := strings.ToUpper(name)
+	// « secrets: » est aussi le mot-clé Compose qui liste des noms de secrets, pas des valeurs.
+	return strings.HasSuffix(upper, "_FILE") || upper == "SECRETS"
 }
 
 // isReference indique si une valeur n'est qu'une référence à une variable (${NOM} ou

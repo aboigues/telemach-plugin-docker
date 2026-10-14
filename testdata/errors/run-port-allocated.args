@@ -1,1 +1,1 @@
-run --rm -p 18080:80 nginx:1.29-alpine
+run --rm -p 18080:80 nginx:1.30-alpine

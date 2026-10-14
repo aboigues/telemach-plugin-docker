@@ -1,6 +1,6 @@
 services:
   web:
-    image: nginxinc/nginx-unprivileged:1.29-alpine
+    image: nginxinc/nginx-unprivileged:1.30-alpine
     ports:
       - "8080:8080"
     depends_on:

@@ -229,7 +229,7 @@
       message si la variable manque : pratique pour les variables obligatoires.
     example: docker compose config --environment
     exercise: >-
-      Utilise ${TAG:-1.29-alpine} pour le tag d'une image, puis lance « TAG=1.28-alpine
+      Utilise ${TAG:-1.30-alpine} pour le tag d'une image, puis lance « TAG=1.28-alpine
       docker compose config » et observe le résultat.
   doc_url: https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/
   tests: [unresolved-variable]

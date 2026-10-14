@@ -1,0 +1,10 @@
+# Images autorisées dans les exemples pédagogiques (principe III de la constitution).
+# Format : nom  mode  # justification
+#   rootless   : l'image s'exécute déjà sans root
+#   needs-user : l'image s'exécute en root par défaut ; l'exemple DOIT préciser --user (ou USER)
+nginxinc/nginx-unprivileged  rootless    # variante officielle de nginx sans root, port 8080
+alpine                       needs-user  # image minimale (~8 Mo), toujours utilisée avec --user
+postgres                     rootless    # l'entrypoint officiel abandonne root pour l'utilisateur postgres
+redis                        rootless    # l'entrypoint officiel abandonne root pour l'utilisateur redis
+essai                        rootless    # image construite dans l'exercice (FROM alpine + USER 1000:1000)
+essai-copy                   rootless    # image construite dans l'exemple (FROM alpine + USER 1000:1000)

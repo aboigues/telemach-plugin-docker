@@ -64,6 +64,6 @@
     example: docker login --help
     exercise: >-
       Repère dans « docker login --help » l'option qui lit le mot de passe sur l'entrée
-      standard, et explique pourquoi « -p » est déconseillé.
+      standard, et explique pourquoi passer le mot de passe en argument est déconseillé.
   doc_url: https://docs.docker.com/reference/cli/docker/login/
   tests: [permission-registry-unauthorized]

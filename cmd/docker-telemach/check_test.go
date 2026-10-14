@@ -51,7 +51,7 @@ func TestCheckMultipleFiles(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("base.yaml", "services:\n  web:\n    image: nginx:1.29-alpine\n")
+	write("base.yaml", "services:\n  web:\n    image: nginx:1.30-alpine\n")
 	write("dev.yaml", "services:\n  web:\n    port:\n      - \"8080:80\"\n")
 	a, _, errb := testApp(t, nil)
 	code := run(a, []string{"check", "--color=never", "-f", "base.yaml", "-f", "dev.yaml", dir})

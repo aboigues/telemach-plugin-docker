@@ -1,1 +1,1 @@
-pull nginx:1.29-alpine
+pull nginx:1.30-alpine

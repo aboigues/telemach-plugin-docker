@@ -26,7 +26,7 @@
       Le dernier argument de « docker build » (souvent « . ») est le contexte : le dossier
       envoyé au moteur de build. Le Dockerfile y est cherché par défaut.
     example: |-
-      printf 'FROM alpine:3.22\nUSER 1000:1000\nCMD ["echo", "bonjour"]\n' > Dockerfile
+      printf 'FROM alpine:3.24\nUSER 1000:1000\nCMD ["echo", "bonjour"]\n' > Dockerfile
       docker build -t essai:1 .
     exercise: >-
       Crée un Dockerfile minimal dans un dossier vide, construis l'image « essai:1 », lance-la
@@ -61,7 +61,7 @@
       Les chemins sources de COPY sont relatifs à la racine du contexte, jamais au Dockerfile
       ni à ta machine : « COPY ../secret.txt » est impossible par conception.
     example: |-
-      printf 'FROM alpine:3.22\nCOPY message.txt /app/\nUSER 1000:1000\nCMD ["cat", "/app/message.txt"]\n' > Dockerfile
+      printf 'FROM alpine:3.24\nCOPY message.txt /app/\nUSER 1000:1000\nCMD ["cat", "/app/message.txt"]\n' > Dockerfile
       echo bonjour > message.txt
       docker build -t essai-copy:1 .
     exercise: >-
@@ -96,9 +96,9 @@
       Le code 127 signifie « commande introuvable » : le programme n'est pas installé dans
       l'image de base. Une image minimale comme alpine contient très peu d'outils ; on les
       ajoute avec « RUN apk add --no-cache … ».
-    example: docker run --rm --user 1000:1000 alpine:3.22 sh -c 'command -v curl || echo "curl absent"'
+    example: docker run --rm --user 1000:1000 alpine:3.24 sh -c 'command -v curl || echo "curl absent"'
     exercise: >-
-      Dans un Dockerfile basé sur alpine:3.22, ajoute « RUN curl --version », observe
+      Dans un Dockerfile basé sur alpine:3.24, ajoute « RUN curl --version », observe
       l'échec, puis corrige-le avec « RUN apk add --no-cache curl ».
   doc_url: https://docs.docker.com/reference/dockerfile/
   tests: [build-run-failed]

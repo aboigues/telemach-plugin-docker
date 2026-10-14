@@ -1,4 +1,4 @@
 services:
   web:
-    image: nginx:1.29-alpine
+    image: nginx:1.30-alpine
     environment: 42

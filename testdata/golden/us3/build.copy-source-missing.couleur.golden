@@ -1,0 +1,18 @@
+[1;38;2;122;162;247m📘 Concept — build context[m
+   Le contexte de build est le dossier envoyé au moteur de construction. Une
+   instruction COPY ne peut copier que des fichiers présents dans ce contexte.
+
+   Les chemins sources de COPY sont relatifs à la racine du contexte, jamais au
+   Dockerfile ni à ta machine : « COPY ../secret.txt » est impossible par
+   conception.
+
+[1;38;2;158;206;106m▶ Exemple[m
+     [38;2;248;248;242mprintf[0m[38;2;248;248;242m [0m[38;2;230;219;116m'FROM alpine:3.24\nCOPY message.txt /app/\nUSER 1000:1000\nCMD ["cat", "/app/message.txt"]\n'[0m[38;2;248;248;242m > Dockerfile[0m
+     [38;2;248;248;242mecho[0m[38;2;248;248;242m bonjour > message.txt[0m
+     [38;2;248;248;242mdocker build -t essai-copy:1 .[0m
+
+[1;38;2;224;175;104m🧪 Exercice[m
+   Ajoute « message.txt » au fichier .dockerignore, reconstruis l'image et
+   observe l'erreur : comprends-tu pourquoi le fichier « disparaît » ?
+
+[2;38;2;138;143;152m📖 Documentation : https://docs.docker.com/build/concepts/context/[m
