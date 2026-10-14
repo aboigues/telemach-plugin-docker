@@ -375,7 +375,7 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 - [X] T075 [P] Rédiger `README.md` (français) : présentation pédagogique, installation (`go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach`), activation (`eval "$(docker telemach shell-init zsh)"`), commandes `check` et `deepen`, désactivation (`TELEMACH_DISABLE=1`), couleurs (`--color`, `NO_COLOR`), confidentialité (100 % local, secrets masqués)
 - [X] T076 [P] Rédiger `docs/catalogue.md` (français) : comment ajouter une entrée au catalogue (champs, règles de validation de data-model.md, ajout obligatoire d'un cas de test dans `testdata/errors/`, règles anti-pattern de T068)
 - [X] T077 Exécuter localement `golangci-lint run`, `govulncheck ./...`, `gitleaks detect` et `go test -race ./...`, et corriger tous les signalements. Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant l'implémentation (principe V).
-- [ ] T078 Dérouler manuellement les scénarios V1 à V15 de `specs/001-docker-error-guidance/quickstart.md` avec Docker 29.x et zsh puis bash, et noter les écarts éventuels pour correction
+- [X] T078 Dérouler manuellement les scénarios V1 à V15 de `specs/001-docker-error-guidance/quickstart.md` avec Docker 29.x et zsh puis bash, et noter les écarts éventuels pour correction
 
 ---
 
