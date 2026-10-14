@@ -41,6 +41,33 @@ jobs:
       - name: Tests unitaires et de régression
         run: go test -race -cover ./...
 
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Fuzzing du nettoyage, du masquage et du diagnostic
+        run: |
+          go test -run='^$' -fuzz=FuzzSanitize -fuzztime=30s ./internal/sanitize
+          go test -run='^$' -fuzz=FuzzRedact -fuzztime=30s ./internal/redact
+          go test -run='^$' -fuzz=FuzzDiagnose -fuzztime=30s ./internal/diagnose
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Scénarios du quickstart contre un vrai démon Docker
+        run: go test -tags integration -count=1 ./tests/integration/...
+
   vuln:
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +78,9 @@ jobs:
         with:
           go-version-file: go.mod
       - name: govulncheck
+        # Compilé avec la chaîne d'outils du projet (voir LESSON-LEARNED LL-001).
+        env:
+          GOTOOLCHAIN: go1.27.2
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
   secrets:

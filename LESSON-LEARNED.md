@@ -98,3 +98,8 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
   d'analyse (golangci-lint, govulncheck…) est compilé avec une version de Go au moins égale ;
   sinon le compiler avec la chaîne d'outils du projet.
 - **Suivi** : automatisé — la gate `lint` échoue immédiatement si la règle est violée.
+- **Récidive (2026-10-14, T077)** : `go run golang.org/x/vuln/cmd/govulncheck@v1.9.0` a été
+  compilé avec Go 1.26 (version minimale de son module) et a refusé le projet. Corrigé en
+  fixant `GOTOOLCHAIN: go1.27.2` dans le job `vuln`. Règle complétée : tout outil lancé par
+  `go run …@version` ou `go install …@version` reçoit `GOTOOLCHAIN` égal à la chaîne d'outils
+  du projet.

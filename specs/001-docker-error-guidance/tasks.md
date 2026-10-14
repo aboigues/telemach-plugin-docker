@@ -364,17 +364,17 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 
 **Purpose**: performance, sécurité transverse, documentation, validation finale
 
-- [ ] T072 [P] Écrire `internal/diagnose/bench_test.go` : banc d'essai du pipeline complet d'`explain` sur le corpus. L'objectif interne est < 200 ms par erreur (SC-003 : < 2 s pour 95 % des cas) ; un test échoue au-delà de 2 s.
-- [ ] T073 [P] Écrire `tests/integration/security_test.go` (`//go:build integration`). Il reproduit V12 (`-e DB_PASSWORD=SuperSecret123`) et vérifie que la valeur n'apparaît ni dans la sortie d'`explain`, ni sous `$XDG_STATE_HOME/telemach/` (SC-006). Il vérifie aussi qu'aucune sous-commande ne lance de processus `docker` (SC-007), en plaçant dans `PATH` un faux `docker` qui journalise ses appels : seul `docker --version` est autorisé, une seule fois, par le script `shell-init` (FR-001b, FR-015) ; tout autre appel fait échouer le test.
-- [ ] T074 Ajouter à `.github/workflows/ci.yml` :
+- [X] T072 [P] Écrire `internal/diagnose/bench_test.go` : banc d'essai du pipeline complet d'`explain` sur le corpus. L'objectif interne est < 200 ms par erreur (SC-003 : < 2 s pour 95 % des cas) ; un test échoue au-delà de 2 s.
+- [X] T073 [P] Écrire `tests/integration/security_test.go` (`//go:build integration`). Il reproduit V12 (`-e DB_PASSWORD=SuperSecret123`) et vérifie que la valeur n'apparaît ni dans la sortie d'`explain`, ni sous `$XDG_STATE_HOME/telemach/` (SC-006). Il vérifie aussi qu'aucune sous-commande ne lance de processus `docker` (SC-007), en plaçant dans `PATH` un faux `docker` qui journalise ses appels : seul `docker --version` est autorisé, une seule fois, par le script `shell-init` (FR-001b, FR-015) ; tout autre appel fait échouer le test.
+- [X] T074 Ajouter à `.github/workflows/ci.yml` :
   - un job `fuzz` (`go test -fuzz=FuzzSanitize -fuzztime=30s ./internal/sanitize`, `FuzzRedact` dans `./internal/redact`, et une cible `FuzzDiagnose` à créer dans `internal/diagnose/fuzz_test.go`) ;
   - un job `integration` (`go test -tags integration ./tests/integration/...` sur `ubuntu-latest`, qui fournit Docker) ;
   - l'exécution de `tests/shell` sous bash et zsh (installer zsh).
 
   Actions épinglées par SHA.
-- [ ] T075 [P] Rédiger `README.md` (français) : présentation pédagogique, installation (`go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach`), activation (`eval "$(docker telemach shell-init zsh)"`), commandes `check` et `deepen`, désactivation (`TELEMACH_DISABLE=1`), couleurs (`--color`, `NO_COLOR`), confidentialité (100 % local, secrets masqués)
-- [ ] T076 [P] Rédiger `docs/catalogue.md` (français) : comment ajouter une entrée au catalogue (champs, règles de validation de data-model.md, ajout obligatoire d'un cas de test dans `testdata/errors/`, règles anti-pattern de T068)
-- [ ] T077 Exécuter localement `golangci-lint run`, `govulncheck ./...`, `gitleaks detect` et `go test -race ./...`, et corriger tous les signalements. Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant l'implémentation (principe V).
+- [X] T075 [P] Rédiger `README.md` (français) : présentation pédagogique, installation (`go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach`), activation (`eval "$(docker telemach shell-init zsh)"`), commandes `check` et `deepen`, désactivation (`TELEMACH_DISABLE=1`), couleurs (`--color`, `NO_COLOR`), confidentialité (100 % local, secrets masqués)
+- [X] T076 [P] Rédiger `docs/catalogue.md` (français) : comment ajouter une entrée au catalogue (champs, règles de validation de data-model.md, ajout obligatoire d'un cas de test dans `testdata/errors/`, règles anti-pattern de T068)
+- [X] T077 Exécuter localement `golangci-lint run`, `govulncheck ./...`, `gitleaks detect` et `go test -race ./...`, et corriger tous les signalements. Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant l'implémentation (principe V).
 - [ ] T078 Dérouler manuellement les scénarios V1 à V15 de `specs/001-docker-error-guidance/quickstart.md` avec Docker 29.x et zsh puis bash, et noter les écarts éventuels pour correction
 
 ---
