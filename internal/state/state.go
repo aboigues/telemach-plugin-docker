@@ -9,19 +9,36 @@ import (
 
 const (
 	// SchemaVersion est la version du format du fichier d'état.
-	SchemaVersion = 1
+	SchemaVersion = 2
 	// RepeatWindow est la durée pendant laquelle une même erreur est considérée comme répétée.
 	RepeatWindow = 10 * time.Minute
 	fileName     = "last.json"
 )
 
-// LastDiagnosis est le dernier diagnostic, dont les captures sont déjà masquées.
+// MaxStderr est la taille maximale du message d'origine conservé (on garde la fin).
+const MaxStderr = 64 << 10
+
+// LastDiagnosis est le dernier diagnostic. Toutes les données textuelles (captures, message
+// d'origine) sont déjà nettoyées et masquées avant d'arriver ici.
 type LastDiagnosis struct {
 	SchemaVersion int
 	Fingerprint   string
 	EntryID       string
 	Captures      map[string]string
 	RecordedAt    time.Time
+
+	// Données nécessaires pour réafficher l'explication complète (docker telemach last).
+	MatchedEntryID string // entrée reconnue dans le message Docker (EntryID peut désigner un problème Compose)
+	Origin         string
+	Confidence     string
+	ExitCode       int
+	Interactive    bool
+	DockerVersion  string
+	Stderr         string
+	Family         string
+	Subcommand     string
+	ComposeDir     string
+	ComposeFiles   []string
 }
 
 // Store lit et écrit l'état dans un répertoire privé.
@@ -55,6 +72,9 @@ func (s Store) Load() (LastDiagnosis, bool) {
 // les droits 0700 pour le répertoire et 0600 pour le fichier.
 func (s Store) Save(d LastDiagnosis) error {
 	d.SchemaVersion = SchemaVersion
+	if len(d.Stderr) > MaxStderr {
+		d.Stderr = d.Stderr[len(d.Stderr)-MaxStderr:]
+	}
 	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
 		return err
 	}

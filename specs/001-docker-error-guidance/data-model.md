@@ -112,11 +112,18 @@ chaque diagnostic.
 
 | Champ | Type | Description |
 |-------|------|-------------|
-| `SchemaVersion` | `int` | `1` |
+| `SchemaVersion` | `int` | `2` (un fichier d'un autre schéma est ignoré puis réécrit) |
 | `Fingerprint` | `string` | Empreinte du dernier diagnostic |
 | `EntryID` | `string` | Identifiant du catalogue, ou vide |
 | `Captures` | `map[string]string` | **Déjà masquées** |
 | `RecordedAt` | `time.Time` | Pour la fenêtre de répétition de 10 minutes |
+| `Origin`, `Confidence` | `string` | Origine et niveau de reconnaissance du diagnostic |
+| `ExitCode` | `int` | Code de sortie de la commande |
+| `Interactive` | `bool` | Commande interactive (stderr non capturé) |
+| `DockerVersion` | `string` | Version du client Docker, si connue |
+| `Stderr` | `string` | Message d'origine **déjà nettoyé et masqué**, 64 Kio au plus (on garde la fin) |
+| `Family`, `Subcommand` | `string` | Famille (`docker`, `compose`) et sous-commande |
+| `ComposeDir`, `ComposeFiles` | `string`, `[]string` | Projet Compose à réanalyser par `last` |
 
 Invariant : aucune donnée non masquée n'est écrite sur disque. Un fichier illisible ou d'un
 schéma inconnu est ignoré et réécrit, sans erreur visible pour l'apprenant.

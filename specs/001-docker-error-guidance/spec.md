@@ -17,6 +17,8 @@
 - Q: Le plugin doit-il proposer un choix de palette, notamment pour les daltoniens ? → A: Non,
   une seule palette qui s'adapte au fond clair ou sombre, sans exigence particulière liée au
   daltonisme ni option de thème.
+- Q: Que faire quand la même erreur se répète ? → A: Version courte, et nouvelle commande
+  `docker telemach last` pour réafficher l'explication complète de la dernière erreur.
 - Q: Le plugin peut-il exécuter une commande après confirmation de l'apprenant ? → A: Non, il
   n'exécute jamais rien ; seule exception, la lecture de la version du client Docker (FR-001b).
 
@@ -141,8 +143,9 @@ relié à l'erreur d'origine.
 - **Capture automatique impossible** (commande lancée hors de l'environnement observé par le
   plugin) : aucune explication n'est produite ; le plugin ne doit ni échouer ni bloquer la
   commande de l'apprenant.
-- **Commande Docker qui échoue en boucle** (même erreur répétée) : le plugin ne répète pas
-  l'explication complète à l'identique et renvoie vers celle déjà fournie.
+- **Commande Docker qui échoue en boucle** (même erreur répétée en moins de 10 minutes) : le
+  plugin affiche une version courte et indique comment réafficher l'explication complète
+  (FR-009a).
 - **Version de Docker ou de Compose ancienne** dont les messages diffèrent : le plugin connaît
   la version du client Docker (FR-001b). Il reconnaît les variantes connues ou retombe sur le
   comportement « erreur non reconnue », en mentionnant la version détectée.
@@ -191,6 +194,9 @@ relié à l'erreur d'origine.
   un fond de terminal clair ou sombre. Aucune option de choix de thème n'est proposée.
 - **FR-008**: Pour une erreur non reconnue, le plugin MUST le dire explicitement, ne MUST NOT
   inventer de cause et MUST orienter vers la documentation officielle.
+- **FR-009a**: L'apprenant MUST pouvoir réafficher à tout moment l'explication complète de la
+  dernière erreur (`docker telemach last`), même après avoir effacé son terminal. Les
+  données conservées pour cela sont déjà nettoyées et masquées (FR-016).
 - **FR-009**: Le plugin MUST proposer un niveau d'explication approfondi à la demande
   (concept sous-jacent, exemple exécutable, exercice court).
 - **FR-010**: Les corrections proposées MUST respecter les bonnes pratiques de sécurité

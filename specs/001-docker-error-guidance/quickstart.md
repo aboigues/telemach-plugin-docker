@@ -100,7 +100,8 @@ Attendu : concept détaillé, exemple coloré, exercice sans risque.
 ### V10 — Répétition (edge case)
 
 Relancer deux fois la commande en échec de V1 : la seconde explication est courte et renvoie
-à `deepen`.
+à `docker telemach last`, qui réaffiche l'explication complète à l'identique (même après
+`clear`).
 
 ### V11 — Coloration et accessibilité (R6)
 

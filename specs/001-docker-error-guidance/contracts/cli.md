@@ -51,7 +51,8 @@ Comportement :
   extraits colorés ;
 - non reconnue → bloc « Erreur non reconnue » : reformulation prudente et lien vers la
   documentation, **sans cause inventée** (FR-008) ;
-- même empreinte depuis moins de 10 min → rendu court et renvoi à `deepen`.
+- même empreinte depuis moins de 10 min → rendu court, avec renvoi à `docker telemach last`
+  (explication complète) et à `deepen`.
 
 Codes de sortie de `explain` : `0` dans tous les cas où une explication (même « non
 reconnue ») a été produite ; `2` en cas d'usage invalide. `explain` ne doit **jamais** faire
@@ -98,6 +99,18 @@ Codes de sortie : `0` aucun problème ; `1` au moins un problème ; `2` usage in
 fichier introuvable (avec explication pédagogique de la recherche des fichiers par défaut).
 
 Lecture seule stricte : aucun fichier n'est créé ni modifié (FR-018).
+
+---
+
+## `last` — réafficher l'explication complète de la dernière erreur (FR-009a)
+
+```text
+docker telemach last
+```
+
+- Lit `LastDiagnosis` et affiche exactement le même rendu complet que `explain` (jamais la
+  version courte) ; pour une erreur Compose, les fichiers sont réanalysés dans leur état actuel.
+- Aucune erreur récente → message expliquant comment en obtenir une. Code `0`.
 
 ---
 

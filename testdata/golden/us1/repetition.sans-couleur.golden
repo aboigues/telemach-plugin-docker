@@ -1,3 +1,4 @@
 ✖ Le port 18080 de ta machine est déjà utilisé.
-↺ Même erreur que précédemment : l'explication complète a été affichée juste avant.
+↺ Même erreur que précédemment (moins de 10 minutes).
+↺ Explication complète : docker telemach last
 ➜ Pour aller plus loin : docker telemach deepen
