@@ -4,6 +4,10 @@
 # Garanties : stdin et stdout ne sont jamais redirigés, le code de sortie d'origine est
 # toujours renvoyé, aucun autre programme n'est observé.
 
+# Binaire docker-telemach, à l'emplacement où il était installé lors de la génération de ce
+# script (souvent ~/.docker/cli-plugins/, qui n'est pas dans le PATH).
+__telemach_bin=__TELEMACH_BIN__
+
 # Version du client Docker, lue une seule fois (commande locale, sans contact avec le démon).
 __telemach_docker_version="$(command docker --version 2>/dev/null | sed -n 's/^Docker version \([^,]*\),.*/\1/p')"
 
@@ -13,7 +17,7 @@ docker() (
 	# La fonction s'exécute dans un sous-shell : l'option du shell de l'utilisateur est intacte.
 	setopt NO_MULTIOS
 	# « docker telemach … » n'est jamais expliqué par TELEMACH lui-même.
-	if [[ "${TELEMACH_DISABLE:-}" == "1" || "${1:-}" == "telemach" ]] || ! command -v docker-telemach >/dev/null 2>&1; then
+	if [[ "${TELEMACH_DISABLE:-}" == "1" || "${1:-}" == "telemach" ]] || ! command -v "$__telemach_bin" >/dev/null 2>&1; then
 		command docker "$@"
 		exit $?
 	fi
@@ -37,7 +41,7 @@ docker() (
 		command docker "$@"
 		__telemach_rc=$?
 		if (( __telemach_rc != 0 )); then
-			command docker-telemach explain --exit-code "$__telemach_rc" --interactive \
+			command "$__telemach_bin" explain --exit-code "$__telemach_rc" --interactive \
 				--docker-version "$__telemach_docker_version" -- "$@" || true
 		fi
 		exit "$__telemach_rc"
@@ -60,7 +64,7 @@ docker() (
 	__telemach_rc=${pipestatus[1]}
 
 	if (( __telemach_rc != 0 )); then
-		command docker-telemach explain --exit-code "$__telemach_rc" --stderr-file "$__telemach_tmp" \
+		command "$__telemach_bin" explain --exit-code "$__telemach_rc" --stderr-file "$__telemach_tmp" \
 			--docker-version "$__telemach_docker_version" -- "$@" || true
 	fi
 	exit "$__telemach_rc"

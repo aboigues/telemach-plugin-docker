@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -30,6 +31,7 @@ type app struct {
 	getenv         func(string) string
 	now            func() time.Time
 	getwd          func() (string, error)
+	executable     func() string
 	store          state.Store
 
 	colorFlag string
@@ -43,7 +45,17 @@ func newApp() *app {
 		getenv: os.Getenv,
 		now:    time.Now,
 		getwd:  os.Getwd,
-		store:  state.Store{Dir: state.DefaultDir(os.Getenv)},
+		executable: func() string {
+			p, err := os.Executable()
+			if err != nil {
+				return ""
+			}
+			if resolved, err := filepath.EvalSymlinks(p); err == nil {
+				return resolved
+			}
+			return p
+		},
+		store: state.Store{Dir: state.DefaultDir(os.Getenv)},
 	}
 }
 
