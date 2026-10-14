@@ -1,0 +1,24 @@
+# Binaires
+/docker-telemach
+/dist/
+*.exe
+*.test
+
+# Couverture et profils
+*.out
+coverage/
+
+# Dépendances vendorisées
+vendor/
+
+# Éditeurs et systèmes
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# Environnement local (ne jamais versionner de secrets)
+.env
+.env.*

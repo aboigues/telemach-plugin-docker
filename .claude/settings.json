@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lesson-learned-reminder.sh",
+            "timeout": 10,
+            "statusMessage": "Chargement de LESSON-LEARNED.md..."
+          }
+        ]
+      }
+    ]
+  }
+}
