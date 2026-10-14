@@ -1,0 +1,39 @@
+# Configuration golangci-lint v2 (v2.14.0) — gates du principe IV.
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosec
+    - ineffassign
+    - unused
+    - revive
+    - gocritic
+    - bodyclose
+    - misspell
+  settings:
+    misspell:
+      # Les identifiants sont en anglais ; les commentaires et messages en français
+      # sont exclus ci-dessous pour éviter les faux positifs.
+      locale: US
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+  exclusions:
+    rules:
+      # Le contenu pédagogique est en français : misspell ne s'applique qu'au code.
+      - linters: [misspell]
+        source: "(//|\"|`)"
+      - path: _test\.go
+        linters: [gosec]
+
+formatters:
+  enable:
+    - gofumpt

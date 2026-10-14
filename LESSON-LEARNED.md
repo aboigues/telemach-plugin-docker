@@ -33,4 +33,21 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
-_Aucun incident consigné pour le moment._
+### LL-001 — golangci-lint refuse un module dont la version de Go est plus récente
+
+- **Date** : 2026-10-14
+- **Catégorie** : CI/gates
+- **Contexte** : mise en place des gates (T004/T005) avec golangci-lint v2.14.0 sur un module
+  déclarant `go 1.27`.
+- **Cause racine** : un binaire golangci-lint ne peut analyser que du code ciblant une version
+  de Go inférieure ou égale à celle qui l'a compilé. Le binaire publié v2.14.0 est compilé avec
+  Go 1.26 ; `go install` sans `GOTOOLCHAIN` a aussi produit un binaire Go 1.26.
+- **Impact** : `can't load config: the Go language version (go1.26) used to build golangci-lint
+  is lower than the targeted Go version (1.27.2)` — la gate `lint` aurait été rouge dès la
+  première PR. Détecté en local avant tout push.
+- **Correctif** : CI en `install-mode: goinstall` après `setup-go` (Go du projet) ; en local,
+  `GOTOOLCHAIN=go1.27.2 go install …@v2.14.0`.
+- **Règle préventive** : à chaque montée de version de Go du projet, vérifier que chaque outil
+  d'analyse (golangci-lint, govulncheck…) est compilé avec une version de Go au moins égale ;
+  sinon le compiler avec la chaîne d'outils du projet.
+- **Suivi** : automatisé — la gate `lint` échoue immédiatement si la règle est violée.

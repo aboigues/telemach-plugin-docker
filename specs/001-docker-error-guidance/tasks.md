@@ -39,11 +39,11 @@ d'abord échouer.
 
 **Purpose**: initialiser le dépôt et poser les gates CI **avant** tout code (principe IV)
 
-- [ ] T001 Initialiser le dépôt git (`git init -b main`, premier commit sur `main` contenant la documentation existante : `.specify/`, `.claude/`, `specs/`, `LESSON-LEARNED.md`, puis création de la branche `001-docker-error-guidance`) et créer `.gitignore` à la racine (binaires `docker-telemach`, `dist/`, fichiers de couverture `*.out`, `.idea/`, `.vscode/`)
-- [ ] T002 Créer `go.mod` à la racine avec `module github.com/aboigues/telemach-plugin-docker`, `go 1.27` et `toolchain go1.27.2`. Ajouter les dépendances directes aux versions de research.md : `github.com/spf13/cobra` v1.10.2, `github.com/compose-spec/compose-go/v2` v2.16.1, `go.yaml.in/yaml/v3` v3.0.5, `charm.land/lipgloss/v2` v2.0.6, `github.com/alecthomas/chroma/v2` v2.27.0, `golang.org/x/term` v0.47.0, `github.com/google/go-cmp` v0.7.0
-- [ ] T003 Créer l'arborescence du plan : `cmd/docker-telemach/`, `internal/{plugin,shellinit/scripts,command,catalog/data,diagnose,compose,redact,sanitize,render,state,textdist}/`, `testdata/{errors,compose,secrets,golden}/`, `tests/{integration,shell}/`, avec un fichier `doc.go` par paquet contenant le commentaire de paquet en français
-- [ ] T004 [P] Créer `.golangci.yml` au format golangci-lint v2 (v2.14.0) avec les linters `govet`, `staticcheck`, `errcheck`, `gosec`, `ineffassign`, `unused`, `revive`, `gocritic`, `bodyclose`, `misspell` (locale US, à appliquer aux identifiants seulement) et le formateur `gofumpt`
-- [ ] T005 [P] Créer `.github/workflows/ci.yml` (déclencheurs `pull_request` et `push` sur `main`, `permissions: contents: read` au niveau du workflow). Jobs :
+- [X] T001 Initialiser le dépôt git (`git init -b main`, premier commit sur `main` contenant la documentation existante : `.specify/`, `.claude/`, `specs/`, `LESSON-LEARNED.md`, puis création de la branche `001-docker-error-guidance`) et créer `.gitignore` à la racine (binaires `docker-telemach`, `dist/`, fichiers de couverture `*.out`, `.idea/`, `.vscode/`)
+- [X] T002 Créer `go.mod` à la racine avec `module github.com/aboigues/telemach-plugin-docker`, `go 1.27` et `toolchain go1.27.2`. Ajouter les dépendances directes aux versions de research.md : `github.com/spf13/cobra` v1.10.2, `github.com/compose-spec/compose-go/v2` v2.16.1, `go.yaml.in/yaml/v3` v3.0.5, `charm.land/lipgloss/v2` v2.0.6, `github.com/alecthomas/chroma/v2` v2.27.0, `golang.org/x/term` v0.47.0, `github.com/google/go-cmp` v0.7.0
+- [X] T003 Créer l'arborescence du plan : `cmd/docker-telemach/`, `internal/{plugin,shellinit/scripts,command,catalog/data,diagnose,compose,redact,sanitize,render,state,textdist}/`, `testdata/{errors,compose,secrets,golden}/`, `tests/{integration,shell}/`, avec un fichier `doc.go` par paquet contenant le commentaire de paquet en français
+- [X] T004 [P] Créer `.golangci.yml` au format golangci-lint v2 (v2.14.0) avec les linters `govet`, `staticcheck`, `errcheck`, `gosec`, `ineffassign`, `unused`, `revive`, `gocritic`, `bodyclose`, `misspell` (locale US, à appliquer aux identifiants seulement) et le formateur `gofumpt`
+- [X] T005 [P] Créer `.github/workflows/ci.yml` (déclencheurs `pull_request` et `push` sur `main`, `permissions: contents: read` au niveau du workflow). Jobs :
   - `lint` (golangci-lint v2.14.0) ;
   - `test` (`go test -race -cover ./...` avec `go-version-file: go.mod`) ;
   - `vuln` (`govulncheck` de `golang.org/x/vuln` v1.9.0) ;
@@ -52,10 +52,10 @@ d'abord échouer.
   - `dockerfile-lint` : hadolint v2.15.1 sur tout `Dockerfile` ou `*.Dockerfile` **hors `testdata/`**, dont les Dockerfile volontairement erronés servent au corpus. Le job réussit s'il ne trouve aucun fichier, et le scan d'image s'ajoutera le jour où le projet livrera une image (principe IV).
 
   **Chaque action est épinglée par SHA de commit complet**, avec la version en commentaire (rechercher les SHA au moment de l'écriture). Interdire `pull_request_target`.
-- [ ] T006 [P] Créer `.github/dependabot.yml` : écosystèmes `gomod` et `github-actions`, fréquence hebdomadaire, mises à jour de sécurité groupées
-- [ ] T007 [P] Créer `.gitleaks.toml` qui étend la configuration par défaut et n'autorise (allowlist) **que** le répertoire `testdata/secrets/`, qui contient de faux secrets volontaires
-- [ ] T008 [P] Créer `SECURITY.md` (français) : procédure de signalement responsable, versions supportées, délai de réponse
-- [ ] T009 [P] Créer `CONTRIBUTING.md` (français) :
+- [X] T006 [P] Créer `.github/dependabot.yml` : écosystèmes `gomod` et `github-actions`, fréquence hebdomadaire, mises à jour de sécurité groupées
+- [X] T007 [P] Créer `.gitleaks.toml` qui étend la configuration par défaut et n'autorise (allowlist) **que** le répertoire `testdata/secrets/`, qui contient de faux secrets volontaires
+- [X] T008 [P] Créer `SECURITY.md` (français) : procédure de signalement responsable, versions supportées, délai de réponse
+- [X] T009 [P] Créer `CONTRIBUTING.md` (français) :
   - règles de langue ;
   - relecture de `LESSON-LEARNED.md` ;
   - gates requises ;
