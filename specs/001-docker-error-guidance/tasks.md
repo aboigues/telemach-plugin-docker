@@ -85,15 +85,15 @@ d'abord échouer.
 
 ### Tests fondamentaux (écrire d'abord)
 
-- [ ] T011 [P] Écrire `internal/sanitize/sanitize_test.go` : retrait des séquences ANSI CSI/OSC et des caractères de contrôle sauf `\n` et `\t`, conservation des accents UTF-8, et cible `FuzzSanitize` (aucune séquence `\x1b` en sortie, jamais de panique)
-- [ ] T012 [P] Créer le corpus `testdata/secrets/` (au moins 15 cas `*.txt`, chacun avec son `*.expected.txt`). Il couvre :
+- [X] T011 [P] Écrire `internal/sanitize/sanitize_test.go` : retrait des séquences ANSI CSI/OSC et des caractères de contrôle sauf `\n` et `\t`, conservation des accents UTF-8, et cible `FuzzSanitize` (aucune séquence `\x1b` en sortie, jamais de panique)
+- [X] T012 [P] Créer le corpus `testdata/secrets/` (au moins 15 cas `*.txt`, chacun avec son `*.expected.txt`). Il couvre :
   - `-e DB_PASSWORD=…`, `--env API_TOKEN=…`, `environment:` en liste et en dictionnaire ;
   - `postgres://user:pass@host` ;
   - en-tête `Authorization: Bearer …` ;
   - jetons `ghp_…`, `glpat-…`, `dckr_pat_…` ;
   - noms contenant `SECRET`, `KEY`, `CREDENTIAL`, `AUTH`, `PASSWD`, sans distinction de casse.
-- [ ] T013 [P] Écrire `internal/redact/redact_test.go` : vérifie chaque cas de `testdata/secrets/` (la valeur est remplacée par `••••••`, le nom de la variable est conservé) et la cible `FuzzRedact` (sortie idempotente, aucune panique)
-- [ ] T014 [P] Écrire `internal/command/command_test.go`, une table de cas. Cas couverts :
+- [X] T013 [P] Écrire `internal/redact/redact_test.go` : vérifie chaque cas de `testdata/secrets/` (la valeur est remplacée par `••••••`, le nom de la variable est conservé) et la cible `FuzzRedact` (sortie idempotente, aucune panique)
+- [X] T014 [P] Écrire `internal/command/command_test.go`, une table de cas. Cas couverts :
   - `run -p 8080:80 nginx` ;
   - `compose -f a.yaml -f b.yaml up` ;
   - `--context x run …`, `-H tcp://… ps` ;
@@ -101,14 +101,14 @@ d'abord échouer.
   - `build -f Dockerfile .`.
 
   Vérifier `Family`, `Subcommand`, `Flags`, `ComposeFiles`, `Interactive`, et le masquage des valeurs `-e`.
-- [ ] T015 [P] Écrire `internal/render/color_test.go` : résolution de `--color=auto|always|never`, `NO_COLOR` (toute valeur non vide → pas de couleur), `CLICOLOR_FORCE=1` (équivaut à `always`), sortie non-TTY (pas de couleur en `auto`)
-- [ ] T016 [P] Écrire `internal/state/state_test.go` :
+- [X] T015 [P] Écrire `internal/render/color_test.go` : résolution de `--color=auto|always|never`, `NO_COLOR` (toute valeur non vide → pas de couleur), `CLICOLOR_FORCE=1` (équivaut à `always`), sortie non-TTY (pas de couleur en `auto`)
+- [X] T016 [P] Écrire `internal/state/state_test.go` :
   - répertoire `0700` et fichier `0600` ;
   - `$XDG_STATE_HOME/telemach/last.json`, avec repli sur `~/.local/state/telemach/` ;
   - `SchemaVersion` = `1` ;
   - fichier corrompu ou de schéma inconnu ignoré puis réécrit sans erreur ;
   - `IsRepeat` vrai pour la même empreinte à moins de 10 minutes, faux au-delà.
-- [ ] T017 [P] Écrire `tests/shell/shellinit_test.go`. Le test exécute les scripts générés sous `bash`, et sous `zsh` s'il est présent (sinon `t.Skip`), avec un faux binaire `docker` et un faux `docker-telemach` placés dans `PATH`. Il vérifie les **6 garanties** de `contracts/cli.md` § shell-init :
+- [X] T017 [P] Écrire `tests/shell/shellinit_test.go`. Le test exécute les scripts générés sous `bash`, et sous `zsh` s'il est présent (sinon `t.Skip`), avec un faux binaire `docker` et un faux `docker-telemach` placés dans `PATH`. Il vérifie les **6 garanties** de `contracts/cli.md` § shell-init :
   1. le code de sortie d'origine est renvoyé ;
   2. le stdout reste identique octet pour octet ;
   3. le fichier temporaire est créé en `0600` puis supprimé, y compris après SIGINT ;
@@ -116,17 +116,17 @@ d'abord échouer.
   5. si `docker-telemach` est absent, le comportement est celui de `docker` ;
   6. en mode interactif, stderr n'est pas redirigé et `--interactive` est transmis ;
   7. `docker --version` est appelé **une seule fois** à l'évaluation du script (compter les appels au faux `docker`), et sa valeur est transmise par `--docker-version` ; aucune autre commande n'est lancée par le script.
-- [ ] T018 [P] Écrire `internal/plugin/metadata_test.go` : la sortie JSON est exactement `{"SchemaVersion":"0.1.0","Vendor":"TELEMACH","Version":…,"ShortDescription":"Explique en français les erreurs Docker et Docker Compose"}`
+- [X] T018 [P] Écrire `internal/plugin/metadata_test.go` : la sortie JSON est exactement `{"SchemaVersion":"0.1.0","Vendor":"TELEMACH","Version":…,"ShortDescription":"Explique en français les erreurs Docker et Docker Compose"}`
 
 ### Implémentation fondamentale
 
-- [ ] T019 [P] Implémenter `internal/sanitize/sanitize.go` (`func Clean(s string) string`) pour faire passer T011
-- [ ] T020 [P] Implémenter `internal/redact/redact.go` (`func Redact(s string) string`, `func RedactArgs(args []string) []string`) selon research.md R7. Les motifs sont en RE2 (`regexp`) et le marqueur de remplacement est `••••••`. Faire passer T013.
-- [ ] T021 [P] Implémenter `internal/textdist/levenshtein.go` (`func Distance(a, b string) int`, `func Closest(word string, candidates []string, maxDist int) (string, bool)`) avec `internal/textdist/levenshtein_test.go`
-- [ ] T022 [P] Implémenter `internal/command/command.go` : type `Command` (`Family` enum `docker`|`compose`, `Subcommand`, `Flags map[string]string`, `ComposeFiles []string`, `Interactive bool`) et `func Parse(args []string) Command`, conformes à data-model.md. Faire passer T014.
-- [ ] T023 [P] Implémenter `internal/render/color.go` (`type ColorMode`, `func ResolveColor(flag string, env func(string) string, isTTY bool) bool`) avec `golang.org/x/term`. Faire passer T015.
-- [ ] T024 [P] Implémenter `internal/render/theme.go` : styles lipgloss v2 à couleurs adaptatives (fond clair et sombre), un par rôle (résumé, concept, cause, correction, anti-pattern, message d'origine atténué, succès). Chaque rôle a un symbole et un libellé, la couleur n'étant **jamais** le seul porteur d'information : `✖`, `📘 Concept`, `🔎 Cause probable`, `💡 Corrections`, `⚠ Anti-pattern`, `✔`, `➜ Pour aller plus loin`. Le thème doit aussi produire un rendu sans couleur.
-- [ ] T025 [P] Implémenter `internal/render/highlight.go` : `func Highlight(code, lexer string, color bool) string` avec chroma v2 (lexers `bash`, `yaml`, `docker`), et `func HighlightLines(lines []Line, focusLine, focusCol int, color bool) string`, qui surligne la ligne fautive et place un marqueur `^` sous la colonne. Sans couleur : texte brut avec numéros de ligne et marqueur. Ajouter un test dans `internal/render/highlight_test.go`.
+- [X] T019 [P] Implémenter `internal/sanitize/sanitize.go` (`func Clean(s string) string`) pour faire passer T011
+- [X] T020 [P] Implémenter `internal/redact/redact.go` (`func Redact(s string) string`, `func RedactArgs(args []string) []string`) selon research.md R7. Les motifs sont en RE2 (`regexp`) et le marqueur de remplacement est `••••••`. Faire passer T013.
+- [X] T021 [P] Implémenter `internal/textdist/levenshtein.go` (`func Distance(a, b string) int`, `func Closest(word string, candidates []string, maxDist int) (string, bool)`) avec `internal/textdist/levenshtein_test.go`
+- [X] T022 [P] Implémenter `internal/command/command.go` : type `Command` (`Family` enum `docker`|`compose`, `Subcommand`, `Flags map[string]string`, `ComposeFiles []string`, `Interactive bool`) et `func Parse(args []string) Command`, conformes à data-model.md. Faire passer T014.
+- [X] T023 [P] Implémenter `internal/render/color.go` (`type ColorMode`, `func ResolveColor(flag string, env func(string) string, isTTY bool) bool`) avec `golang.org/x/term`. Faire passer T015.
+- [X] T024 [P] Implémenter `internal/render/theme.go` : styles lipgloss v2 à couleurs adaptatives (fond clair et sombre), un par rôle (résumé, concept, cause, correction, anti-pattern, message d'origine atténué, succès). Chaque rôle a un symbole et un libellé, la couleur n'étant **jamais** le seul porteur d'information : `✖`, `📘 Concept`, `🔎 Cause probable`, `💡 Corrections`, `⚠ Anti-pattern`, `✔`, `➜ Pour aller plus loin`. Le thème doit aussi produire un rendu sans couleur.
+- [X] T025 [P] Implémenter `internal/render/highlight.go` : `func Highlight(code, lexer string, color bool) string` avec chroma v2 (lexers `bash`, `yaml`, `docker`), et `func HighlightLines(lines []Line, focusLine, focusCol int, color bool) string`, qui surligne la ligne fautive et place un marqueur `^` sous la colonne. Sans couleur : texte brut avec numéros de ligne et marqueur. Ajouter un test dans `internal/render/highlight_test.go`.
 - [ ] T026 Implémenter `internal/catalog/schema.go` et `internal/catalog/loader.go` :
   - types `CatalogEntry`, `Fix`, `ConceptRef`, `Deepening`, `AntiPatternNote` (data-model.md) ;
   - chargement par `go:embed data/*.yaml` avec `yaml.v3` en mode `KnownFields(true)` ;
@@ -148,7 +148,7 @@ d'abord échouer.
   - `Fingerprint` = SHA-256 de la commande et de l'erreur normalisées et masquées.
 
   Ajouter des tests dans `internal/diagnose/diagnose_test.go` (dépend de T022 et T026).
-- [ ] T029 [P] Implémenter `internal/state/state.go` : type `LastDiagnosis` (`SchemaVersion`, `Fingerprint`, `EntryID`, `Captures` déjà masquées, `RecordedAt`), `Load`, `Save` (écriture atomique, droits `0600`), `IsRepeat(fp string, now time.Time) bool` sur une fenêtre de 10 minutes. Faire passer T016.
+- [X] T029 [P] Implémenter `internal/state/state.go` : type `LastDiagnosis` (`SchemaVersion`, `Fingerprint`, `EntryID`, `Captures` déjà masquées, `RecordedAt`), `Load`, `Save` (écriture atomique, droits `0600`), `IsRepeat(fp string, now time.Time) bool` sur une fenêtre de 10 minutes. Faire passer T016.
 - [ ] T030 Implémenter `internal/render/explanation.go` :
   - `func RenderExplanation(w io.Writer, d diagnose.Diagnosis, original string, opts Options)` ;
   - blocs dans l'ordre de l'exemple de `contracts/cli.md` : résumé, concept et définition, cause, corrections numérotées avec commande colorée par `Highlight`, anti-pattern éventuel, message Docker d'origine **atténué avec les fragments reconnus (captures : port, image, clé, chemin) surlignés en couleur** (FR-007, clarification du 2026-10-14), indication `➜ Pour aller plus loin : docker telemach deepen` ;
@@ -156,8 +156,8 @@ d'abord échouer.
   - rendu court quand `Repeated` est vrai.
 
   Dépend de T024 et T025.
-- [ ] T031 [P] Implémenter `internal/plugin/metadata.go` (sous-commande cachée `docker-cli-plugin-metadata`) pour faire passer T018. **Ne pas importer `github.com/docker/cli`**.
-- [ ] T032 [P] Écrire `internal/shellinit/scripts/bash.sh` et `internal/shellinit/scripts/zsh.sh` (commentaires en français). Chacun définit une fonction `docker` :
+- [X] T031 [P] Implémenter `internal/plugin/metadata.go` (sous-commande cachée `docker-cli-plugin-metadata`) pour faire passer T018. **Ne pas importer `github.com/docker/cli`**.
+- [X] T032 [P] Écrire `internal/shellinit/scripts/bash.sh` et `internal/shellinit/scripts/zsh.sh` (commentaires en français). Chacun définit une fonction `docker` :
   - les variables internes sont préfixées `__telemach_` ;
   - le fichier temporaire est créé par `mktemp` dans `${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}` avec `umask 077` ;
   - stderr est dupliqué via `2> >(tee "$tmp" >&2)`, sauf pour une commande interactive ;
