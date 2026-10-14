@@ -1,0 +1,4 @@
+entry_id: "image.pull-access-denied"
+origin: docker
+captures:
+  repo: "telemach-corpus/inexistante"

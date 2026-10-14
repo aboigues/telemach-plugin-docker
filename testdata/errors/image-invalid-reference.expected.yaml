@@ -1,0 +1,4 @@
+entry_id: "image.invalid-reference-format"
+origin: docker
+captures:
+  repo: "library/Nginx"

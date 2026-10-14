@@ -59,7 +59,7 @@ de Docker, puis oriente vers `docker logs`.
 ### V5 — Erreur non reconnue (US1, scénario 4, FR-008)
 
 ```bash
-docker-telemach explain --exit-code 1 --stderr-file <(echo "erreur totalement inventée") -- run x
+docker-telemach explain --exit-code 1 --stderr-file <(echo "erreur totalement inventée") -- pull x
 ```
 
 Attendu : bloc « Erreur non reconnue », aucune cause inventée, lien vers la documentation.
@@ -126,7 +126,7 @@ Attendu : `SuperSecret123` n'apparaît ni à l'écran dans l'explication, ni sur
 ```bash
 eval "$(docker telemach shell-init zsh)"
 docker-telemach explain --exit-code 1 --docker-version 29.8.0 \
-  --stderr-file <(echo "erreur totalement inventée") -- run x
+  --stderr-file <(echo "erreur totalement inventée") -- pull x
 ```
 
 Attendu : le bloc « Erreur non reconnue » mentionne `Docker 29.8.0`. Avec

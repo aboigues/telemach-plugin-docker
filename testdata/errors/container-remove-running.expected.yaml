@@ -1,0 +1,4 @@
+entry_id: "container.remove-running"
+origin: docker
+captures:
+  container: "telemach-corpus-web"

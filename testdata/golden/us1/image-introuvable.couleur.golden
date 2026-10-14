@@ -1,0 +1,24 @@
+[1;38;2;255;122;122m✖ L'image « ngnix » est introuvable, ni sur ta machine ni sur le registre.[m
+
+[1;38;2;122;162;247m📘 Concept — image & registry[m
+   Une image est le modèle à partir duquel un conteneur est créé. Si elle n'est
+   pas présente sur ta machine, Docker la télécharge depuis un registre (Docker
+   Hub par défaut).
+
+[1;38;2;224;175;104m🔎 Cause probable[m
+   Le nom de l'image est probablement mal orthographié (tu pensais peut-être à
+   « nginx »), ou l'image est privée et demande une connexion.
+
+[1;38;2;158;206;106m💡 Corrections[m
+   1. Vérifier l'orthographe du nom de l'image, par exemple « nginx ».
+      [38;2;248;248;242mdocker pull nginx[0m
+   2. Si l'image est privée, se connecter au registre avant de la télécharger.
+      [38;2;248;248;242mdocker login[0m
+
+[2;38;2;138;143;152m── Message Docker d'origine ────────────────────────────────────────────────────[m
+[2;38;2;138;143;152mUnable to find image '[m[1;38;2;125;207;255mngnix[m[2;38;2;138;143;152m:latest' locally[m
+[2;38;2;138;143;152mdocker: Error response from daemon: pull access denied for [m[1;38;2;125;207;255mngnix[m[2;38;2;138;143;152m, repository does not exist or may require 'docker login'[m
+
+[2;38;2;138;143;152mRun 'docker run --help' for more information[m
+
+[3;38;2;125;207;255m➜ Pour aller plus loin : docker telemach deepen[m

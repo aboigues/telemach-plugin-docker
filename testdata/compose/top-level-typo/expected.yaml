@@ -1,0 +1,7 @@
+kind: "unknown-key"
+file: "compose.yaml"
+line: 1
+column: 1
+service: ""
+key_path: "service"
+suggestion: "services"

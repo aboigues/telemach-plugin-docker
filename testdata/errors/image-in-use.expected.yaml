@@ -1,0 +1,4 @@
+entry_id: "image.in-use"
+origin: docker
+captures:
+  ref: "telemach-corpus-img:1"

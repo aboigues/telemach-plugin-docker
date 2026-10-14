@@ -1,0 +1,26 @@
+✖ Le port 18080 de ta machine est déjà utilisé.
+
+📘 Concept — port publishing
+   L'option « -p PORT_MACHINE:PORT_CONTENEUR » relie un port de ta machine à un
+   port du conteneur. Un port de la machine ne peut être relié qu'une seule fois
+   à la fois.
+
+🔎 Cause probable
+   Un autre conteneur (ou un autre programme de ta machine) écoute déjà sur le
+   port 18080. Docker ne peut pas le publier une deuxième fois.
+
+💡 Corrections
+   1. Voir quel conteneur publie déjà ce port.
+      docker ps --filter publish=18080
+   2. Publier le conteneur sur un autre port de ta machine (le port du conteneur
+      ne change pas).
+      docker run -p 18081:80 nginx:1.30-alpine
+   3. Ou arrêter le conteneur qui occupe le port, s'il ne sert plus.
+      docker stop <nom-du-conteneur>
+
+── Message Docker d'origine ────────────────────────────────────────────────────
+docker: Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint jolly_brattain (e2039b88141855904e58f8f1b34b97f921486c54356bb25d4f463af2a3270cc7): Bind for 0.0.0.0:18080 failed: port is already allocated
+
+Run 'docker run --help' for more information
+
+➜ Pour aller plus loin : docker telemach deepen

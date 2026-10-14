@@ -1,0 +1,1 @@
+run --rm alpine:3.24 sh -c echo "base de données injoignable" >&2; exit 3

@@ -1,0 +1,22 @@
+✖ Le client Docker n'arrive pas à joindre le démon Docker.
+
+📘 Concept — client & daemon
+   La commande « docker » est un client : elle envoie tes demandes au démon
+   Docker (dockerd), un service qui crée et gère réellement les conteneurs.
+
+🔎 Cause probable
+   Le démon Docker n'est pas démarré, ou le client cherche à le joindre au
+   mauvais endroit (variable DOCKER_HOST ou contexte Docker incorrect).
+
+💡 Corrections
+   1. Vérifier quel contexte et quelle adresse le client utilise.
+      docker context ls
+   2. Sous Linux, démarrer le service Docker.
+      sudo systemctl start docker
+   3. Sous macOS, Windows ou WSL2 avec Docker Desktop, lancer Docker Desktop et
+      attendre qu'il soit prêt.
+
+── Message Docker d'origine ────────────────────────────────────────────────────
+failed to connect to the docker API at unix:///tmp/telemach-corpus-absent.sock; check if the path is correct and if the daemon is running: dial unix /tmp/telemach-corpus-absent.sock: connect: no such file or directory
+
+➜ Pour aller plus loin : docker telemach deepen

@@ -1,0 +1,7 @@
+kind: "undefined-reference"
+file: "compose.yaml"
+line: 2
+column: 3
+service: "web"
+key_path: "services.web"
+suggestion: "image"

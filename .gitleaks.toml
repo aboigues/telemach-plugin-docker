@@ -1,0 +1,10 @@
+# Configuration gitleaks : règles par défaut, et une seule exception pour le corpus
+# de faux secrets volontaires utilisé par les tests de masquage (SC-006).
+title = "telemach-plugin-docker"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Faux secrets volontaires du corpus de tests"
+paths = ['''^testdata/secrets/''']

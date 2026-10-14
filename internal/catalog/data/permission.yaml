@@ -1,0 +1,69 @@
+# Erreurs de droits : socket du démon et registres.
+- id: permission.socket-denied
+  category: permission
+  patterns:
+    - 'permission denied while trying to connect to the [Dd]ocker (?:API|daemon socket) at (?P<host>\S+)'
+  concept:
+    name: Docker socket
+    definition: >-
+      Le client parle au démon par un fichier spécial, le socket (souvent
+      /var/run/docker.sock). Seuls root et les membres du groupe « docker » peuvent l'utiliser.
+  summary: Ton utilisateur n'a pas le droit d'utiliser le socket du démon Docker.
+  cause: >-
+    Ton compte n'appartient pas au groupe « docker » (ou la session n'a pas été rouverte
+    après l'ajout au groupe).
+  fixes:
+    - description: Installer Docker en mode rootless, qui fonctionne sans aucun droit root (solution la plus sûre).
+      command: dockerd-rootless-setuptool.sh install
+      safe: true
+    - description: >-
+        Ou ajouter ton compte au groupe « docker », puis fermer et rouvrir ta session.
+        Attention : ce groupe donne des droits équivalents à root sur la machine.
+      command: sudo usermod -aG docker $USER
+      safe: true
+    - description: Rendre le socket accessible à tous.
+      command: sudo chmod 666 /var/run/docker.sock
+      safe: false
+  anti_pattern:
+    description: >-
+      « chmod 666 » sur le socket, ou « sudo docker » systématique, donne le contrôle total de
+      la machine à n'importe quel programme ou utilisateur : c'est une faille de sécurité.
+  deepen:
+    explanation: >-
+      Contrôler le démon Docker, c'est pouvoir lancer un conteneur qui monte tout le disque
+      de la machine : l'accès au socket équivaut donc à un accès root. Le mode rootless
+      supprime ce risque en faisant tourner le démon sous ton propre compte.
+    example: ls -l /var/run/docker.sock
+    exercise: >-
+      Affiche les droits du socket avec « ls -l /var/run/docker.sock » et tes groupes avec
+      « id » : lequel te manque-t-il ?
+  doc_url: https://docs.docker.com/engine/security/rootless/
+  tests: [permission-socket-denied]
+
+- id: permission.registry-unauthorized
+  category: permission
+  patterns:
+    - 'unauthorized: (?:incorrect username or password|authentication required)'
+  concept:
+    name: registry authentication
+    definition: >-
+      Un registre (Docker Hub, GitHub Container Registry…) vérifie ton identité avant de te
+      laisser publier ou télécharger des images privées.
+  summary: Le registre a refusé tes identifiants.
+  cause: >-
+    Le nom d'utilisateur ou le mot de passe est incorrect, ou le registre exige un jeton
+    d'accès personnel à la place du mot de passe.
+  fixes:
+    - description: Créer un jeton d'accès personnel sur le site du registre, puis se connecter en le passant par l'entrée standard.
+      command: docker login -u ton-compte --password-stdin < fichier-du-jeton
+      safe: true
+  deepen:
+    explanation: >-
+      « --password-stdin » évite que le mot de passe apparaisse dans l'historique du shell
+      ou dans la liste des processus. Préfère un jeton d'accès, révocable, à ton mot de passe.
+    example: docker login --help
+    exercise: >-
+      Repère dans « docker login --help » l'option qui lit le mot de passe sur l'entrée
+      standard, et explique pourquoi passer le mot de passe en argument est déconseillé.
+  doc_url: https://docs.docker.com/reference/cli/docker/login/
+  tests: [permission-registry-unauthorized]

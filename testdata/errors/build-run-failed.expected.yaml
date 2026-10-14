@@ -1,0 +1,5 @@
+entry_id: "build.run-failed"
+origin: docker
+captures:
+  code: "127"
+  step: "[3/3] RUN commande-inexistante --version"

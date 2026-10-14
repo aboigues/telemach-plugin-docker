@@ -1,0 +1,4 @@
+entry_id: "runtime.exit-126"
+origin: application
+captures:
+  cmd: "/etc/passwd"

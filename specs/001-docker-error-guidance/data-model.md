@@ -29,6 +29,7 @@ Dérivée de `CapturedError.Args`.
 | `Family` | `enum` | `docker` ou `compose` |
 | `Subcommand` | `string` | `run`, `build`, `pull`, `up`, `config`… (FR-003) |
 | `Flags` | `map[string]string` | Options reconnues (`-p`, `--name`, `-f`…), valeurs masquées si sensibles |
+| `Positionals` | `[]string` | Arguments hors options (image, conteneur, commande du conteneur) ; `Image()` en déduit l'image visée |
 | `ComposeFiles` | `[]string` | Fichiers Compose concernés (`-f`, sinon recherche par défaut) |
 | `Interactive` | `bool` | `-it`, `exec -it`, `attach`… (R2) |
 
@@ -42,6 +43,7 @@ Fichiers YAML embarqués, un par catégorie (`internal/catalog/data/*.yaml`).
 | `Category` | `enum` | `network`, `image`, `container`, `volume`, `daemon`, `permission`, `build`, `compose`, `runtime` | Obligatoire |
 | `Applies` | `[]string` | Sous-commandes concernées (vide = toutes) | — |
 | `ExitCodes` | `[]int` | Codes de sortie concernés (optionnel) | — |
+| `Fallback` | `string` | `application` : repli quand l'erreur vient du programme du conteneur ; `compose-issue` : pédagogie d'un type de problème Compose | Optionnel ; une entrée a des motifs, des codes de sortie ou un `fallback` |
 | `Patterns` | `[]string` | Expressions régulières RE2 avec groupes nommés | ≥ 1 (sauf entrée fondée sur le seul code de sortie) ; compilées au chargement |
 | `Concept` | `ConceptRef` | Concept Docker enseigné | Obligatoire |
 | `Summary` | `string` (fr) | Résumé en une phrase, peut utiliser les groupes capturés | Obligatoire, ≤ 160 caractères |
@@ -50,7 +52,7 @@ Fichiers YAML embarqués, un par catégorie (`internal/catalog/data/*.yaml`).
 | `AntiPattern` | `*AntiPatternNote` | Mise en garde si la solution rapide est dangereuse (FR-010) | Optionnel |
 | `Deepen` | `Deepening` | Contenu approfondi (US3) | Obligatoire |
 | `DocURL` | `string` | Lien vers la documentation officielle | `https://docs.docker.com/…` |
-| `Tests` | `[]string` | Fichiers du corpus `testdata/errors/` qui doivent correspondre | ≥ 1 |
+| `Tests` | `[]string` | Cas du corpus `testdata/errors/` qui doivent correspondre (ou dossiers de `testdata/compose/` pour `compose-issue`) | ≥ 1 |
 
 **Fix** : `Description` (fr), `Command` (gabarit facultatif, ex. `docker run -p {{.alt_port}}:80 …`),
 `Safe` (`bool`, faux = signalé comme anti-pattern).
@@ -70,7 +72,8 @@ une ou deux phrases, FR-006).
 | `Line`, `Column` | `int` | Position (1-based) ; 0 si inconnue |
 | `Service` | `string` | Service concerné, si applicable |
 | `KeyPath` | `string` | Chemin de la clé, ex. `services.web.port` |
-| `Suggestion` | `string` | Clé ou valeur proposée, ex. `ports` |
+| `Suggestion` | `string` | Clé, valeur ou variable proposée, ex. `ports`, `.env`, `backend` |
+| `Detail` | `string` | Précision en français (référence manquante, type attendu…) |
 | `Excerpt` | `[]Line` | Lignes autour de l'erreur, valeurs sensibles masquées |
 | `Fixed` | `[]Line` | Extrait corrigé proposé |
 | `Blocking` | `bool` | Vrai si l'erreur empêche l'analyse du reste |

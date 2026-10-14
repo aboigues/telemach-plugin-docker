@@ -1,0 +1,158 @@
+# Erreurs du programme exécuté dans le conteneur, reconnues par leur code de sortie
+# (convention de docker run, research.md R3).
+- id: runtime.exit-126
+  category: runtime
+  applies: [run, start, exec]
+  exit_codes: [126]
+  patterns:
+    - 'exec: "(?P<cmd>[^"]+)": permission denied'
+  concept:
+    name: container command
+    definition: >-
+      Après le nom de l'image, « docker run » accepte la commande à lancer dans le conteneur.
+      Ce doit être un programme exécutable présent dans l'image.
+  summary: La commande demandée existe dans le conteneur mais ne peut pas être exécutée (code 126).
+  cause: >-
+    Le fichier{{if .cmd}} « {{.cmd}} »{{end}} n'est pas un programme exécutable : fichier de données,
+    script sans droit d'exécution, ou dossier.
+  fixes:
+    - description: Vérifier le type et les droits du fichier dans l'image.
+      command: docker run --rm --entrypoint ls {{.image}} -l {{.cmd}}
+      safe: true
+    - description: Pour un script, l'appeler via son interpréteur (par exemple « sh script.sh »).
+      safe: true
+  deepen:
+    explanation: >-
+      Les codes 126 et 127 viennent de la convention des shells : 126 = trouvé mais non
+      exécutable, 127 = introuvable. Docker les renvoie quand le programme du conteneur ne
+      peut pas démarrer.
+    example: docker run --rm --user 1000:1000 alpine:3.24 ls -l /bin/sh /etc/passwd
+    exercise: >-
+      Compare les droits de /bin/sh et de /etc/passwd dans alpine:3.24 : lequel porte le
+      droit « x » d'exécution ?
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [runtime-exit-126]
+
+- id: runtime.exit-127
+  category: runtime
+  applies: [run, start, exec]
+  exit_codes: [127]
+  patterns:
+    - 'exec: "(?P<cmd>[^"]+)": executable file not found in \$PATH'
+  concept:
+    name: container command
+    definition: >-
+      Le conteneur ne voit que les fichiers de son image : un programme installé sur ta
+      machine n'existe pas forcément dans le conteneur.
+  summary: La commande demandée est introuvable dans le conteneur (code 127).
+  cause: >-
+    Le programme{{if .cmd}} « {{.cmd}} »{{end}} n'est pas installé dans l'image, ou son nom est mal
+    orthographié.
+  fixes:
+    - description: Vérifier si le programme existe dans l'image.
+      command: docker run --rm --entrypoint sh {{.image}} -c 'command -v {{.cmd}}'
+      safe: true
+    - description: L'installer dans ta propre image avec une instruction RUN (par exemple « RUN apk add --no-cache … » pour alpine).
+      safe: true
+  deepen:
+    explanation: >-
+      Les images minimales (alpine, distroless) contiennent très peu d'outils : c'est voulu,
+      pour réduire leur taille et leur surface d'attaque. On ajoute seulement ce dont
+      l'application a besoin.
+    example: docker run --rm --user 1000:1000 alpine:3.24 ls /bin
+    exercise: >-
+      Liste les programmes de /bin dans alpine:3.24 : « bash » y est-il ? Quelle commande
+      utiliser à la place ?
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [runtime-exit-127]
+
+- id: runtime.exit-137
+  category: runtime
+  applies: [run, start, exec]
+  exit_codes: [137]
+  concept:
+    name: SIGKILL & memory limit
+    definition: >-
+      Le code 137 (128 + 9) signifie que le programme a été tué par le signal SIGKILL : par
+      « docker kill », ou par le noyau quand le conteneur dépasse sa limite de mémoire.
+  summary: Le programme du conteneur a été tué brutalement (SIGKILL, code 137).
+  cause: >-
+    Le conteneur a probablement manqué de mémoire (OOM), ou il a été arrêté de force par
+    « docker kill » ou « docker rm -f ».
+  fixes:
+    - description: Vérifier si le conteneur a été tué faute de mémoire (si tu ne l'as pas lancé avec « --rm »).
+      command: docker inspect <nom-du-conteneur> --format '{{"{{"}}.State.OOMKilled{{"}}"}}'
+      safe: true
+    - description: Lui accorder plus de mémoire avec l'option « --memory ».
+      command: docker run --memory 512m {{.image}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un code de sortie supérieur à 128 indique une mort par signal : code − 128 = numéro du
+      signal. 137 → 9 (SIGKILL), 143 → 15 (SIGTERM).
+    example: docker run --rm --init --user 1000:1000 alpine:3.24 sh -c 'kill -9 $$'; echo "code $?"
+    exercise: >-
+      Lance l'exemple puis remplace « -9 » par « -15 » : quel code obtiens-tu, et pourquoi ?
+  doc_url: https://docs.docker.com/engine/containers/resource_constraints/
+  tests: [runtime-exit-137]
+
+- id: runtime.exit-143
+  category: runtime
+  applies: [run, start, exec]
+  exit_codes: [143]
+  concept:
+    name: SIGTERM
+    definition: >-
+      Le code 143 (128 + 15) signifie que le programme a reçu le signal SIGTERM, la demande
+      d'arrêt propre envoyée notamment par « docker stop ».
+  summary: Le programme du conteneur s'est arrêté sur demande (SIGTERM, code 143).
+  cause: >-
+    Le conteneur a été arrêté par « docker stop » (ou un orchestrateur), ou le programme a
+    reçu SIGTERM d'un autre processus.
+  fixes:
+    - description: Si cet arrêt n'était pas voulu, regarder les journaux et les événements récents de Docker.
+      command: docker events --since 10m --filter event=stop
+      safe: true
+  deepen:
+    explanation: >-
+      SIGTERM laisse au programme le temps de se terminer proprement (fermer ses fichiers,
+      finir ses requêtes). C'est le signal envoyé par « docker stop » avant SIGKILL.
+    example: docker run --rm --init --user 1000:1000 alpine:3.24 sh -c 'kill -15 $$'; echo "code $?"
+    exercise: >-
+      Lance « docker run -d --init --name essai --user 1000:1000 alpine:3.24 sleep 300 », arrête-le avec
+      « docker stop essai » puis lis son code avec « docker inspect essai --format
+      '{{"{{"}}.State.ExitCode{{"}}"}}' ».
+  doc_url: https://docs.docker.com/reference/cli/docker/container/stop/
+  tests: [runtime-exit-143]
+
+- id: runtime.application-error
+  category: runtime
+  applies: [run, start, exec]
+  fallback: application
+  concept:
+    name: container exit code
+    definition: >-
+      Quand le programme du conteneur se termine, « docker run » renvoie son code de sortie.
+      Un code autre que 0 signale une erreur de ce programme, pas de Docker.
+  summary: Le programme exécuté dans le conteneur s'est terminé en erreur.
+  cause: >-
+    Docker a bien démarré le conteneur ; c'est l'application elle-même qui a échoué
+    (configuration manquante, service injoignable, bogue…).
+  fixes:
+    - description: Lire les messages de l'application juste au-dessus, ou ses journaux si le conteneur existe encore.
+      command: docker logs <nom-du-conteneur>
+      safe: true
+    - description: Lancer un shell dans l'image pour enquêter.
+      command: docker run --rm -it --entrypoint sh {{.image}}
+      safe: true
+  deepen:
+    explanation: >-
+      « docker run » transmet le code de sortie du programme principal du conteneur. Les codes
+      125, 126 et 127 sont réservés à Docker et au lancement ; les autres viennent de ton
+      application.
+    example: docker run --rm --user 1000:1000 alpine:3.24 sh -c 'exit 3'; echo "code $?"
+    exercise: >-
+      Lance l'exemple avec plusieurs valeurs (0, 1, 42) et vérifie que le code affiché est
+      toujours celui choisi par le programme.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [runtime-application-error]

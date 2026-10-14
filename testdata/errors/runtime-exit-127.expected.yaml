@@ -1,0 +1,4 @@
+entry_id: "runtime.exit-127"
+origin: application
+captures:
+  cmd: "commande-inexistante"

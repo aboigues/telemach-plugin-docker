@@ -1,0 +1,139 @@
+# Erreurs liées au cycle de vie des conteneurs.
+- id: container.name-conflict
+  category: container
+  applies: [run, create, rename]
+  patterns:
+    - 'The container name "/(?P<name>[^"]+)" is already in use'
+  concept:
+    name: container name
+    definition: >-
+      Chaque conteneur porte un nom unique sur ta machine. Un conteneur arrêté garde son nom
+      tant qu'il n'est pas supprimé.
+  summary: Le nom « {{.name}} » est déjà pris par un autre conteneur.
+  cause: >-
+    Un conteneur portant ce nom existe déjà, peut-être arrêté (il n'apparaît alors qu'avec
+    « docker ps -a »).
+  fixes:
+    - description: Retrouver le conteneur qui porte ce nom.
+      command: docker ps -a --filter name=^{{.name}}$
+      safe: true
+    - description: Le supprimer s'il ne sert plus, puis relancer ta commande.
+      command: docker rm {{.name}}
+      safe: true
+    - description: Ou choisir un autre nom avec « --name ».
+      command: docker run --name {{.name}}-2 {{.image}}
+      safe: true
+  deepen:
+    explanation: >-
+      Sans « --name », Docker invente un nom (comme « naughty_poitras »). L'option « --rm »
+      supprime automatiquement le conteneur à son arrêt : pratique pour les essais, le nom est
+      alors libéré tout de suite.
+    example: docker run --rm --name essai --user 1000:1000 alpine:3.24 echo bonjour
+    exercise: >-
+      Lance deux fois « docker run --rm --name essai --user 1000:1000 alpine:3.24 true » : pourquoi la seconde
+      fonctionne-t-elle grâce à « --rm » ?
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [container-name-conflict]
+
+- id: container.not-found
+  category: container
+  applies: [logs, stop, start, restart, exec, rm, kill, inspect, attach, cp, pause, unpause, port, top, wait]
+  patterns:
+    - 'No such container: (?P<container>\S+)'
+  concept:
+    name: container
+    definition: >-
+      Un conteneur est une instance d'une image, désignée par son nom ou son identifiant.
+      Docker ne trouve que les conteneurs qui existent encore sur ta machine.
+  summary: Aucun conteneur ne s'appelle « {{.container}} ».
+  cause: >-
+    Le nom est mal orthographié, ou le conteneur a été supprimé (par exemple automatiquement
+    s'il avait été lancé avec « --rm »).
+  fixes:
+    - description: Lister tous les conteneurs, y compris les arrêtés, pour retrouver le bon nom.
+      command: docker ps -a --format '{{"{{"}}.Names{{"}}"}} ({{"{{"}}.Status{{"}}"}})'
+      safe: true
+  deepen:
+    explanation: >-
+      Tu peux désigner un conteneur par son nom ou par le début de son identifiant
+      (quelques caractères suffisent s'ils sont uniques).
+    example: docker ps -a --format '{{"{{"}}.ID{{"}}"}} {{"{{"}}.Names{{"}}"}}'
+    exercise: >-
+      Lance « docker run -d --name essai --user 1000:1000 alpine:3.24 sleep 60 », arrête-le en utilisant
+      seulement les 4 premiers caractères de son identifiant, puis supprime-le.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/ls/
+  tests: [container-not-found-logs, container-not-found-stop, container-not-found-start, container-not-found-exec]
+
+- id: container.not-running
+  category: container
+  applies: [exec]
+  patterns:
+    - 'container (?P<container>\S+) is not running'
+  concept:
+    name: container lifecycle
+    definition: >-
+      Un conteneur passe par plusieurs états : créé, démarré (running), arrêté (exited).
+      « docker exec » ne fonctionne que sur un conteneur démarré.
+  summary: Le conteneur est arrêté ; « docker exec » a besoin d'un conteneur démarré.
+  cause: >-
+    Le programme principal du conteneur s'est terminé, ce qui a arrêté le conteneur. On ne
+    peut pas exécuter de commande à l'intérieur d'un conteneur arrêté.
+  fixes:
+    - description: Voir l'état du conteneur et son code de sortie.
+      command: docker ps -a --filter id={{.container}}
+      safe: true
+    - description: Lire ses journaux pour comprendre pourquoi il s'est arrêté.
+      command: docker logs {{.container}}
+      safe: true
+    - description: Le redémarrer, puis relancer « docker exec ».
+      command: docker start {{.container}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un conteneur vit tant que son processus principal (PID 1) vit. Une image comme alpine
+      lance « sh » par défaut, qui se termine aussitôt sans terminal : le conteneur s'arrête.
+    example: |-
+      docker run -d --name essai --user 1000:1000 alpine:3.24 sleep 300
+      docker exec essai ps
+    exercise: >-
+      Lance « docker run -d --user 1000:1000 alpine:3.24 », observe son état avec « docker ps -a », puis lance
+      un conteneur qui reste démarré avec « sleep 300 » et entres-y avec « docker exec ».
+  doc_url: https://docs.docker.com/reference/cli/docker/container/exec/
+  tests: [container-not-running-exec]
+
+- id: container.remove-running
+  category: container
+  applies: [rm]
+  patterns:
+    - 'cannot remove container "/?(?P<container>[^"]+)": container is running'
+    - 'You cannot remove a running container'
+  concept:
+    name: container lifecycle
+    definition: >-
+      Un conteneur doit être arrêté avant d'être supprimé : Docker protège ainsi les
+      programmes en cours d'exécution.
+  summary: Le conteneur « {{.container}} » est encore démarré, il ne peut pas être supprimé.
+  cause: >-
+    « docker rm » refuse de supprimer un conteneur en cours d'exécution pour éviter d'arrêter
+    un service par erreur.
+  fixes:
+    - description: Arrêter proprement le conteneur (signal SIGTERM), puis le supprimer.
+      command: docker stop {{.container}} && docker rm {{.container}}
+      safe: true
+    - description: Forcer la suppression avec « -f » (arrêt brutal par SIGKILL).
+      command: docker rm -f {{.container}}
+      safe: false
+  anti_pattern:
+    description: >-
+      « docker rm -f » tue le programme sans lui laisser le temps de se terminer proprement
+      (fichiers non enregistrés, connexions coupées). Réserve-le aux conteneurs de test.
+  deepen:
+    explanation: >-
+      « docker stop » envoie SIGTERM, attend 10 secondes, puis envoie SIGKILL. Un programme
+      bien écrit profite de ce délai pour se terminer proprement.
+    example: docker stop --time 30 essai
+    exercise: >-
+      Lance « docker run -d --name essai --user 1000:1000 alpine:3.24 sleep 300 », chronomètre « docker stop
+      essai » : pourquoi faut-il environ 10 secondes ? (indice : sleep ignore SIGTERM en PID 1).
+  doc_url: https://docs.docker.com/reference/cli/docker/container/rm/
+  tests: [container-remove-running]

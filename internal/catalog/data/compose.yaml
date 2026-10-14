@@ -1,0 +1,336 @@
+# Erreurs Docker Compose. Les problèmes des fichiers Compose eux-mêmes sont analysés par
+# le paquet compose ; ces entrées en fournissent le contenu pédagogique.
+- id: compose.no-project
+  category: compose
+  applies: [compose]
+  patterns:
+    - 'no configuration file provided: not found'
+  concept:
+    name: Compose project
+    definition: >-
+      Un projet Compose est l'ensemble des services décrits dans un fichier compose.yaml. Le
+      dossier qui contient ce fichier donne son nom au projet.
+  summary: Aucun fichier Compose n'a été trouvé dans ce dossier.
+  cause: >-
+    La commande est lancée hors du dossier du projet, ou le fichier ne porte pas un nom
+    reconnu (compose.yaml, compose.yml, docker-compose.yaml, docker-compose.yml).
+  fixes:
+    - description: Se placer dans le dossier du projet, ou indiquer le fichier avec « -f ».
+      command: docker compose -f chemin/vers/compose.yaml {{.subcommand}}
+      safe: true
+    - description: Lister les projets Compose connus de Docker.
+      command: docker compose ls
+      safe: true
+  deepen:
+    explanation: >-
+      « docker compose ps », « logs » ou « down » agissent sur le projet du dossier courant :
+      le nom du projet vient du nom du dossier, sauf si tu le fixes avec « -p ».
+    example: docker compose ls --all
+    exercise: >-
+      Dans un dossier « labo », crée un compose.yaml avec un service alpine, lance « docker
+      compose up -d », puis lance « docker compose ps » depuis un autre dossier.
+  doc_url: https://docs.docker.com/compose/
+  tests: [compose-no-project-ps, compose-no-project-logs, compose-no-project-down]
+
+# --- Pédagogie des problèmes détectés par l'analyseur Compose (docker telemach check) ---
+- id: compose.tab-indent
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: YAML indentation
+    definition: >-
+      En YAML, l'indentation (les espaces en début de ligne) indique qui contient quoi. Elle
+      doit être faite avec des espaces, jamais avec des tabulations.
+  summary: Une tabulation est utilisée pour l'indentation, ce que YAML interdit.
+  cause: >-
+    L'éditeur a inséré une tabulation (affichée « → ») au lieu d'espaces en début de ligne.
+  fixes:
+    - description: Remplacer la tabulation par des espaces (2 par niveau, comme le reste du fichier).
+      safe: true
+    - description: Configurer ton éditeur pour insérer des espaces dans les fichiers YAML.
+      safe: true
+  deepen:
+    explanation: >-
+      Une tabulation n'a pas de largeur fixe : selon l'éditeur, elle vaut 2, 4 ou 8 espaces.
+      YAML l'interdit donc pour l'indentation, afin que la structure soit la même partout.
+    example: grep -nP '^\t' compose.yaml
+    exercise: >-
+      Active l'affichage des caractères invisibles dans ton éditeur, puis retrouve les
+      tabulations d'un fichier YAML.
+  doc_url: https://docs.docker.com/reference/compose-file/
+  tests: [tab-indent]
+
+- id: compose.yaml-syntax
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: YAML syntax
+    definition: >-
+      Un fichier Compose est écrit en YAML : des paires « clé: valeur », des listes dont les
+      éléments commencent par « - », et une indentation régulière.
+  summary: Le fichier n'est pas un YAML valide.
+  cause: >-
+    Une ligne ne respecte pas la syntaxe YAML : « : » oublié après une clé, indentation
+    irrégulière, ou clé écrite deux fois.
+  fixes:
+    - description: Corriger la ligne indiquée en t'aidant de la version corrigée proposée.
+      safe: true
+    - description: Vérifier le fichier complet avec Docker Compose.
+      command: docker compose config --quiet
+      safe: true
+  deepen:
+    explanation: >-
+      Après une erreur de syntaxe, l'analyseur ne peut plus comprendre la suite du fichier :
+      corrige d'abord cette erreur, puis relance la vérification pour voir les suivantes.
+    example: docker telemach check
+    exercise: >-
+      Supprime volontairement le « : » après un nom de service, lance « docker telemach
+      check », puis corrige.
+  doc_url: https://docs.docker.com/reference/compose-file/
+  tests: [missing-colon, bad-indentation, duplicate-key]
+
+- id: compose.unknown-key
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: Compose specification
+    definition: >-
+      La spécification Compose fixe la liste des clés autorisées à chaque niveau (services,
+      networks, volumes…). Une clé inconnue est refusée.
+  summary: Une clé inconnue est utilisée dans le fichier Compose.
+  cause: >-
+    La clé est mal orthographiée (par exemple « port » au lieu de « ports ») ou placée au
+    mauvais niveau d'indentation.
+  fixes:
+    - description: Remplacer la clé par la clé proposée.
+      safe: true
+    - description: Consulter la référence pour vérifier le nom et l'emplacement de la clé.
+      safe: true
+  deepen:
+    explanation: >-
+      Les clés commençant par « x- » sont des extensions libres, ignorées par Compose : elles
+      servent à factoriser des morceaux de configuration avec les ancres YAML.
+    example: docker compose config
+    exercise: >-
+      Ajoute une clé « x-commun » contenant des variables d'environnement et réutilise-la
+      dans deux services avec une ancre YAML (&commun et *commun).
+  doc_url: https://docs.docker.com/reference/compose-file/services/
+  tests: [unknown-key-port, top-level-typo, depends-on-typo, multi-file-override]
+
+- id: compose.wrong-type
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: value type
+    definition: >-
+      Chaque clé attend un type de valeur précis : un texte, un nombre, une liste (lignes
+      « - ») ou un dictionnaire (lignes « clé: valeur »).
+  summary: La valeur de cette clé n'a pas le bon type.
+  cause: >-
+    La valeur est écrite sous une forme inattendue, par exemple un texte là où une liste est
+    attendue (« ports: "8080:80" » au lieu d'une liste).
+  fixes:
+    - description: Réécrire la valeur sous la forme attendue (voir le détail du problème).
+      safe: true
+  deepen:
+    explanation: >-
+      Beaucoup de clés acceptent deux formes : « environment » accepte une liste
+      (- NOM=valeur) ou un dictionnaire (NOM: valeur). « ports » attend toujours une liste.
+    example: docker compose config
+    exercise: >-
+      Écris la même variable d'environnement sous forme de liste puis de dictionnaire, et
+      compare le résultat de « docker compose config ».
+  doc_url: https://docs.docker.com/reference/compose-file/services/
+  tests: [wrong-type-ports, wrong-type-environment, wrong-type-restart, wrong-type-depends-on]
+
+- id: compose.undefined-reference
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: top-level elements
+    definition: >-
+      Les réseaux, volumes nommés, secrets et services utilisés par un service doivent être
+      déclarés dans leur section de premier niveau (networks:, volumes:, services:…).
+  summary: Le fichier fait référence à un élément qui n'est pas déclaré.
+  cause: >-
+    Un service utilise un réseau, un volume nommé ou un autre service qui n'est déclaré nulle
+    part, ou dont le nom est mal orthographié.
+  fixes:
+    - description: Déclarer l'élément manquant dans sa section de premier niveau, ou corriger son nom.
+      safe: true
+  deepen:
+    explanation: >-
+      Un volume nommé (« donnees:/chemin ») doit être déclaré dans « volumes: » ; un chemin
+      commençant par « ./ » ou « / » est au contraire un montage d'un dossier de ta machine.
+    example: |-
+      services:
+        db:
+          image: postgres:18-alpine
+          volumes:
+            - donnees:/var/lib/postgresql/data
+      volumes:
+        donnees:
+    exercise: >-
+      Déclare un volume nommé pour une base de données, lance le projet, supprime les
+      conteneurs avec « docker compose down », puis vérifie que les données sont restées.
+  doc_url: https://docs.docker.com/reference/compose-file/volumes/
+  tests: [undefined-depends-on, undefined-network, undefined-volume, no-image-no-build]
+
+- id: compose.dependency-cycle
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: depends_on
+    definition: >-
+      « depends_on » fixe l'ordre de démarrage des services : un service démarre après ceux
+      dont il dépend. Les dépendances ne peuvent pas former une boucle.
+  summary: Les dépendances entre services forment une boucle.
+  cause: >-
+    Deux services (ou plus) dépendent l'un de l'autre : Compose ne peut pas décider lequel
+    démarrer en premier.
+  fixes:
+    - description: Supprimer la dépendance qui n'est pas indispensable (en général, c'est le service de données qui ne dépend de rien).
+      safe: true
+  deepen:
+    explanation: >-
+      « depends_on » n'attend que le démarrage du conteneur, pas que le service soit prêt.
+      Avec « condition: service_healthy » et un « healthcheck », Compose attend que la base
+      réponde vraiment.
+    example: |-
+      depends_on:
+        db:
+          condition: service_healthy
+    exercise: >-
+      Ajoute un healthcheck à un service postgres et fais attendre ton application avec
+      « condition: service_healthy ».
+  doc_url: https://docs.docker.com/compose/how-tos/startup-order/
+  tests: [dependency-cycle]
+
+- id: compose.unresolved-variable
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: variable interpolation
+    definition: >-
+      Compose remplace ${NOM} par la valeur de la variable d'environnement NOM, prise dans
+      ton shell ou dans le fichier .env du projet.
+  summary: Une variable utilisée dans le fichier Compose n'est pas définie.
+  cause: >-
+    La variable n'existe ni dans l'environnement ni dans le fichier .env : Compose la
+    remplacera par une chaîne vide, ce qui donne souvent une configuration invalide.
+  fixes:
+    - description: Définir la variable dans le fichier .env du projet (non versionné s'il contient des secrets).
+      safe: true
+    - description: Ou prévoir une valeur par défaut avec ${NOM:-valeur}.
+      safe: true
+  deepen:
+    explanation: >-
+      ${NOM:-défaut} utilise une valeur par défaut, ${NOM:?message} arrête Compose avec un
+      message si la variable manque : pratique pour les variables obligatoires.
+    example: docker compose config --environment
+    exercise: >-
+      Utilise ${TAG:-1.30-alpine} pour le tag d'une image, puis lance « TAG=1.28-alpine
+      docker compose config » et observe le résultat.
+  doc_url: https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/
+  tests: [unresolved-variable]
+
+- id: compose.plaintext-secret
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: secrets
+    definition: >-
+      Un secret (mot de passe, jeton, clé) ne doit jamais être écrit dans un fichier
+      versionné. Compose sait le lire depuis l'environnement, un fichier .env ou « secrets: ».
+  summary: Un secret est écrit en clair dans le fichier Compose.
+  cause: >-
+    Une variable sensible (mot de passe, jeton…) a sa valeur écrite directement dans
+    « environment ».
+  fixes:
+    - description: Remplacer la valeur par une variable (${NOM}) et la définir dans un fichier .env ajouté à .gitignore.
+      safe: true
+    - description: Pour plus de sécurité, utiliser les secrets de Compose, montés comme fichiers dans /run/secrets/.
+      safe: true
+    - description: Laisser la valeur en clair dans le fichier.
+      safe: false
+  anti_pattern:
+    description: >-
+      Un secret écrit dans compose.yaml finit dans l'historique git, où il reste lisible même
+      après sa suppression : considère-le comme compromis et change-le.
+  deepen:
+    explanation: >-
+      Avec « secrets: », le mot de passe n'apparaît ni dans le fichier ni dans « docker
+      inspect » : il est monté comme un fichier en lecture seule. Beaucoup d'images
+      officielles acceptent une variable *_FILE qui pointe vers ce fichier.
+    example: |-
+      services:
+        db:
+          image: postgres:18-alpine
+          environment:
+            POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+          secrets: [db_password]
+      secrets:
+        db_password:
+          file: ./db_password.txt
+    exercise: >-
+      Convertis un mot de passe postgres écrit en clair en secret Compose, et vérifie avec
+      « docker compose config » qu'il n'apparaît plus.
+  doc_url: https://docs.docker.com/compose/how-tos/use-secrets/
+  tests: [plaintext-password]
+
+- id: compose.file-not-found
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: Compose file
+    definition: >-
+      Sans option « -f », Docker Compose cherche, dans le dossier courant, compose.yaml,
+      compose.yml, docker-compose.yaml puis docker-compose.yml.
+  summary: Aucun fichier Compose n'a été trouvé.
+  cause: >-
+    Le dossier ne contient aucun fichier portant l'un des noms attendus, ou la commande est
+    lancée depuis un autre dossier.
+  fixes:
+    - description: Se placer dans le dossier du projet, ou indiquer le fichier avec « -f ».
+      command: docker telemach check -f chemin/vers/compose.yaml
+      safe: true
+  deepen:
+    explanation: >-
+      Si un fichier compose.override.yaml existe à côté de compose.yaml, Compose le charge
+      automatiquement et fusionne ses valeurs : pratique pour les réglages de développement.
+    example: docker compose config --services
+    exercise: >-
+      Crée un compose.override.yaml qui ajoute un port à un service et observe la fusion
+      avec « docker compose config ».
+  doc_url: https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/
+  tests: [empty-dir]
+
+- id: compose.file-unreadable
+  category: compose
+  fallback: compose-issue
+  concept:
+    name: file permissions & encoding
+    definition: >-
+      Pour lire un fichier Compose, il faut avoir le droit de lecture et que le fichier soit
+      encodé en UTF-8, l'encodage standard des fichiers YAML.
+  summary: Le fichier Compose existe mais ne peut pas être lu.
+  cause: >-
+    Les droits du fichier interdisent sa lecture, ou il a été enregistré dans un autre
+    encodage que l'UTF-8 (par exemple Latin-1 par un ancien éditeur).
+  fixes:
+    - description: Vérifier les droits du fichier, et les rétablir si besoin.
+      command: ls -l compose.yaml && chmod u+r compose.yaml
+      safe: true
+    - description: Convertir le fichier en UTF-8.
+      command: iconv -f LATIN1 -t UTF-8 compose.yaml -o compose.utf8.yaml
+      safe: true
+  deepen:
+    explanation: >-
+      La commande « file » indique l'encodage d'un fichier ; les éditeurs modernes
+      enregistrent en UTF-8 par défaut.
+    example: file compose.yaml
+    exercise: >-
+      Vérifie l'encodage de tes fichiers Compose avec « file », puis repère dans ton éditeur
+      où l'encodage est indiqué.
+  doc_url: https://docs.docker.com/reference/compose-file/
+  tests: [unreadable-encoding]

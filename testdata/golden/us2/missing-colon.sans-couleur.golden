@@ -1,0 +1,24 @@
+✖ Problème 1/1 — compose.yaml:2
+   il manque « : » après « web »
+
+     1 │ services:
+   ➤ 2 │   web
+     3 │     image: nginx:1.30-alpine
+
+   💡 Version corrigée
+     2 │   web:
+
+📘 Concept — YAML syntax
+   Un fichier Compose est écrit en YAML : des paires « clé: valeur », des listes
+   dont les éléments commencent par « - », et une indentation régulière.
+
+🔎 Cause probable
+   Une ligne ne respecte pas la syntaxe YAML : « : » oublié après une clé,
+   indentation irrégulière, ou clé écrite deux fois.
+
+💡 Corrections
+   1. Corriger la ligne indiquée en t'aidant de la version corrigée proposée.
+   2. Vérifier le fichier complet avec Docker Compose.
+      docker compose config --quiet
+
+➜ Pour aller plus loin : docker telemach deepen

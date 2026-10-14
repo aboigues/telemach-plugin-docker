@@ -119,7 +119,8 @@ internal/
 ├── catalog/                    # Chargement + validation du catalogue
 │   └── data/*.yaml             # Catalogue d'erreurs, en français, un fichier par catégorie
 ├── diagnose/                   # Matcher, codes de sortie (R3) → Diagnosis
-├── compose/                    # Analyse Compose (yaml.v3 + compose-go) → ComposeIssue
+├── compose/                    # Analyse Compose (yaml.v3 + compose-go) → ComposeIssue,
+│                               # et son rendu (render.go : placé ici pour éviter un cycle d'imports)
 ├── redact/                     # Masquage des secrets (R7)
 ├── sanitize/                   # Neutralisation des séquences ANSI/contrôle
 ├── render/                     # lipgloss + chroma, gestion couleur/NO_COLOR

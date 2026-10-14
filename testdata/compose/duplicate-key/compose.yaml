@@ -1,0 +1,4 @@
+services:
+  web:
+    image: nginx:1.30-alpine
+    image: httpd:2.4

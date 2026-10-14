@@ -1,0 +1,27 @@
+✖ Problème 1/1 — compose.yaml:4:5
+   service « web », clé « services.web.port »
+   la clé « port » n'existe pas à cet endroit — tu voulais sans doute écrire « ports »
+
+     1 │ services:
+     2 │   web:
+     3 │     image: nginx:1.30-alpine
+   ➤ 4 │     port:
+             ^
+     5 │       - "8080:80"
+
+   💡 Version corrigée
+     4 │     ports:
+
+📘 Concept — Compose specification
+   La spécification Compose fixe la liste des clés autorisées à chaque niveau
+   (services, networks, volumes…). Une clé inconnue est refusée.
+
+🔎 Cause probable
+   La clé est mal orthographiée (par exemple « port » au lieu de « ports ») ou
+   placée au mauvais niveau d'indentation.
+
+💡 Corrections
+   1. Remplacer la clé par la clé proposée.
+   2. Consulter la référence pour vérifier le nom et l'emplacement de la clé.
+
+➜ Pour aller plus loin : docker telemach deepen

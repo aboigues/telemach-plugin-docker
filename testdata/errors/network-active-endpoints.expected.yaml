@@ -1,0 +1,4 @@
+entry_id: "network.active-endpoints"
+origin: docker
+captures:
+  network: "telemach-corpus-net"

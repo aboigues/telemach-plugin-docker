@@ -1,0 +1,4 @@
+entry_id: "build.copy-source-missing"
+origin: docker
+captures:
+  path: "/absent.txt"
