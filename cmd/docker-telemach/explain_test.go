@@ -15,11 +15,12 @@ func testApp(t *testing.T, env map[string]string) (*app, *bytes.Buffer, *bytes.B
 	t.Helper()
 	var out, errb bytes.Buffer
 	return &app{
-		stdout: &out,
-		stderr: &errb,
-		getenv: func(k string) string { return env[k] },
-		now:    func() time.Time { return time.Date(2026, 10, 14, 10, 0, 0, 0, time.UTC) },
-		store:  state.Store{Dir: filepath.Join(t.TempDir(), "telemach")},
+		stdout:     &out,
+		stderr:     &errb,
+		getenv:     func(k string) string { return env[k] },
+		now:        func() time.Time { return time.Date(2026, 10, 14, 10, 0, 0, 0, time.UTC) },
+		executable: func() string { return "/opt/telemach/docker-telemach" },
+		store:      state.Store{Dir: filepath.Join(t.TempDir(), "telemach")},
 	}, &out, &errb
 }
 
@@ -134,7 +135,8 @@ func TestReadTailKeepsEnd(t *testing.T) {
 
 func TestShellInitAndMetadata(t *testing.T) {
 	a, out, _ := testApp(t, nil)
-	if code := run(a, []string{"shell-init", "zsh"}); code != 0 || !strings.Contains(out.String(), "docker() (") {
+	if code := run(a, []string{"shell-init", "zsh"}); code != 0 || !strings.Contains(out.String(), "docker() (") ||
+		!strings.Contains(out.String(), "__telemach_bin='/opt/telemach/docker-telemach'") {
 		t.Errorf("shell-init zsh : code %d, sortie %q", code, out.String())
 	}
 	a, _, errb := testApp(t, nil)

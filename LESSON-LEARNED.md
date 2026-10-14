@@ -33,6 +33,24 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-006 — Fonction shell inactive après une installation réelle
+
+- **Date** : 2026-10-14
+- **Catégorie** : bug
+- **Contexte** : première installation locale, en suivant le README (binaire dans
+  `~/.docker/cli-plugins/`, `eval "$(docker telemach shell-init zsh)"` dans `~/.zshrc`).
+- **Cause racine** : le script généré cherchait `docker-telemach` dans le PATH ; or le dossier
+  des plugins Docker n'y est pas. La fonction se désactivait silencieusement. Les tests
+  plaçaient le binaire dans le PATH et ne reproduisaient donc pas l'installation réelle.
+- **Impact** : aucune explication affichée après une erreur ; détecté au premier test
+  d'installation, avant la fusion.
+- **Correctif** : `shell-init` inscrit dans le script le chemin absolu de son propre binaire
+  (protégé pour le shell) ; les tests d'intégration n'ajoutent plus le binaire au PATH ; un
+  test couvre un chemin contenant espace et apostrophe.
+- **Règle préventive** : les tests de bout en bout doivent reproduire **exactement** la
+  procédure d'installation documentée, sans raccourci d'environnement (PATH, variables).
+- **Suivi** : automatisé — `TestBinaryOutsidePath` (bash et zsh) et tests d'intégration.
+
 ### LL-005 — Gate dependency-review rouge : Dependency graph désactivé sur le dépôt
 
 - **Date** : 2026-10-14

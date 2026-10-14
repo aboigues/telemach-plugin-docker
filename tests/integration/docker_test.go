@@ -38,9 +38,10 @@ func newHarness(t *testing.T) harness {
 // shell exécute body dans bash après activation de l'intégration TELEMACH.
 func (h harness) shell(t *testing.T, body string, extraEnv ...string) (stdout, stderr string) {
 	t.Helper()
-	cmd := exec.Command("bash", "-c", `eval "$(docker-telemach shell-init bash)"`+"\n"+body)
+	// Comme une vraie installation : le binaire n'est PAS dans le PATH (LL-006).
+	cmd := exec.Command("bash", "-c", `eval "$("$TELEMACH" shell-init bash)"`+"\n"+body)
 	cmd.Env = append(os.Environ(),
-		"PATH="+h.bin+string(os.PathListSeparator)+os.Getenv("PATH"),
+		"TELEMACH="+filepath.Join(h.bin, "docker-telemach"),
 		"XDG_STATE_HOME="+h.state,
 		"NO_COLOR=1",
 	)
