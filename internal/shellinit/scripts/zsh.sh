@@ -9,7 +9,8 @@ __telemach_docker_version="$(command docker --version 2>/dev/null | sed -n 's/^D
 
 # Fonction exécutée dans un sous-shell : ses pièges (trap) restent locaux.
 docker() (
-	if [[ "${TELEMACH_DISABLE:-}" == "1" ]] || ! command -v docker-telemach >/dev/null 2>&1; then
+	# « docker telemach … » n'est jamais expliqué par TELEMACH lui-même.
+	if [[ "${TELEMACH_DISABLE:-}" == "1" || "${1:-}" == "telemach" ]] || ! command -v docker-telemach >/dev/null 2>&1; then
 		command docker "$@"
 		exit $?
 	fi

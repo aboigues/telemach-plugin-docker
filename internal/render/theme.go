@@ -49,7 +49,7 @@ func NewTheme(colorOn, dark bool) Theme {
 	t.fix = lipgloss.NewStyle().Bold(true).Foreground(c("#1A7F37", "#9ECE6A"))
 	t.anti = lipgloss.NewStyle().Bold(true).Foreground(c("#A21CAF", "#D7A0FF"))
 	t.dim = lipgloss.NewStyle().Faint(true).Foreground(c("#6B7280", "#8A8F98"))
-	t.highlight = lipgloss.NewStyle().Bold(true).Underline(true).Foreground(c("#0E7490", "#7DCFFF"))
+	t.highlight = lipgloss.NewStyle().Bold(true).Foreground(c("#0E7490", "#7DCFFF"))
 	t.success = lipgloss.NewStyle().Bold(true).Foreground(c("#1A7F37", "#9ECE6A"))
 	t.hint = lipgloss.NewStyle().Italic(true).Foreground(c("#0E7490", "#7DCFFF"))
 	t.label = lipgloss.NewStyle().Bold(true)

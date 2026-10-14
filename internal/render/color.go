@@ -89,3 +89,13 @@ func HasDarkBackground(out io.Writer, env func(string) string) bool {
 	}
 	return lipgloss.HasDarkBackground(os.Stdin, f)
 }
+
+// TerminalWidth renvoie la largeur du terminal associé à w, ou 80 par défaut.
+func TerminalWidth(w io.Writer) int {
+	if f, ok := w.(*os.File); ok {
+		if width, _, err := term.GetSize(int(f.Fd())); err == nil && width >= 40 { //nolint:gosec // descripteur valide
+			return min(width, 100)
+		}
+	}
+	return 80
+}

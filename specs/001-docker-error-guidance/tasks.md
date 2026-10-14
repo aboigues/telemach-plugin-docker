@@ -127,7 +127,7 @@ d'abord échouer.
 - [X] T023 [P] Implémenter `internal/render/color.go` (`type ColorMode`, `func ResolveColor(flag string, env func(string) string, isTTY bool) bool`) avec `golang.org/x/term`. Faire passer T015.
 - [X] T024 [P] Implémenter `internal/render/theme.go` : styles lipgloss v2 à couleurs adaptatives (fond clair et sombre), un par rôle (résumé, concept, cause, correction, anti-pattern, message d'origine atténué, succès). Chaque rôle a un symbole et un libellé, la couleur n'étant **jamais** le seul porteur d'information : `✖`, `📘 Concept`, `🔎 Cause probable`, `💡 Corrections`, `⚠ Anti-pattern`, `✔`, `➜ Pour aller plus loin`. Le thème doit aussi produire un rendu sans couleur.
 - [X] T025 [P] Implémenter `internal/render/highlight.go` : `func Highlight(code, lexer string, color bool) string` avec chroma v2 (lexers `bash`, `yaml`, `docker`), et `func HighlightLines(lines []Line, focusLine, focusCol int, color bool) string`, qui surligne la ligne fautive et place un marqueur `^` sous la colonne. Sans couleur : texte brut avec numéros de ligne et marqueur. Ajouter un test dans `internal/render/highlight_test.go`.
-- [ ] T026 Implémenter `internal/catalog/schema.go` et `internal/catalog/loader.go` :
+- [X] T026 Implémenter `internal/catalog/schema.go` et `internal/catalog/loader.go` :
   - types `CatalogEntry`, `Fix`, `ConceptRef`, `Deepening`, `AntiPatternNote` (data-model.md) ;
   - chargement par `go:embed data/*.yaml` avec `yaml.v3` en mode `KnownFields(true)` ;
   - validation au chargement :
@@ -140,8 +140,8 @@ d'abord échouer.
     - `Deepen` obligatoire ;
     - `DocURL` préfixé par `https://docs.docker.com/` ;
     - `Tests` ≥ 1.
-- [ ] T027 Écrire `internal/catalog/catalog_test.go` : charge le catalogue embarqué et vérifie toutes les règles de T026. Pour chaque entrée, chaque fichier listé dans `Tests` doit exister dans `testdata/errors/` et correspondre à au moins un de ses `Patterns`. Contrôle de langue (SC-005) : `Summary`, `Cause` et `Concept.Definition` contiennent au moins un mot-outil français (`le`, `la`, `les`, `de`, `du`, `des`, `un`, `une`, `est`, `pas`) (dépend de T026).
-- [ ] T028 Implémenter `internal/diagnose/diagnose.go` :
+- [X] T027 Écrire `internal/catalog/catalog_test.go` : charge le catalogue embarqué et vérifie toutes les règles de T026. Pour chaque entrée, chaque fichier listé dans `Tests` doit exister dans `testdata/errors/` et correspondre à au moins un de ses `Patterns`. Contrôle de langue (SC-005) : `Summary`, `Cause` et `Concept.Definition` contiennent au moins un mot-outil français (`le`, `la`, `les`, `de`, `du`, `des`, `un`, `une`, `est`, `pas`) (dépend de T026).
+- [X] T028 Implémenter `internal/diagnose/diagnose.go` :
   - types `Diagnosis` (`Confidence` ∈ {`recognized`, `partial`, `unknown`}, `Origin` ∈ {`docker`, `application`, `unknown`}, `Entry`, `Captures`, `ComposeIssues`, `Fingerprint`) ;
   - `func Diagnose(cmd command.Command, exitCode int, stderr string, cat *catalog.Catalog) Diagnosis` : filtre sur `Applies` et `ExitCodes`, première entrée dont un motif correspond, groupes nommés extraits puis masqués ;
   - repli `unknown` sans cause (FR-008) ;
@@ -149,7 +149,7 @@ d'abord échouer.
 
   Ajouter des tests dans `internal/diagnose/diagnose_test.go` (dépend de T022 et T026).
 - [X] T029 [P] Implémenter `internal/state/state.go` : type `LastDiagnosis` (`SchemaVersion`, `Fingerprint`, `EntryID`, `Captures` déjà masquées, `RecordedAt`), `Load`, `Save` (écriture atomique, droits `0600`), `IsRepeat(fp string, now time.Time) bool` sur une fenêtre de 10 minutes. Faire passer T016.
-- [ ] T030 Implémenter `internal/render/explanation.go` :
+- [X] T030 Implémenter `internal/render/explanation.go` :
   - `func RenderExplanation(w io.Writer, d diagnose.Diagnosis, original string, opts Options)` ;
   - blocs dans l'ordre de l'exemple de `contracts/cli.md` : résumé, concept et définition, cause, corrections numérotées avec commande colorée par `Highlight`, anti-pattern éventuel, message Docker d'origine **atténué avec les fragments reconnus (captures : port, image, clé, chemin) surlignés en couleur** (FR-007, clarification du 2026-10-14), indication `➜ Pour aller plus loin : docker telemach deepen` ;
   - bloc « Erreur non reconnue » sans cause, avec lien vers la documentation (FR-008) ;
@@ -168,8 +168,8 @@ d'abord échouer.
   - à l'évaluation, lecture unique de la version par `__telemach_docker_version=$(command docker --version 2>/dev/null | sed -n 's/^Docker version \([^,]*\),.*/\1/p')`, puis transmission par `--docker-version "$__telemach_docker_version"` si elle n'est pas vide (FR-001b).
 
   Implémenter `internal/shellinit/shellinit.go` (`go:embed`, `func Script(shell string) (string, error)`, erreur en français si le shell n'est pas pris en charge). Faire passer T017.
-- [ ] T033 Implémenter `cmd/docker-telemach/main.go` : racine cobra `docker-telemach` avec les options globales `--color` (`auto`|`always`|`never`) et `--width` (entier ≥ 40). Brancher les sous-commandes `docker-cli-plugin-metadata` et `shell-init` (`cmd/docker-telemach/shellinit.go`, écriture sur stdout, code `2` si le shell est inconnu). Messages d'aide et d'erreur en français.
-- [ ] T034 Implémenter `cmd/docker-telemach/explain.go` selon `contracts/cli.md` § explain :
+- [X] T033 Implémenter `cmd/docker-telemach/main.go` : racine cobra `docker-telemach` avec les options globales `--color` (`auto`|`always`|`never`) et `--width` (entier ≥ 40). Brancher les sous-commandes `docker-cli-plugin-metadata` et `shell-init` (`cmd/docker-telemach/shellinit.go`, écriture sur stdout, code `2` si le shell est inconnu). Messages d'aide et d'erreur en français.
+- [X] T034 Implémenter `cmd/docker-telemach/explain.go` selon `contracts/cli.md` § explain :
   - options `--exit-code` (obligatoire, 1 à 255), `--stderr-file`, `--interactive`, `--docker-version` (format `^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$`, ignorée si invalide), `-- <args>` ;
   - en mode `--interactive`, diagnostic fondé sur le seul code de sortie, sinon « non reconnue » ;
   - version détectée mentionnée dans le bloc « Erreur non reconnue » ;

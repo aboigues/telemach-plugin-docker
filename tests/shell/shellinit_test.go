@@ -288,3 +288,20 @@ func TestUnsupportedShell(t *testing.T) {
 		t.Errorf("erreur en français attendue pour fish, obtenu %v", err)
 	}
 }
+
+// Les commandes « docker telemach … » ne sont jamais expliquées par TELEMACH.
+func TestTelemachSubcommandNotExplained(t *testing.T) {
+	forEachShell(t, func(t *testing.T, shell string) {
+		e := setup(t, true)
+		stdout, _, err := run(t, shell, e, []string{"FAKE_RC=1"}, `docker telemach check; echo "rc=$?"`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if stdout != "STDOUT-LINE\nrc=1\n" {
+			t.Errorf("stdout : %q", stdout)
+		}
+		if strings.Contains(readLog(t, e), "telemach explain") {
+			t.Error("explain ne doit pas être appelé pour docker telemach")
+		}
+	})
+}
