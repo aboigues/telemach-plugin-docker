@@ -60,7 +60,7 @@ d'abord échouer.
   - relecture de `LESSON-LEARNED.md` ;
   - gates requises ;
   - liste des checks déclarés « required » dans la protection de la branche `main` (`lint`, `test`, `vuln`, `secrets`, `dependency-review`, `dockerfile-lint`) et rappel des règles appliquées par la tâche T010 (pas de push direct, pas de contournement administrateur).
-- [ ] T010 Protéger la branche `main` du dépôt **public** `https://github.com/aboigues/telemach-plugin-docker` (principe IV). Le dépôt existe déjà et est vide ; `gh` est authentifié en tant que `aboigues`. Dépend de T001 et T005. **Action visible de l'extérieur : demander confirmation à l'utilisateur avant chaque étape.**
+- [X] T010 Protéger la branche `main` du dépôt **public** `https://github.com/aboigues/telemach-plugin-docker` (principe IV). Le dépôt existe déjà et est vide ; `gh` est authentifié en tant que `aboigues`. Dépend de T001 et T005. **Action visible de l'extérieur : demander confirmation à l'utilisateur avant chaque étape.**
   1. Ajouter le remote : `git remote add origin https://github.com/aboigues/telemach-plugin-docker.git`, puis pousser `main` (`git push -u origin main`).
   2. Créer `.github/branch-protection.json` avec :
      - `required_status_checks` : `strict: true`, contextes `lint`, `test`, `vuln`, `secrets`, `dependency-review`, `dockerfile-lint` ;
