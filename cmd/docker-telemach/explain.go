@@ -10,6 +10,7 @@ import (
 
 	"github.com/aboigues/telemach-plugin-docker/internal/catalog"
 	"github.com/aboigues/telemach-plugin-docker/internal/command"
+	"github.com/aboigues/telemach-plugin-docker/internal/compose"
 	"github.com/aboigues/telemach-plugin-docker/internal/diagnose"
 	"github.com/aboigues/telemach-plugin-docker/internal/redact"
 	"github.com/aboigues/telemach-plugin-docker/internal/render"
@@ -73,11 +74,6 @@ func (a *app) explain(f explainFlags, args []string) error {
 
 	now := a.now()
 	repeated := a.store.IsRepeat(d.Fingerprint, now)
-	entryID := ""
-	if d.Entry != nil {
-		entryID = d.Entry.ID
-	}
-	_ = a.store.Save(state.LastDiagnosis{Fingerprint: d.Fingerprint, EntryID: entryID, Captures: d.Captures, RecordedAt: now})
 
 	dockerVersion := ""
 	if versionPattern.MatchString(f.dockerVersion) {
@@ -88,16 +84,55 @@ func (a *app) explain(f explainFlags, args []string) error {
 		Theme: theme, Width: width, DockerVersion: dockerVersion, Repeated: repeated,
 		Interactive: in.Interactive, ExitCode: f.exitCode,
 	}
-	if err := a.renderDiagnosis(w, in, d, stderr, opts); err != nil {
+	entryID, err := a.renderDiagnosis(w, in, d, stderr, opts)
+	if err != nil {
 		return err
 	}
+	_ = a.store.Save(state.LastDiagnosis{Fingerprint: d.Fingerprint, EntryID: entryID, Captures: d.Captures, RecordedAt: now})
 	return nil
 }
 
-// renderDiagnosis affiche le diagnostic ; il est complété pour Docker Compose (US2).
-func (a *app) renderDiagnosis(w io.Writer, _ diagnose.Input, d diagnose.Diagnosis, stderr string, opts render.Options) error {
+// renderDiagnosis affiche le diagnostic. Pour docker compose, les fichiers Compose sont
+// d'abord analysés : un problème bloquant y est montré à la place de l'explication
+// générique ; les simples remarques (variables, secrets) sont ajoutées après.
+// Elle renvoie l'identifiant de l'entrée expliquée, mémorisé pour « deepen ».
+func (a *app) renderDiagnosis(w io.Writer, in diagnose.Input, d diagnose.Diagnosis, stderr string, opts render.Options) (string, error) {
+	entryID := ""
+	if d.Entry != nil {
+		entryID = d.Entry.ID
+	}
 	fmt.Fprintln(w)
-	return render.RenderExplanation(w, d, stderr, opts)
+	if in.Command.Family != command.FamilyCompose {
+		return entryID, render.RenderExplanation(w, d, stderr, opts)
+	}
+	dir := in.Command.Flags["project-directory"]
+	if dir == "" {
+		if wd, err := a.getwd(); err == nil {
+			dir = wd
+		}
+	}
+	issues := compose.Analyze(dir, in.Command.ComposeFiles)
+	cat, _ := catalog.Default()
+	if blocking(issues) {
+		return "compose." + string(issues[0].Kind), compose.RenderIssues(w, dir, nil, issues, cat, opts)
+	}
+	if err := render.RenderExplanation(w, d, stderr, opts); err != nil {
+		return entryID, err
+	}
+	if len(issues) > 0 {
+		fmt.Fprintln(w)
+		return entryID, compose.RenderIssues(w, dir, nil, issues, cat, opts)
+	}
+	return entryID, nil
+}
+
+func blocking(issues []compose.Issue) bool {
+	for _, is := range issues {
+		if is.Blocking {
+			return true
+		}
+	}
+	return false
 }
 
 // readTail lit au plus limit octets, en gardant la fin du fichier, sans le modifier.

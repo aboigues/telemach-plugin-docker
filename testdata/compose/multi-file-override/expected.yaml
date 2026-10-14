@@ -1,0 +1,7 @@
+kind: "unknown-key"
+file: "compose.override.yaml"
+line: 3
+column: 5
+service: "web"
+key_path: "services.web.port"
+suggestion: "ports"

@@ -96,6 +96,14 @@ func TestEmbeddedCatalog(t *testing.T) {
 	}
 	for _, e := range c.Entries {
 		for _, name := range e.Tests {
+			if e.Fallback == "compose-issue" {
+				// Pédagogie d'un problème détecté par l'analyseur Compose : le cas de test
+				// est un dossier de testdata/compose/.
+				if _, err := os.Stat(filepath.Join("..", "..", "testdata", "compose", name, "expected.yaml")); err != nil {
+					t.Errorf("%s : cas Compose introuvable : %v", e.ID, err)
+				}
+				continue
+			}
 			path := filepath.Join("..", "..", "testdata", "errors", name+".stderr.txt")
 			data, err := os.ReadFile(path)
 			if err != nil {

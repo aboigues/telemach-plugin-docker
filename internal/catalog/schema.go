@@ -18,7 +18,7 @@ type Entry struct {
 	Category    Category         `yaml:"category"`
 	Applies     []string         `yaml:"applies"`
 	ExitCodes   []int            `yaml:"exit_codes"`
-	Fallback    string           `yaml:"fallback"` // « application » : entrée de repli pour cette origine
+	Fallback    string           `yaml:"fallback"` // « application » : repli pour cette origine ; « compose-issue » : pédagogie d'un problème Compose
 	Patterns    []string         `yaml:"patterns"`
 	Concept     ConceptRef       `yaml:"concept"`
 	Summary     string           `yaml:"summary"`

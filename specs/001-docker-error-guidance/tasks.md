@@ -255,7 +255,7 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T051 [P] [US2] Constituer `testdata/compose/` : au moins 20 répertoires, chacun avec son `compose.yaml` (ou ses fichiers multiples) et un `expected.yaml` (`kind`, `file`, `line`, `column`, `service`, `key_path`, `suggestion`). Cas obligatoires :
+- [X] T051 [P] [US2] Constituer `testdata/compose/` : au moins 20 répertoires, chacun avec son `compose.yaml` (ou ses fichiers multiples) et un `expected.yaml` (`kind`, `file`, `line`, `column`, `service`, `key_path`, `suggestion`). Cas obligatoires :
   - **Syntaxe YAML** :
     - `tab-indent` ;
     - `missing-colon` ;
@@ -284,18 +284,18 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
     - `unreadable-encoding` (fichier en UTF-16 ou en Latin-1 avec des octets invalides → `file-unreadable`) ;
     - `unreadable-permissions` (fichier en `0000`, créé par le test lui-même dans un répertoire temporaire, car git ne conserve pas ces droits → `file-unreadable`) ;
     - `valid` (aucun problème).
-- [ ] T052 [P] [US2] Écrire `internal/compose/corpus_test.go`. Il analyse chaque cas, compare les `ComposeIssue` à `expected.yaml` et calcule le taux de localisation exacte (ligne et clé) : échec si < 90 % (SC-002). Il vérifie aussi qu'aucune valeur de `plaintext-password` n'apparaît dans les `Excerpt` (SC-006).
-- [ ] T053 [P] [US2] Écrire `internal/compose/readonly_test.go` : après analyse, le hash SHA-256 et la date de modification de chaque fichier du cas sont inchangés, et aucun nouveau fichier n'existe dans le répertoire (FR-018)
-- [ ] T054 [P] [US2] Écrire `cmd/docker-telemach/check_test.go`, qui couvre les codes de sortie de `contracts/cli.md` § check :
+- [X] T052 [P] [US2] Écrire `internal/compose/corpus_test.go`. Il analyse chaque cas, compare les `ComposeIssue` à `expected.yaml` et calcule le taux de localisation exacte (ligne et clé) : échec si < 90 % (SC-002). Il vérifie aussi qu'aucune valeur de `plaintext-password` n'apparaît dans les `Excerpt` (SC-006).
+- [X] T053 [P] [US2] Écrire `internal/compose/readonly_test.go` : après analyse, le hash SHA-256 et la date de modification de chaque fichier du cas sont inchangés, et aucun nouveau fichier n'existe dans le répertoire (FR-018)
+- [X] T054 [P] [US2] Écrire `cmd/docker-telemach/check_test.go`, qui couvre les codes de sortie de `contracts/cli.md` § check :
   - `0` pour `valid` ;
   - `1` pour `tab-indent` ;
   - `2` pour `empty-dir`, avec l'explication des noms de fichiers recherchés ;
   - `-f` multiples, chaque problème indiquant son fichier d'origine.
-- [ ] T055 [P] [US2] Écrire `tests/integration/compose_test.go` (`//go:build integration`) : scénario V6 (`docker compose up` sur `tab-indent` et `unknown-key-port` via la fonction shell → ligne exacte et correction affichées)
+- [X] T055 [P] [US2] Écrire `tests/integration/compose_test.go` (`//go:build integration`) : scénario V6 (`docker compose up` sur `tab-indent` et `unknown-key-port` via la fonction shell → ligne exacte et correction affichées)
 
 ### Implementation for User Story 2
 
-- [ ] T056 [P] [US2] Implémenter `internal/compose/issue.go`. Type `ComposeIssue` (data-model.md) :
+- [X] T056 [P] [US2] Implémenter `internal/compose/issue.go`. Type `ComposeIssue` (data-model.md) :
   - `Kind` ∈ {`yaml-syntax`, `tab-indent`, `unknown-key`, `wrong-type`, `undefined-reference`, `dependency-cycle`, `unresolved-variable`, `plaintext-secret`, `file-not-found`, `file-unreadable`} ;
   - `File` ;
   - `Line` et `Column` (à partir de 1, 0 si inconnus) ;
@@ -304,25 +304,25 @@ Règle commune aux tâches de catalogue T039 à T045, appliquée à chaque entr�
   - `Blocking`.
 
   Ajouter `func Sort(issues []ComposeIssue)` : bloquants d'abord, puis par fichier, puis par ligne.
-- [ ] T057 [P] [US2] Implémenter `internal/compose/locate.go` : `func Locate(dir string, files []string) ([]string, error)`, avec recherche par défaut dans l'ordre `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml`. Si aucun fichier n'est trouvé, renvoyer une erreur typée qui produit une `ComposeIssue` `file-not-found`. Si le fichier existe mais n'est pas lisible (droits) ou n'est pas en UTF-8 valide, produire une `ComposeIssue` `file-unreadable` (bloquante) qui explique la cause. Ouverture **en lecture seule** uniquement.
-- [ ] T058 [US2] Implémenter `internal/compose/syntax.go`. Première passe avec `go.yaml.in/yaml/v3` (API `Node`) :
+- [X] T057 [P] [US2] Implémenter `internal/compose/locate.go` : `func Locate(dir string, files []string) ([]string, error)`, avec recherche par défaut dans l'ordre `compose.yaml`, `compose.yml`, `docker-compose.yaml`, `docker-compose.yml`. Si aucun fichier n'est trouvé, renvoyer une erreur typée qui produit une `ComposeIssue` `file-not-found`. Si le fichier existe mais n'est pas lisible (droits) ou n'est pas en UTF-8 valide, produire une `ComposeIssue` `file-unreadable` (bloquante) qui explique la cause. Ouverture **en lecture seule** uniquement.
+- [X] T058 [US2] Implémenter `internal/compose/syntax.go`. Première passe avec `go.yaml.in/yaml/v3` (API `Node`) :
   - détection des tabulations d'indentation, avec la ligne exacte ;
   - erreurs de syntaxe YAML, ligne et colonne extraites du message ;
   - clés dupliquées ;
   - construction d'un index `KeyPath` → (ligne, colonne), réutilisé par les passes suivantes.
 
   Dépend de T056.
-- [ ] T059 [US2] Implémenter `internal/compose/keys.go` : extraire la liste des clés autorisées à chaque niveau (racine, `services.*`, `networks.*`, `volumes.*`, `secrets.*`, `configs.*`) du schéma JSON embarqué par compose-go v2.16.1. Détecter les clés inconnues avec une suggestion via `textdist.Closest` (distance ≤ 2), en utilisant l'index de T058.
-- [ ] T060 [US2] Implémenter `internal/compose/semantic.go`. Seconde passe avec le chargeur `compose-go/v2` :
+- [X] T059 [US2] Implémenter `internal/compose/keys.go` : extraire la liste des clés autorisées à chaque niveau (racine, `services.*`, `networks.*`, `volumes.*`, `secrets.*`, `configs.*`) du schéma JSON embarqué par compose-go v2.16.1. Détecter les clés inconnues avec une suggestion via `textdist.Closest` (distance ≤ 2), en utilisant l'index de T058.
+- [X] T060 [US2] Implémenter `internal/compose/semantic.go`. Seconde passe avec le chargeur `compose-go/v2` :
   - aucun accès réseau, aucune résolution de chemins distants ;
   - interpolation par une fonction de recherche qui ne fait que noter si chaque variable est **définie** (environnement ou `.env`), sans jamais en conserver la valeur ;
   - conversion des erreurs (types incorrects, références non déclarées, cycles `depends_on`, service sans `image` ni `build`, variables non résolues) en `ComposeIssue`, positionnées grâce à l'index de T058.
-- [ ] T061 [US2] Implémenter `internal/compose/secrets.go` : signaler les `plaintext-secret` (nom de variable sensible avec une valeur littérale, selon les règles de R7) avec `Suggestion` = `.env` non versionné ou `secrets:`. Faire passer tous les `Excerpt` et `Fixed` par `redact`.
-- [ ] T062 [US2] Implémenter `internal/compose/excerpt.go` (3 lignes de contexte autour de l'erreur et version corrigée par type de problème : remplacer les tabulations par des espaces, renommer la clé suggérée, ajouter le service manquant en commentaire…) et `internal/compose/analyze.go` (`func Analyze(files []string) []ComposeIssue`, qui enchaîne locate → syntax → keys → semantic → secrets → Sort ; si un problème bloquant est trouvé, les passes suivantes ne sont pas lancées)
-- [ ] T063 [P] [US2] Rédiger `internal/catalog/data/compose.yaml`, une entrée pédagogique par `Kind` : `compose.yaml-syntax`, `compose.tab-indent`, `compose.unknown-key`, `compose.wrong-type`, `compose.undefined-reference`, `compose.dependency-cycle` (rôle de `depends_on`), `compose.plaintext-secret` (avec `AntiPattern`), `compose.file-not-found`, `compose.file-unreadable` (droits et encodage UTF-8), `compose.unresolved-variable`, `compose.no-project` (`ps`, `logs`, `down` hors d'un projet : rôle du nom de projet et du répertoire courant). Chaque entrée a un concept, une cause, des corrections et un `Deepen`, et ses `Tests` pointent vers des sorties `docker compose` réelles ajoutées à `testdata/errors/compose-*.stderr.txt`.
-- [ ] T064 [US2] Implémenter `internal/render/compose.go`. Pour chaque `ComposeIssue` : en-tête `fichier:ligne:colonne`, service et clé ; extrait YAML coloré par `HighlightLines` (ligne fautive surlignée, marqueur de colonne) ; bloc pédagogique tiré de `compose.<kind>` ; version corrigée colorée. Afficher `✔ Aucun problème détecté dans <fichier>` s'il n'y a aucun problème. Ajouter des golden files dans `testdata/golden/us2/` (sans couleur et avec couleur).
-- [ ] T065 [US2] Brancher la famille `compose` dans `cmd/docker-telemach/explain.go` : si `cmd.Family == compose`, appeler `compose.Analyze(cmd.ComposeFiles)` et afficher les problèmes trouvés. Si aucun n'est trouvé, revenir au diagnostic par catalogue.
-- [ ] T066 [US2] Implémenter `cmd/docker-telemach/check.go` : `docker telemach check [-f <fichier>]... [<répertoire>]`. Codes de sortie `0` (aucun problème), `1` (au moins un problème), `2` (usage invalide ou fichier introuvable). Lecture seule stricte. Sortie colorée selon `render.ResolveColor` (FR-007a). Faire passer T052 à T054.
+- [X] T061 [US2] Implémenter `internal/compose/secrets.go` : signaler les `plaintext-secret` (nom de variable sensible avec une valeur littérale, selon les règles de R7) avec `Suggestion` = `.env` non versionné ou `secrets:`. Faire passer tous les `Excerpt` et `Fixed` par `redact`.
+- [X] T062 [US2] Implémenter `internal/compose/excerpt.go` (3 lignes de contexte autour de l'erreur et version corrigée par type de problème : remplacer les tabulations par des espaces, renommer la clé suggérée, ajouter le service manquant en commentaire…) et `internal/compose/analyze.go` (`func Analyze(files []string) []ComposeIssue`, qui enchaîne locate → syntax → keys → semantic → secrets → Sort ; si un problème bloquant est trouvé, les passes suivantes ne sont pas lancées)
+- [X] T063 [P] [US2] Rédiger `internal/catalog/data/compose.yaml`, une entrée pédagogique par `Kind` : `compose.yaml-syntax`, `compose.tab-indent`, `compose.unknown-key`, `compose.wrong-type`, `compose.undefined-reference`, `compose.dependency-cycle` (rôle de `depends_on`), `compose.plaintext-secret` (avec `AntiPattern`), `compose.file-not-found`, `compose.file-unreadable` (droits et encodage UTF-8), `compose.unresolved-variable`, `compose.no-project` (`ps`, `logs`, `down` hors d'un projet : rôle du nom de projet et du répertoire courant). Chaque entrée a un concept, une cause, des corrections et un `Deepen`, et ses `Tests` pointent vers des sorties `docker compose` réelles ajoutées à `testdata/errors/compose-*.stderr.txt`.
+- [X] T064 [US2] Implémenter `internal/render/compose.go`. Pour chaque `ComposeIssue` : en-tête `fichier:ligne:colonne`, service et clé ; extrait YAML coloré par `HighlightLines` (ligne fautive surlignée, marqueur de colonne) ; bloc pédagogique tiré de `compose.<kind>` ; version corrigée colorée. Afficher `✔ Aucun problème détecté dans <fichier>` s'il n'y a aucun problème. Ajouter des golden files dans `testdata/golden/us2/` (sans couleur et avec couleur).
+- [X] T065 [US2] Brancher la famille `compose` dans `cmd/docker-telemach/explain.go` : si `cmd.Family == compose`, appeler `compose.Analyze(cmd.ComposeFiles)` et afficher les problèmes trouvés. Si aucun n'est trouvé, revenir au diagnostic par catalogue.
+- [X] T066 [US2] Implémenter `cmd/docker-telemach/check.go` : `docker telemach check [-f <fichier>]... [<répertoire>]`. Codes de sortie `0` (aucun problème), `1` (au moins un problème), `2` (usage invalide ou fichier introuvable). Lecture seule stricte. Sortie colorée selon `render.ResolveColor` (FR-007a). Faire passer T052 à T054.
 
 **Checkpoint**: les scénarios V6 à V8 du quickstart passent ; SC-002 ≥ 90 % ; les User Stories 1 et 2 fonctionnent indépendamment.
 

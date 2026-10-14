@@ -1,0 +1,3 @@
+services:
+  web:
+    image: "nginx:${TELEMACH_TEST_TAG}"

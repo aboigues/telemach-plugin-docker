@@ -1,0 +1,7 @@
+kind: "wrong-type"
+file: "compose.yaml"
+line: 4
+column: 5
+service: "web"
+key_path: "services.web.depends_on"
+suggestion: ""

@@ -1,0 +1,24 @@
+✖ Problème 1/1 — compose.yaml:3:1
+   tabulation (→) dans l'indentation
+
+     1 │ services:
+     2 │   web:
+   ➤ 3 │ →image: nginx:1.29-alpine
+         ^
+
+   💡 Version corrigée
+     3 │     image: nginx:1.29-alpine
+
+📘 Concept — YAML indentation
+   En YAML, l'indentation (les espaces en début de ligne) indique qui contient
+   quoi. Elle doit être faite avec des espaces, jamais avec des tabulations.
+
+🔎 Cause probable
+   L'éditeur a inséré une tabulation (affichée « → ») au lieu d'espaces en début
+   de ligne.
+
+💡 Corrections
+   1. Remplacer la tabulation par des espaces (2 par niveau, comme le reste du fichier).
+   2. Configurer ton éditeur pour insérer des espaces dans les fichiers YAML.
+
+➜ Pour aller plus loin : docker telemach deepen

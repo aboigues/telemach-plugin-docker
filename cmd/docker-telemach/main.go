@@ -29,6 +29,7 @@ type app struct {
 	stdout, stderr io.Writer
 	getenv         func(string) string
 	now            func() time.Time
+	getwd          func() (string, error)
 	store          state.Store
 
 	colorFlag string
@@ -41,6 +42,7 @@ func newApp() *app {
 		stderr: os.Stderr,
 		getenv: os.Getenv,
 		now:    time.Now,
+		getwd:  os.Getwd,
 		store:  state.Store{Dir: state.DefaultDir(os.Getenv)},
 	}
 }
@@ -122,6 +124,11 @@ Options globales :
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
 `)
 	root.Flags().BoolP("help", "h", false, "affiche l'aide")
+}
+
+// renderOptions construit les options de rendu communes.
+func (a *app) renderOptions(theme render.Theme, width int) render.Options {
+	return render.Options{Theme: theme, Width: width}
 }
 
 // output prépare le thème et l'écrivain coloré pour w.

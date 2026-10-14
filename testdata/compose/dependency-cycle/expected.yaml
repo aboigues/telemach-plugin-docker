@@ -1,0 +1,7 @@
+kind: "dependency-cycle"
+file: "compose.yaml"
+line: 4
+column: 5
+service: "api"
+key_path: "services.api.depends_on"
+suggestion: ""

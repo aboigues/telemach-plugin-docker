@@ -185,3 +185,6 @@ func wrapRest(text string, width int, prefix string) string {
 	}
 	return strings.Join(lines, "\n"+prefix)
 }
+
+// Wrap coupe un paragraphe à la largeur donnée, chaque ligne étant précédée de prefix.
+func Wrap(text string, width int, prefix string) string { return wrap(text, max(width, 40), prefix) }

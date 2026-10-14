@@ -1,0 +1,27 @@
+[1;38;2;255;122;122m✖ Problème 1/1 — compose.yaml:4:5[m
+   [2;38;2;138;143;152mservice « web », clé « services.web.port »[m
+   la clé « port » n'existe pas à cet endroit — tu voulais sans doute écrire « ports »
+
+     [2;38;2;138;143;152m1 │ [m[38;2;249;38;114mservices[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+     [2;38;2;138;143;152m2 │ [m[38;2;248;248;242m  [0m[38;2;249;38;114mweb[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+     [2;38;2;138;143;152m3 │ [m[38;2;248;248;242m    [0m[38;2;249;38;114mimage[0m[38;2;248;248;242m:[0m[38;2;248;248;242m [0m[38;2;174;129;255mnginx:1.29-alpine[0m[38;2;248;248;242m[0m
+   [1;38;2;255;122;122m➤ [m[1;38;2;255;122;122m4 │ [m[38;2;248;248;242m    [0m[38;2;249;38;114mport[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+             [1;38;2;255;122;122m^[m
+     [2;38;2;138;143;152m5 │ [m[38;2;248;248;242m      [0m[38;2;248;248;242m- [0m[38;2;230;219;116m"8080:80"[0m
+
+   [1;38;2;158;206;106m💡 Version corrigée[m
+     [2;38;2;138;143;152m4 │ [m[38;2;248;248;242m    [0m[38;2;174;129;255mports:[0m
+
+[1;38;2;122;162;247m📘 Concept — Compose specification[m
+   La spécification Compose fixe la liste des clés autorisées à chaque niveau
+   (services, networks, volumes…). Une clé inconnue est refusée.
+
+[1;38;2;224;175;104m🔎 Cause probable[m
+   La clé est mal orthographiée (par exemple « port » au lieu de « ports ») ou
+   placée au mauvais niveau d'indentation.
+
+[1;38;2;158;206;106m💡 Corrections[m
+   1. Remplacer la clé par la clé proposée.
+   2. Consulter la référence pour vérifier le nom et l'emplacement de la clé.
+
+[3;38;2;125;207;255m➜ Pour aller plus loin : docker telemach deepen[m

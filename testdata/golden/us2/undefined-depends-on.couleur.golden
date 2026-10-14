@@ -1,0 +1,24 @@
+[1;38;2;255;122;122m✖ Problème 1/1 — compose.yaml:4:5[m
+   [2;38;2;138;143;152mservice « web », clé « services.web.depends_on »[m
+   le service « db » n'est pas déclaré
+
+     [2;38;2;138;143;152m1 │ [m[38;2;249;38;114mservices[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+     [2;38;2;138;143;152m2 │ [m[38;2;248;248;242m  [0m[38;2;249;38;114mweb[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+     [2;38;2;138;143;152m3 │ [m[38;2;248;248;242m    [0m[38;2;249;38;114mimage[0m[38;2;248;248;242m:[0m[38;2;248;248;242m [0m[38;2;174;129;255mnginx:1.29-alpine[0m[38;2;248;248;242m[0m
+   [1;38;2;255;122;122m➤ [m[1;38;2;255;122;122m4 │ [m[38;2;248;248;242m    [0m[38;2;249;38;114mdepends_on[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+             [1;38;2;255;122;122m^[m
+     [2;38;2;138;143;152m5 │ [m[38;2;248;248;242m      [0m[38;2;248;248;242m- [0m[38;2;174;129;255mdb[0m
+
+[1;38;2;122;162;247m📘 Concept — top-level elements[m
+   Les réseaux, volumes nommés, secrets et services utilisés par un service
+   doivent être déclarés dans leur section de premier niveau (networks:,
+   volumes:, services:…).
+
+[1;38;2;224;175;104m🔎 Cause probable[m
+   Un service utilise un réseau, un volume nommé ou un autre service qui n'est
+   déclaré nulle part, ou dont le nom est mal orthographié.
+
+[1;38;2;158;206;106m💡 Corrections[m
+   1. Déclarer l'élément manquant dans sa section de premier niveau, ou corriger son nom.
+
+[3;38;2;125;207;255m➜ Pour aller plus loin : docker telemach deepen[m

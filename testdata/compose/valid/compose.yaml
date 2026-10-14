@@ -1,0 +1,9 @@
+services:
+  web:
+    image: nginxinc/nginx-unprivileged:1.29-alpine
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cache
+  cache:
+    image: redis:8-alpine

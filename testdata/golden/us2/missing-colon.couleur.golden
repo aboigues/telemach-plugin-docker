@@ -1,0 +1,24 @@
+[1;38;2;255;122;122m✖ Problème 1/1 — compose.yaml:2[m
+   il manque « : » après « web »
+
+     [2;38;2;138;143;152m1 │ [m[38;2;249;38;114mservices[0m[38;2;248;248;242m:[0m[38;2;248;248;242m[0m
+   [1;38;2;255;122;122m➤ [m[1;38;2;255;122;122m2 │ [m[38;2;248;248;242m  [0m[38;2;174;129;255mweb[0m[38;2;248;248;242m[0m
+     [2;38;2;138;143;152m3 │ [m[38;2;248;248;242m    [0m[38;2;249;38;114mimage[0m[38;2;248;248;242m:[0m[38;2;248;248;242m [0m[38;2;174;129;255mnginx:1.29-alpine[0m
+
+   [1;38;2;158;206;106m💡 Version corrigée[m
+     [2;38;2;138;143;152m2 │ [m[38;2;248;248;242m  [0m[38;2;174;129;255mweb:[0m
+
+[1;38;2;122;162;247m📘 Concept — YAML syntax[m
+   Un fichier Compose est écrit en YAML : des paires « clé: valeur », des listes
+   dont les éléments commencent par « - », et une indentation régulière.
+
+[1;38;2;224;175;104m🔎 Cause probable[m
+   Une ligne ne respecte pas la syntaxe YAML : « : » oublié après une clé,
+   indentation irrégulière, ou clé écrite deux fois.
+
+[1;38;2;158;206;106m💡 Corrections[m
+   1. Corriger la ligne indiquée en t'aidant de la version corrigée proposée.
+   2. Vérifier le fichier complet avec Docker Compose.
+      [38;2;248;248;242mdocker compose config --quiet[0m
+
+[3;38;2;125;207;255m➜ Pour aller plus loin : docker telemach deepen[m

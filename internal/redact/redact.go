@@ -41,19 +41,36 @@ func redactText(s string) string {
 	s = knownTokens.ReplaceAllString(s, Mask)
 	s = authorization.ReplaceAllString(s, "${1}"+Mask)
 	s = urlCredentials.ReplaceAllString(s, "${1}"+Mask+"${3}")
-	s = quotedYAML.ReplaceAllString(s, "${1}${2}"+Mask+"${3}")
+	s = quotedYAML.ReplaceAllStringFunc(s, func(m string) string {
+		sub := quotedYAML.FindStringSubmatch(m)
+		inner := strings.TrimSuffix(strings.TrimPrefix(m[len(sub[1]):], sub[2]), sub[3])
+		if isReference(inner) {
+			return m
+		}
+		return sub[1] + sub[2] + Mask + sub[3]
+	})
 	s = plainYAML.ReplaceAllStringFunc(s, func(m string) string {
 		sub := plainYAML.FindStringSubmatch(m)
-		if strings.Contains(sub[2], Mask) {
-			return m // déjà masqué (par exemple par la règle Authorization)
+		if strings.Contains(sub[2], Mask) || isReference(sub[2]) {
+			return m // déjà masqué, ou simple référence à une variable
 		}
 		return sub[1] + Mask
 	})
 	s = assignment.ReplaceAllStringFunc(s, func(m string) string {
 		sub := assignment.FindStringSubmatch(m)
+		if isReference(sub[2]) {
+			return m
+		}
 		return sub[1] + Mask
 	})
 	return passwordFlagEq.ReplaceAllString(s, "${1}"+Mask)
+}
+
+// isReference indique si une valeur n'est qu'une référence à une variable (${NOM} ou
+// $NOM), qui ne révèle aucun secret.
+func isReference(v string) bool {
+	v = strings.Trim(strings.TrimSpace(v), `"'`)
+	return strings.HasPrefix(v, "$") && !strings.HasPrefix(v, "$$")
 }
 
 // redactLoginPassword masque la valeur suivant -p ou --password dans une commande
@@ -116,4 +133,12 @@ func maskPasswordFlags(args []string) []string {
 		}
 	}
 	return out
+}
+
+var sensitiveNameOnly = regexp.MustCompile(`^` + sensitiveName + `$`)
+
+// IsSensitiveName indique si un nom de variable désigne vraisemblablement un secret
+// (PASSWORD, SECRET, TOKEN, KEY, CREDENTIAL, AUTH…, sans distinction de casse).
+func IsSensitiveName(name string) bool {
+	return sensitiveNameOnly.MatchString(name)
 }

@@ -1,0 +1,24 @@
+✖ Problème 1/1 — compose.yaml:4:5
+   service « web », clé « services.web.depends_on »
+   le service « db » n'est pas déclaré
+
+     1 │ services:
+     2 │   web:
+     3 │     image: nginx:1.29-alpine
+   ➤ 4 │     depends_on:
+             ^
+     5 │       - db
+
+📘 Concept — top-level elements
+   Les réseaux, volumes nommés, secrets et services utilisés par un service
+   doivent être déclarés dans leur section de premier niveau (networks:,
+   volumes:, services:…).
+
+🔎 Cause probable
+   Un service utilise un réseau, un volume nommé ou un autre service qui n'est
+   déclaré nulle part, ou dont le nom est mal orthographié.
+
+💡 Corrections
+   1. Déclarer l'élément manquant dans sa section de premier niveau, ou corriger son nom.
+
+➜ Pour aller plus loin : docker telemach deepen

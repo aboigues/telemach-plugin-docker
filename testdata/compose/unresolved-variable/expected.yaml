@@ -1,0 +1,7 @@
+kind: "unresolved-variable"
+file: "compose.yaml"
+line: 3
+column: 12
+service: "web"
+key_path: "services.web.image"
+suggestion: "TELEMACH_TEST_TAG"

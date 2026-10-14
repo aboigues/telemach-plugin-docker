@@ -1,0 +1,7 @@
+kind: "yaml-syntax"
+file: "compose.yaml"
+line: 2
+column: 0
+service: ""
+key_path: ""
+suggestion: "web:"

@@ -1,0 +1,7 @@
+services:
+  web:
+    image: nginx:1.29-alpine
+    depend_on:
+      - db
+  db:
+    image: postgres:18-alpine

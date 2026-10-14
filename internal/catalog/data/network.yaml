@@ -1,7 +1,7 @@
 # Erreurs liées au réseau et à la publication de ports.
 - id: run.port-already-allocated
   category: network
-  applies: [run, create, start]
+  applies: [run, create, start, compose]
   patterns:
     - 'Bind for [0-9a-fA-F.:\[\]]+:(?P<port>\d+) failed: port is already allocated'
     - 'listen tcp[46]? [0-9a-fA-F.:\[\]]*:(?P<port>\d+): bind: address already in use'

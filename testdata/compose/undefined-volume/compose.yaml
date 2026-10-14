@@ -1,0 +1,5 @@
+services:
+  db:
+    image: postgres:18-alpine
+    volumes:
+      - donnees:/var/lib/postgresql/data

@@ -1,0 +1,7 @@
+kind: "plaintext-secret"
+file: "compose.yaml"
+line: 5
+column: 7
+service: "db"
+key_path: "services.db.environment.POSTGRES_PASSWORD"
+suggestion: ".env"

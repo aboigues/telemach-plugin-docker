@@ -1,0 +1,7 @@
+kind: "undefined-reference"
+file: "compose.yaml"
+line: 4
+column: 5
+service: "db"
+key_path: "services.db.volumes"
+suggestion: "donnees"
