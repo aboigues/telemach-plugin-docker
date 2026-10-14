@@ -36,6 +36,9 @@ La branche `main` est protégée :
 - checks obligatoires : `lint`, `test`, `vuln`, `secrets`, `dependency-review`,
   `dockerfile-lint`.
 
+**Prérequis du dépôt** : le Dependency graph et les alertes Dependabot doivent être activés
+(Settings › Code security), sans quoi la gate `dependency-review` échoue (voir LL-005).
+
 **Workflow de fusion** : Claude Code commit, pousse et ouvre la pull request ; le mainteneur
 relit la PR puis la fusionne lui-même. Ce clic sur « Merge » vaut validation humaine : aucune
 approbation formelle n'est exigée, GitHub interdisant d'approuver sa propre PR.

@@ -33,6 +33,23 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-005 — Gate dependency-review rouge : Dependency graph désactivé sur le dépôt
+
+- **Date** : 2026-10-14
+- **Catégorie** : CI/gates
+- **Contexte** : première pull request (#1) après la mise en place des gates (T005, T010).
+- **Cause racine** : `actions/dependency-review-action` exige que le Dependency graph soit
+  activé dans les réglages du dépôt ; ce prérequis n'était ni vérifié ni documenté.
+- **Impact** : la gate obligatoire `dependency-review` échouait sans lien avec le code,
+  bloquant la fusion.
+- **Correctif** : activation des alertes Dependabot (et donc du Dependency graph) par
+  `gh api -X PUT repos/aboigues/telemach-plugin-docker/vulnerability-alerts`, puis relance.
+- **Règle préventive** : lors de la création d'une gate CI, vérifier ses prérequis côté
+  dépôt (réglages de sécurité, permissions) et les documenter dans `CONTRIBUTING.md` ; ouvrir
+  une PR de test dès que les gates sont en place, avant d'écrire du code.
+- **Suivi** : non automatisable dans la CI elle-même (réglage du dépôt) ; prérequis ajouté
+  à `CONTRIBUTING.md`.
+
 ### LL-004 — Tags d'images d'exemple choisis de mémoire, sans vérification
 
 - **Date** : 2026-10-14
