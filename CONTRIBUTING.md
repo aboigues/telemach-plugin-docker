@@ -34,7 +34,7 @@ La branche `main` est protégée :
 - fusion uniquement par pull request, historique linéaire, conversations résolues ;
 - aucune exception pour les administrateurs (`enforce_admins`) ;
 - checks obligatoires : `lint`, `test`, `vuln`, `secrets`, `dependency-review`,
-  `dockerfile-lint`.
+  `dockerfile-lint`, `goreleaser-check`, `image-scan`, `build`, `fuzz`, `integration`.
 
 **Prérequis du dépôt** : le Dependency graph et les alertes Dependabot doivent être activés
 (Settings › Code security), sans quoi la gate `dependency-review` échoue (voir LL-005).
