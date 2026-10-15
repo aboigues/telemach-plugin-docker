@@ -157,3 +157,13 @@ func installHelpText(t render.Theme, tag string) string {
 	fmt.Fprintf(&b, "%s\n", indent("-v ~/.docker/cli-plugins:/sortie   dossier de ta machine où copier le plugin (obligatoire)\n--user \"$(id -u):$(id -g)\"          le conteneur écrit avec ton identité\n-e HOST_OS=darwin                  installe le binaire macOS (linux par défaut)", 3))
 	return b.String()
 }
+
+func noComposeText(t render.Theme, tag, dir string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s\n\n", t.Anti(render.SymbolError+" Aucun fichier Compose trouvé dans "+dir+"."))
+	fmt.Fprintf(&b, "%s\n", t.Concept(render.LabelConcept+" — montage (bind mount)"))
+	fmt.Fprintf(&b, "%s\n\n", indent("Le conteneur ne voit que les dossiers montés avec -v. Lance la commande depuis le\ndossier de ton projet (celui qui contient compose.yaml) : -v \"$PWD\":/projet:ro le\nrend visible dans le conteneur, en lecture seule.", 3))
+	fmt.Fprintf(&b, "%s\n", t.Fix("💡 Correction"))
+	fmt.Fprintf(&b, "%s\n", indent("cd chemin/vers/ton/projet\n"+tryCommand(tag), 3))
+	return b.String()
+}

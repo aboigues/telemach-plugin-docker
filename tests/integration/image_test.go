@@ -175,3 +175,76 @@ func TestImageInstall(t *testing.T) {
 		})
 	}
 }
+
+// L'essai sans installation donne la même vérification que le plugin installé (FR-012),
+// sans rien écrire dans le dossier monté en lecture seule.
+func TestImageCheck(t *testing.T) {
+	image := testImage(t)
+	h := newHarness(t)
+	plugin := filepath.Join(h.bin, "docker-telemach")
+
+	for _, name := range []string{"valid", "depends-on-typo"} {
+		t.Run(name, func(t *testing.T) {
+			dir, err := filepath.Abs(filepath.Join("..", "..", "testdata", "compose", name))
+			if err != nil {
+				t.Fatal(err)
+			}
+			host := exec.Command(plugin, "check", "--color=never", dir)
+			var hostErr bytes.Buffer
+			host.Stderr = &hostErr
+			hostCode := exitCode(t, host.Run())
+
+			in := exec.Command("docker", "run", "--rm", "-v", dir+":/projet:ro", image, "check", "--color=never", "/projet")
+			var imgErr bytes.Buffer
+			in.Stderr = &imgErr
+			imgCode := exitCode(t, in.Run())
+
+			if imgCode != hostCode {
+				t.Errorf("code image = %d, plugin installé = %d", imgCode, hostCode)
+			}
+			want := strings.ReplaceAll(hostErr.String(), dir, "/projet")
+			if imgErr.String() != want {
+				t.Errorf("sortie différente.\n--- image ---\n%s\n--- plugin installé ---\n%s", imgErr.String(), want)
+			}
+		})
+	}
+
+	t.Run("dossier sans fichier Compose", func(t *testing.T) {
+		dir := t.TempDir()
+		var errb bytes.Buffer
+		cmd := exec.Command("docker", "run", "--rm", "-v", dir+":/projet:ro", image, "check", "/projet")
+		cmd.Stderr = &errb
+		if code := exitCode(t, cmd.Run()); code != 2 {
+			t.Errorf("code = %d, attendu 2", code)
+		}
+		if !strings.Contains(errb.String(), "Aucun fichier Compose") {
+			t.Errorf("message de l'image attendu :\n%s", errb.String())
+		}
+		if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+			t.Errorf("rien ne doit être écrit : %v", entries)
+		}
+	})
+
+	t.Run("sans argument : /projet par défaut", func(t *testing.T) {
+		dir, _ := filepath.Abs(filepath.Join("..", "..", "testdata", "compose", "valid"))
+		cmd := exec.Command("docker", "run", "--rm", "-v", dir+":/projet:ro", image, "check")
+		var errb bytes.Buffer
+		cmd.Stderr = &errb
+		if code := exitCode(t, cmd.Run()); code != 0 {
+			t.Errorf("code = %d\n%s", code, errb.String())
+		}
+	})
+}
+
+// exitCode convertit l'erreur d'une commande en code de sortie.
+func exitCode(t *testing.T, err error) int {
+	t.Helper()
+	if err == nil {
+		return 0
+	}
+	if ee, ok := err.(*exec.ExitError); ok {
+		return ee.ExitCode()
+	}
+	t.Fatal(err)
+	return -1
+}

@@ -249,6 +249,27 @@ cosign verify telemachlearning/telemach:0.2.0 \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
+#### Essayer sans rien installer
+
+Pour voir ce que TELEMACH dit de ton fichier Compose sans rien installer, lance l'image depuis
+le dossier de ton projet :
+
+```bash
+docker run --rm -t -v "$PWD":/projet:ro telemachlearning/telemach:0.2.0 check /projet
+```
+
+- `-v "$PWD":/projet:ro` monte le dossier courant dans le conteneur, en **lecture seule**
+  (`:ro`) : l'image ne peut rien y modifier ;
+- `-t` alloue un terminal, pour avoir les couleurs.
+
+Les variables d'environnement de ton shell ne sont pas visibles dans le conteneur : si ton
+fichier Compose utilise `${NOM_VARIABLE}`, TELEMACH la signalera comme non définie.
+Transmets-la avec `-e`, par exemple
+`docker run --rm -t -e NOM_VARIABLE -v "$PWD":/projet:ro telemachlearning/telemach:0.2.0 check /projet`.
+
+L'essai ne couvre que la vérification des fichiers Compose : l'explication automatique des
+erreurs de `docker` demande d'installer le plugin.
+
 #### Compiler depuis les sources
 
 Il faut Go 1.27 ou plus récent (la version exacte, 1.27.2, est téléchargée automatiquement

@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -93,5 +95,43 @@ func TestPassThroughFailure(t *testing.T) {
 	}
 	if !strings.Contains(errb.String(), "introuvable") {
 		t.Errorf("cause attendue dans le message :\n%s", errb.String())
+	}
+}
+
+// « check » sur un dossier sans fichier Compose : message propre à l'image, sans lancer le
+// plugin (contracts/image-cli.md).
+func TestCheckPreflight(t *testing.T) {
+	withCompose := t.TempDir()
+	if err := os.WriteFile(filepath.Join(withCompose, "compose.yaml"), []byte("services: {}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	empty := t.TempDir()
+
+	cases := []struct {
+		name     string
+		args     []string
+		wantExec bool
+		wantCode int
+	}{
+		{"dossier inexistant", []string{"check", filepath.Join(empty, "absent")}, false, 2},
+		{"dossier sans fichier Compose", []string{"check", empty}, false, 2},
+		{"options avant le dossier", []string{"check", "--color", "never", empty}, false, 2},
+		{"dossier avec compose.yaml", []string{"check", withCompose}, true, 0},
+		{"fichier explicite -f", []string{"check", "-f", "autre.yaml", empty}, true, 0},
+		{"fichier explicite --file=", []string{"check", "--file=autre.yaml", empty}, true, 0},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			a, _, errb, call := testApp(t)
+			if code := run(a, c.args); code != c.wantCode {
+				t.Errorf("code = %d, attendu %d\n%s", code, c.wantCode, errb.String())
+			}
+			if (call.path != "") != c.wantExec {
+				t.Errorf("plugin exécuté = %v, attendu %v", call.path != "", c.wantExec)
+			}
+			if !c.wantExec && !strings.Contains(errb.String(), "Aucun fichier Compose") {
+				t.Errorf("message de l'image attendu :\n%s", errb.String())
+			}
+		})
 	}
 }
