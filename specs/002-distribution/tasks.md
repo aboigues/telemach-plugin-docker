@@ -229,7 +229,7 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 - [ ] T040 Première Release : après fusion et **confirmation de l'utilisateur**, poser et pousser le tag `v0.2.0` sur `main` (`git tag -a v0.2.0 -m "…" && git push origin v0.2.0` ; `v0.1.0`, antérieur à la chaîne de publication, reste sans Release) ; suivre l'exécution ; vérifier quickstart V1 étapes 1 à 3 (Release, image `0.2.0`, `0.2`, `latest` sur deux architectures, durée < 30 min, SC-004 ; relance refusée) et que l'étape de connexion Docker Hub valide le jeton.
 - [ ] T041 Validation SC-007 sur les plateformes cibles (quickstart V2 à V5) : Linux amd64 (WSL2 de l'utilisateur, Docker Desktop), Linux arm64 si disponible, macOS arm64 (**par l'utilisateur** ; confirmer le point ouvert R7 sur la propriété des fichiers) ; chronométrer l'installation par la Release (< 5 min, SC-001) et `docker run … install` image déjà téléchargée (< 1 min, SC-002) ; reporter les résultats et toute anomalie dans `specs/002-distribution/research.md`.
 - [ ] T042 Vérifications de sécurité post-publication (quickstart V5) : `cosign verify` de l'image, `gh attestation verify` des binaires et de l'image, absence de shell, utilisateur `65532:65532`, taille compressée < 15 Mo par architecture (SC-006), et binaires extraits de l'image identiques à ceux de la Release (sommes de `checksums.txt`, FR-009, quickstart V5).
-- [ ] T043 Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (gate rouge, publication ratée, mauvaise manipulation), avec règle préventive et suivi (principe V).
+- [X] T043 Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (gate rouge, publication ratée, mauvaise manipulation), avec règle préventive et suivi (principe V).
 
 ---
 
