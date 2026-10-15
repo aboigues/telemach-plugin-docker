@@ -93,7 +93,7 @@ func (a *app) explain(f explainFlags, args []string) error {
 		Fingerprint: d.Fingerprint, EntryID: entryID, Captures: d.Captures, RecordedAt: now,
 		Origin: string(d.Origin), Confidence: string(d.Confidence), ExitCode: f.exitCode,
 		Interactive: in.Interactive, DockerVersion: dockerVersion, Stderr: stderr,
-		Family: string(cmd.Family), Subcommand: cmd.Subcommand,
+		Family: string(cmd.Family), Subcommand: cmd.Subcommand, Args: cleanArgs(args),
 	}
 	if d.Entry != nil {
 		last.MatchedEntryID = d.Entry.ID
@@ -176,4 +176,14 @@ func readTail(path string, limit int64) (string, error) {
 	}
 	data, err := io.ReadAll(io.LimitReader(f, limit))
 	return string(data), err
+}
+
+// cleanArgs prépare les arguments pour le disque et l'affichage : séquences de contrôle
+// retirées, secrets masqués.
+func cleanArgs(args []string) []string {
+	out := make([]string, len(args))
+	for i, arg := range args {
+		out[i] = sanitize.Clean(arg)
+	}
+	return redact.RedactArgs(out)
 }

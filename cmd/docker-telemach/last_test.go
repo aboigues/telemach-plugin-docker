@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/aboigues/telemach-plugin-docker/internal/state"
 )
 
 func TestLastWithoutHistory(t *testing.T) {
@@ -41,8 +44,19 @@ func TestLastReprintsFullExplanation(t *testing.T) {
 	if code := run(a, []string{"last", "--color=never"}); code != 0 {
 		t.Fatalf("code = %d", code)
 	}
-	if got := errb.String(); got != full {
-		t.Errorf("last doit reproduire l'explication complète.\n--- explain ---\n%s\n--- last ---\n%s", full, got)
+	got := errb.String()
+	// En-tête : quand et pour quelle commande l'erreur a été enregistrée (issue #7), secret masqué.
+	header, body, _ := strings.Cut(got, "\n")
+	for _, want := range []string{"14/10/2026 à 10:00", "à l'instant", "docker run --rm -e DB_PASSWORD=", "ngnix"} {
+		if !strings.Contains(header, want) {
+			t.Errorf("en-tête sans %q : %q", want, header)
+		}
+	}
+	if strings.Contains(header, "SuperSecret123") {
+		t.Errorf("le secret ne doit pas apparaître dans l'en-tête : %q", header)
+	}
+	if body != full {
+		t.Errorf("last doit reproduire l'explication complète.\n--- explain ---\n%s\n--- last ---\n%s", full, body)
 	}
 
 	data, err := os.ReadFile(filepath.Join(a.store.Dir, "last.json"))
@@ -62,5 +76,48 @@ func TestLastCompose(t *testing.T) {
 	run(a, []string{"last", "--color=never"})
 	if out := errb.String(); !strings.Contains(out, "compose.yaml:3:1") || !strings.Contains(out, "Version corrigée") {
 		t.Errorf("le problème Compose doit être réaffiché :\n%s", out)
+	}
+}
+
+// L'ancienneté de l'erreur réaffichée est visible : une erreur d'hier ne passe pas pour la
+// dernière commande tapée (issue #7).
+func TestLastShowsAge(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	f := writeStderr(t, "docker: Error response from daemon: pull access denied for ngnix, repository does not exist or may require 'docker login'\n")
+	run(a, []string{"explain", "--color=never", "--exit-code", "125", "--stderr-file", f, "--", "run", "ngnix"})
+
+	cases := []struct {
+		after time.Duration
+		want  string
+	}{
+		{30 * time.Second, "à l'instant"},
+		{5 * time.Minute, "il y a 5 min"},
+		{21 * time.Hour, "il y a 21 h"},
+		{3 * 24 * time.Hour, "il y a 3 j"},
+	}
+	for _, c := range cases {
+		a.now = func() time.Time { return time.Date(2026, 10, 14, 10, 0, 0, 0, time.UTC).Add(c.after) }
+		errb.Reset()
+		run(a, []string{"last", "--color=never"})
+		header, _, _ := strings.Cut(errb.String(), "\n")
+		if !strings.Contains(header, c.want) || !strings.Contains(header, "docker run ngnix") {
+			t.Errorf("après %v : en-tête %q, attendu %q et la commande", c.after, header, c.want)
+		}
+	}
+}
+
+// Un fichier d'état antérieur (sans arguments enregistrés) affiche la sous-commande seule.
+func TestLastOldStateWithoutArgs(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	if err := a.store.Save(state.LastDiagnosis{
+		RecordedAt: time.Date(2026, 10, 13, 9, 30, 0, 0, time.UTC), Family: "docker", Subcommand: "run",
+		Stderr: "erreur inventée", Confidence: "unknown", Origin: "docker",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	run(a, []string{"last", "--color=never"})
+	header, _, _ := strings.Cut(errb.String(), "\n")
+	if !strings.Contains(header, "13/10/2026 à 09:30") || !strings.Contains(header, "docker run") {
+		t.Errorf("en-tête inattendu : %q", header)
 	}
 }
