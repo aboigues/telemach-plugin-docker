@@ -1,5 +1,6 @@
 # Binaires
 /docker-telemach
+/telemach-image
 /dist/
 *.exe
 *.test

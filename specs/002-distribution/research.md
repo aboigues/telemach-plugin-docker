@@ -156,6 +156,19 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
   l'image avec `docker/build-push-action` v7.4.0 (`c3c9e263c25d99ce0380d002d59b67737d91b0dc`)
   sur un contexte préparé à partir des binaires de la Release (mêmes sommes, FR-009).
 - **Note** : `dockers_v2` sera renommé `dockers` en GoReleaser v3 (sans date) ; à surveiller.
+- **Résultats de T008 (2026-10-15, GoReleaser v2.18.3, snapshot local)** :
+  (a) **confirmé** : le contexte de `dockers_v2` ne contient que `linux/<arch>/` (binaires de la
+  plateforme visée). **Repli retenu, plus léger que build-push-action** : `extra_files` ajoute
+  au contexte les dossiers de compilation darwin de `dist/`
+  (`dist/docker-telemach_darwin_amd64_v1`, `dist/docker-telemach_darwin_arm64_v8.0`), copiés
+  par `COPY dist/docker-telemach_darwin_${TARGETARCH}_*/docker-telemach`. Les binaires de
+  l'image (linux et darwin) sont octet pour octet ceux de `dist/`, et `checksums.txt` porte les
+  mêmes sommes (le format d'archive `binary` publie la sortie de compilation telle quelle) :
+  FR-009 respecté.
+  (b) **écarté** : avec un tag `v0.2.0-rc.1` (clone jetable), seule l'image
+  `0.2.0-rc.1-…` est produite ; les modèles vides (`X.Y`, `latest`) sont ignorés sans erreur.
+  (c) contenu de l'image : `telemach-image` (~8,5 Mo, rendu lipgloss), plugin linux et darwin ;
+  utilisateur `65532:65532` ; **12,7 Mo compressés** (amd64) : SC-006 tenu.
 
 ## R7 — Comportement de `install` (droits, propriétaire, système)
 

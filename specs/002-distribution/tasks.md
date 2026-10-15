@@ -53,9 +53,9 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 
 **Purpose**: Outils locaux et squelette du nouveau point d'entrée
 
-- [ ] T001 Installer GoReleaser en local pour les essais, compilé avec la chaîne d'outils du projet (LL-001) : `GOBIN=<scratchpad>/bin GOTOOLCHAIN=go1.27.2 go install github.com/goreleaser/goreleaser/v2@v2.18.3`, puis `goreleaser --version`. Vérifier que `docker` répond dans WSL (`docker version`) ; sinon demander à l'utilisateur d'activer l'intégration WSL de Docker Desktop, et noter que les essais d'image se feront dans la CI (T009).
-- [ ] T002 [P] Créer `cmd/telemach-image/doc.go` : commentaire de paquet en français (« point d'entrée de l'image telemachlearning/telemach : installe le plugin sur la machine hôte ou exécute le plugin linux embarqué »).
-- [ ] T003 [P] Créer `.dockerignore` à la racine : tout exclure (`*`) sauf ce que le `Dockerfile` copie (le contexte réel est préparé par GoReleaser ; le fichier protège les constructions locales et satisfait le principe III).
+- [X] T001 Installer GoReleaser en local pour les essais, compilé avec la chaîne d'outils du projet (LL-001) : `GOBIN=<scratchpad>/bin GOTOOLCHAIN=go1.27.2 go install github.com/goreleaser/goreleaser/v2@v2.18.3`, puis `goreleaser --version`. Vérifier que `docker` répond dans WSL (`docker version`) ; sinon demander à l'utilisateur d'activer l'intégration WSL de Docker Desktop, et noter que les essais d'image se feront dans la CI (T009).
+- [X] T002 [P] Créer `cmd/telemach-image/doc.go` : commentaire de paquet en français (« point d'entrée de l'image telemachlearning/telemach : installe le plugin sur la machine hôte ou exécute le plugin linux embarqué »).
+- [X] T003 [P] Créer `.dockerignore` à la racine : tout exclure (`*`) sauf ce que le `Dockerfile` copie (le contexte réel est préparé par GoReleaser ; le fichier protège les constructions locales et satisfait le principe III).
 
 ---
 
@@ -67,14 +67,14 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 
 ### Tests fondamentaux (écrire d'abord)
 
-- [ ] T004 [P] Écrire `cmd/telemach-image/main_test.go` :
+- [X] T004 [P] Écrire `cmd/telemach-image/main_test.go` :
   - aucun argument, `--help`, `-h` et `help` affichent l'aide en français, code 0 ; l'aide contient les trois commandes canoniques de `contracts/image-cli.md` § « Usages documentés » (essai, installation Linux, installation macOS), avec le tag de version `<version>` remplacé par la version du binaire ;
   - toute autre commande (`check /projet`, `--version`) est transmise **telle quelle** au binaire cible : la fonction d'exécution est injectable (`exec func(path string, argv []string, env []string) error`), le test vérifie le chemin `/opt/telemach/linux/docker-telemach`, `argv[0]` et les arguments.
 
 ### Implémentation fondamentale
 
-- [ ] T005 Implémenter `cmd/telemach-image/main.go` et `cmd/telemach-image/messages.go` : variable `version` injectée par `-X main.version=…` (défaut `dev`) ; aiguillage `help`/`install`/autre ; exécution par `syscall.Exec` du binaire linux avec les mêmes arguments et l'environnement courant ; aide en français rendue avec `internal/render` (mêmes couleurs, symboles et règles `NO_COLOR`/terminal que le plugin). `install` renvoie provisoirement « non implémenté » (code 2), complété en US2. Faire passer T004.
-- [ ] T006 Créer `Dockerfile` à la racine (contexte GoReleaser `dockers_v2`, research R5/R6) :
+- [X] T005 Implémenter `cmd/telemach-image/main.go` et `cmd/telemach-image/messages.go` : variable `version` injectée par `-X main.version=…` (défaut `dev`) ; aiguillage `help`/`install`/autre ; exécution par `syscall.Exec` du binaire linux avec les mêmes arguments et l'environnement courant ; aide en français rendue avec `internal/render` (mêmes couleurs, symboles et règles `NO_COLOR`/terminal que le plugin). `install` renvoie provisoirement « non implémenté » (code 2), complété en US2. Faire passer T004.
+- [X] T006 Créer `Dockerfile` à la racine (contexte GoReleaser `dockers_v2`, research R5/R6) :
   ```dockerfile
   # syntax n'est pas nécessaire : instructions standard uniquement
   FROM scratch
@@ -87,7 +87,7 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
   ENTRYPOINT ["/usr/local/bin/telemach-image"]
   ```
   Les labels OCI (`org.opencontainers.image.source`, `.version`, `.revision`, `.licenses=Apache-2.0`, `.title`, `.description`, `.url=https://www.telemach-learning.fr`) sont posés par GoReleaser (T007). Pas de `VOLUME`, pas de shell, aucun `RUN`. Vérifier avec hadolint v2.15.1 en local.
-- [ ] T007 Créer `.goreleaser.yaml` (GoReleaser OSS v2.18.3, `version: 2`), conforme à `contracts/release-assets.md` et `contracts/image-tags.md` :
+- [X] T007 Créer `.goreleaser.yaml` (GoReleaser OSS v2.18.3, `version: 2`), conforme à `contracts/release-assets.md` et `contracts/image-tags.md` :
   - `builds` : id `docker-telemach` (`./cmd/docker-telemach`, `goos: [linux, darwin]`, `goarch: [amd64, arm64]`) et id `telemach-image` (`./cmd/telemach-image`, `goos: [linux]`, `goarch: [amd64, arm64]`) ; pour les deux : `env: [CGO_ENABLED=0]`, `flags: [-trimpath]`, `ldflags: ["-s -w -buildid= -X main.version={{ .Version }}"]`, `mod_timestamp: "{{ .CommitTimestamp }}"` ;
   - `archives` : id `docker-telemach`, `ids: [docker-telemach]`, `formats: [binary]`, `name_template: "docker-telemach_{{ .Version }}_{{ .Os }}_{{ .Arch }}"` (le binaire `telemach-image` n'est **pas** publié dans la Release) ;
   - `checksum` : `name_template: checksums.txt`, algorithme sha256 ;
@@ -97,12 +97,12 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
   - `release` : `draft: true`, `prerelease: auto`, `replace_existing_draft: false`, `header`/`footer` en français selon la structure de `contracts/release-assets.md` (commandes d'installation et de vérification avec `{{ .Version }}`, commande d'installation par l'image `telemachlearning/telemach:{{ .Version }}`) ;
   - `changelog` : `use: git`, groupes « Nouveautés » (`^feat`), « Corrections » (`^fix`), « Autres changements » ; exclure `^docs`, `^ci`, `^test`.
   Valider avec `goreleaser check`.
-- [ ] T008 Vérifier les **risques R6** avec `goreleaser release --snapshot --clean` (en local si Docker répond, sinon dans la CI via T009) et consigner le résultat dans `specs/002-distribution/research.md` § R6 :
+- [X] T008 Vérifier les **risques R6** avec `goreleaser release --snapshot --clean` (en local si Docker répond, sinon dans la CI via T009) et consigner le résultat dans `specs/002-distribution/research.md` § R6 :
   (a) le contexte `dockers_v2` contient bien `darwin/<arch>/docker-telemach` et l'image contient les trois fichiers attendus (`docker create` + `docker export | tar -t`) ;
   (b) un modèle de tag vide (pré-version) est ignoré : snapshot avec un tag de pré-version factice dans un **clone jetable** (jamais dans le dépôt) ;
   (c) les binaires de l'image snapshot ont les mêmes sommes SHA-256 que ceux de `dist/` (FR-009).
   **Si (a) ou (b) échoue** : appliquer le repli R6 (image construite par `docker/build-push-action` v7.4.0 `c3c9e263c25d99ce0380d002d59b67737d91b0dc` sur un contexte préparé à partir de `dist/`, mêmes binaires) et adapter T006, T007, T009 et T023 en conséquence.
-- [ ] T009 Modifier `.github/workflows/ci.yml` :
+- [X] T009 Modifier `.github/workflows/ci.yml` :
   - déclencheurs : retirer `tags: ['v*']` de `push` (la CI d'un tag est exécutée par `release.yml`) ; ajouter `workflow_call:` ;
   - nouveau job `goreleaser-check` (`contents: read`) : checkout (`fetch-depth: 0`), setup-go, installation de Syft via `anchore/sbom-action/download-syft` (SHA de research, `syft-version: v1.54.1`), `goreleaser-action` (SHA de research, `version: v2.18.3`) avec `args: check`, puis `args: release --snapshot --clean --skip=sign,docker` (les tests du contrat des artefacts sont branchés sur ce job en T013) ;
   - nouveau job `image-scan` (`contents: read`) : construction de l'image `linux/amd64` à partir d'un snapshot (setup-qemu, setup-buildx, `goreleaser release --snapshot --clean --skip=sign,sbom`, ou le repli de T008), puis `anchore/scan-action` (SHA de research) avec `image: <image snapshot>`, `grype-version: v0.120.1`, `fail-build: true`, `severity-cutoff: high`, `only-fixed: false` ;
