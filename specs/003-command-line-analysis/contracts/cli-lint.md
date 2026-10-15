@@ -74,7 +74,10 @@ temporaire sûr, etc.) sont inchangées et retestées sous bash et zsh.
 
 Quand la commande échoue (code non nul) et que l'analyse trouve au moins un avertissement :
 
-- erreur reconnue : explication habituelle, puis une section
+- erreur reconnue : une section placée **avant** l'explication habituelle (le piège est la
+  cause la plus probable, et l'explication générique du message Docker peut alors être
+  trompeuse), suivie de « Explication du message d'erreur de Docker : » et de l'explication
+  habituelle :
 
   ```text
   ⚠ Dans ta commande — cause probable

@@ -61,8 +61,10 @@ func RenderInline(w io.Writer, items []LintItem, o Options) error {
 		b.WriteString(wrap(catalog.Render(it.Entry.Summary, c), width, indent) + "\n")
 		b.WriteString(indent + t.Concept(LabelConcept+" — "+it.Entry.Concept.Name) + "\n")
 		b.WriteString(wrap(it.Entry.Concept.Definition, width, indent+indent) + "\n")
+		b.WriteString(indent + t.Fix(LabelFix) + "\n")
 		writeFixes(&b, it, t, width, indent)
 	}
+	b.WriteString("\n" + t.Dim("Explication du message d'erreur de Docker :") + "\n")
 	_, err := io.WriteString(w, b.String())
 	return err
 }
@@ -90,8 +92,12 @@ func writeWarning(b *strings.Builder, it LintItem, t Theme, width int) {
 func writeFixes(b *strings.Builder, it LintItem, t Theme, width int, base string) {
 	c := it.Captures
 	for _, f := range it.Entry.Fixes {
+		desc := catalog.Render(f.Description, c)
+		if desc == "" {
+			continue // correction sans objet dans ce contexte (par exemple avant exécution)
+		}
 		prefix := base + indent
-		b.WriteString(prefix + wrapRest(catalog.Render(f.Description, c), width, strings.Repeat(" ", utf8.RuneCountInString(prefix))) + "\n")
+		b.WriteString(prefix + wrapRest(desc, width, strings.Repeat(" ", utf8.RuneCountInString(prefix))) + "\n")
 		if f.Command != "" {
 			b.WriteString(prefix + t.Highlight(catalog.Render(f.Command, c), "bash") + "\n")
 		}
@@ -121,4 +127,13 @@ func writeReminder(b *strings.Builder, it LintItem, t Theme) {
 		text += " → " + cmd
 	}
 	b.WriteString(t.Dim(text+" — détails : docker telemach last") + "\n")
+}
+
+// RenderOriginal écrit seulement le message Docker d'origine (utilisé quand un piège de la
+// ligne de commande remplace le bloc « erreur non reconnue »).
+func RenderOriginal(w io.Writer, original string, o Options) error {
+	var b strings.Builder
+	writeOriginal(&b, original, nil, o, max(o.Width, 40))
+	_, err := io.WriteString(w, b.String())
+	return err
 }

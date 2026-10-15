@@ -1,0 +1,106 @@
+# Pièges de la ligne de commande (feature 003) : écritures que Docker accepte, mais qui ne
+# font pas ce que l'apprenant croit. Détectés par internal/lint, sans motif d'erreur.
+- id: cmdline.option-after-image
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: ordre des arguments de docker run
+    definition: >-
+      docker run [OPTIONS] IMAGE [COMMANDE] [ARG...] : les options de Docker se placent avant
+      le nom de l'image ; tout ce qui suit l'image est donné au programme du conteneur.
+  summary: "Option Docker placée après l'image : {{.options}} {{.transmis}} au conteneur, pas à Docker."
+  cause: >-
+    Docker arrête de lire ses propres options dès qu'il rencontre le nom de l'image
+    ({{.image}}). Ce qui suit est considéré comme la commande du conteneur et ses arguments :
+    Docker ne l'interprète pas, et ne signale donc aucune erreur.
+  fixes:
+    - description: Placer les options de Docker avant le nom de l'image.
+      command: "{{.fixed_command}}"
+      safe: true
+    - description: "{{.cleanup}}"
+      command: "{{.cleanup_command}}"
+      safe: true
+  deepen:
+    explanation: >-
+      La CLI Docker lit la ligne de gauche à droite : ses options d'abord, puis le nom de
+      l'image, puis la commande à lancer dans le conteneur avec ses propres options. Une option
+      placée après l'image n'est donc jamais vue par Docker : elle est transmise au programme
+      du conteneur, qui l'ignore, l'interprète autrement, ou échoue.
+    example: |-
+      docker run --rm --user 1000:1000 -e MESSAGE=bonjour alpine:3.24 printenv MESSAGE
+      docker run --rm --user 1000:1000 alpine:3.24 -e MESSAGE=bonjour
+    exercise: >-
+      Lance « docker run -d --name essai-ordre -p 8090:8080 nginxinc/nginx-unprivileged:1.30-alpine »,
+      ouvre http://localhost:8090, puis supprime-le avec « docker rm -f essai-ordre ». Recommence
+      en plaçant « -p 8090:8080 » après le nom de l'image, et observe que le port n'est plus publié.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [misplaced-faulty]
+
+- id: cmdline.option-after-container
+  category: cmdline
+  applies: [exec]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: ordre des arguments de docker exec
+    definition: >-
+      docker exec [OPTIONS] CONTENEUR COMMANDE [ARG...] : les options de Docker se placent
+      avant le nom du conteneur ; tout ce qui suit est la commande à lancer dans le conteneur.
+  summary: "Option Docker placée après le conteneur : {{.options}} {{.transmis}} à la commande, pas à Docker."
+  cause: >-
+    Docker arrête de lire ses propres options dès qu'il rencontre le nom du conteneur
+    ({{.container}}). Ce qui suit est la commande lancée dans le conteneur : une option
+    comme « -it » est alors prise pour le nom d'un programme.
+  fixes:
+    - description: Placer les options de Docker avant le nom du conteneur.
+      command: "{{.fixed_command}}"
+      safe: true
+  deepen:
+    explanation: >-
+      docker exec lance une commande supplémentaire dans un conteneur déjà démarré. Comme pour
+      docker run, ses options (-it pour un terminal interactif, -e pour une variable, -u pour
+      l'utilisateur) se placent avant le nom du conteneur.
+    example: |-
+      docker run -d --name essai-exec --user 1000:1000 alpine:3.24 sleep 300
+      docker exec -e MESSAGE=bonjour essai-exec printenv MESSAGE
+      docker rm -f essai-exec
+    exercise: >-
+      Avec le conteneur essai-exec de l'exemple, compare « docker exec -e A=1 essai-exec env »
+      et « docker exec essai-exec -e A=1 env » : la seconde échoue, car « -e » est pris pour
+      la commande à lancer.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/exec/
+  tests: [misplaced-faulty]
+
+- id: cmdline.image-without-tag
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: info
+  concept:
+    name: image tag
+    definition: >-
+      Le tag désigne une version précise d'une image (« nginx:1.30-alpine »). Sans tag, Docker
+      utilise « latest », qui change à chaque nouvelle publication.
+  summary: "Image sans tag explicite : {{.image}} désigne {{.image}}:latest, qui change à chaque publication."
+  cause: >-
+    Avec « latest », la même commande peut lancer une autre version demain, sans que rien ne
+    l'indique : les résultats ne sont plus reproductibles.
+  fixes:
+    - description: Préfère un tag précis, choisi sur la page de l'image (Docker Hub), par exemple {{.image}}:<version>.
+      safe: true
+  deepen:
+    explanation: >-
+      Un tag est une étiquette posée sur une image. « latest » n'est pas « la dernière
+      version » au sens strict : c'est simplement le tag utilisé quand on n'en précise aucun,
+      et l'éditeur peut le déplacer à tout moment. Un tag précis rend une commande ou un
+      fichier Compose reproductible.
+    example: |-
+      docker pull alpine:3.24
+      docker image ls alpine
+    exercise: >-
+      Lance « docker pull alpine:3.24 », puis « docker image ls alpine » : la colonne TAG
+      indique exactement la version que tu utilises.
+  doc_url: https://docs.docker.com/reference/cli/docker/image/tag/
+  tests: [misplaced-faulty]

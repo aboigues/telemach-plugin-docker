@@ -149,3 +149,44 @@ func TestShellInitAndMetadata(t *testing.T) {
 		t.Errorf("métadonnées : code %d, sortie %q", code, out.String())
 	}
 }
+
+// Une commande en échec dont la ligne contient un piège : un seul affichage, le piège
+// présenté comme cause probable (feature 003, FR-010).
+func TestExplainIncludesCmdlinePitfall(t *testing.T) {
+	msg := "OCI runtime exec failed: exec failed: unable to start container process: exec: \"-it\": executable file not found in $PATH: unknown\n"
+	args := []string{"explain", "--color=never", "--exit-code", "126", "--stderr-file", "", "--", "exec", "web", "-it", "sh"}
+
+	a, _, errb := testApp(t, nil)
+	args[5] = writeStderr(t, msg)
+	if code := run(a, args); code != 0 {
+		t.Fatalf("code = %d", code)
+	}
+	out := errb.String()
+	if n := strings.Count(out, "Option Docker placée après le conteneur"); n != 1 {
+		t.Errorf("piège attendu une fois, trouvé %d fois :\n%s", n, out)
+	}
+	if !strings.Contains(out, "docker exec -it web sh") {
+		t.Errorf("commande corrigée attendue :\n%s", out)
+	}
+	last, ok := a.store.Load()
+	if !ok || len(last.Findings) != 1 || last.Findings[0].EntryID != "cmdline.option-after-container" {
+		t.Errorf("le piège doit être conservé pour last : %+v", last.Findings)
+	}
+
+	// TELEMACH_LINT=0 : explain se comporte exactement comme avant.
+	a2, _, errb2 := testApp(t, map[string]string{"TELEMACH_LINT": "0"})
+	args[5] = writeStderr(t, msg)
+	run(a2, args)
+	if strings.Contains(errb2.String(), "Dans ta commande") || strings.Contains(errb2.String(), "Option Docker placée") {
+		t.Errorf("aucun piège attendu avec TELEMACH_LINT=0 :\n%s", errb2.String())
+	}
+
+	// Erreur non reconnue : le piège devient l'explication principale.
+	a3, _, errb3 := testApp(t, nil)
+	args[5] = writeStderr(t, "erreur totalement inventée\n")
+	run(a3, args)
+	out3 := errb3.String()
+	if strings.Contains(out3, "ne reconnaît pas encore") || !strings.Contains(out3, "Option Docker placée après le conteneur") || !strings.Contains(out3, "erreur totalement inventée") {
+		t.Errorf("piège principal et message d'origine attendus :\n%s", out3)
+	}
+}

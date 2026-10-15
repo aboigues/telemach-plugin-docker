@@ -1,0 +1,16 @@
+# Options Docker placées après l'image (run, create) ou le conteneur (exec).
+cmdline.option-after-image,cmdline.image-without-tag	-	-	run -d nginx -p 8090:80
+cmdline.option-after-image	-	-	run nginx:1.30-alpine -p 8080:80 --name web
+cmdline.option-after-image	-	-	run alpine:3.24 --rm echo hi
+cmdline.option-after-image	-	-	create redis:8-alpine -v ./data:/data
+cmdline.option-after-image	-	-	run postgres:18-alpine -e POSTGRES_PASSWORD=Secret123
+cmdline.option-after-image	-	-	container run alpine:3.24 -it sh
+cmdline.option-after-container	-	-	exec web -it sh
+cmdline.option-after-container	-	-	exec web -e A=1 env
+cmdline.option-after-image	-	-	--context x run nginx:1.30-alpine -p 1:2
+cmdline.option-after-image	-	-	run nginx:1.30-alpine --restart always
+cmdline.option-after-image	-	-	run -d nginx:1.30-alpine --publish=8080:80
+cmdline.option-after-image	-	-	run alpine:3.24 -d --rm sleep 60
+cmdline.option-after-image	-	-	run alpine:3.24 --privileged true
+cmdline.option-after-image	-	-	run --rm alpine:3.24 -e DEBUG=1 env
+cmdline.option-after-image	-	-	run nginx:1.30-alpine -v /srv/site:/usr/share/nginx/html:ro

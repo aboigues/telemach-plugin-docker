@@ -131,9 +131,46 @@ func lintCaptures(c map[string]string, after bool) map[string]string {
 	for k, v := range c {
 		out[k] = v
 	}
-	if !after {
+	out["transmis"] = "a été transmis"
+	if after {
+		out["cleanup"] = "Si le conteneur a été créé sans ces options, le supprimer puis le relancer avec la commande corrigée."
+		out["cleanup_command"] = "docker rm -f <conteneur>"
+	} else {
 		out["effect"] = c["effect_cond"]
+		out["transmis"] = "serait transmis"
+		// Capture vide (et non absente, qui s'afficherait « … ») : correction sans objet.
+		out["cleanup"], out["cleanup_command"] = "", ""
 	}
 	delete(out, "effect_cond")
 	return out
+}
+
+// cmdlineWarnings renvoie les avertissements (jamais les informations) de la ligne de
+// commande, pour les ajouter à l'explication d'une commande en échec.
+func (a *app) cmdlineWarnings(args []string) ([]render.LintItem, []state.FindingRecord) {
+	if a.getenv("TELEMACH_LINT") == "0" {
+		return nil, nil
+	}
+	findings := lint.Analyze(args, a.lintEnv())
+	if len(findings) == 0 {
+		return nil, nil
+	}
+	cat, err := catalog.Default()
+	if err != nil {
+		return nil, nil
+	}
+	var items []render.LintItem
+	var records []state.FindingRecord
+	for _, f := range findings {
+		e, ok := cat.Get(f.EntryID)
+		if !ok || f.Severity != lint.SeverityWarning {
+			continue
+		}
+		c := lintCaptures(f.Captures, true)
+		// La commande a échoué : ni « le conteneur a démarré », ni conseil de suppression.
+		c["effect"], c["cleanup"], c["cleanup_command"] = "", "", ""
+		items = append(items, render.LintItem{Entry: e, Captures: c})
+		records = append(records, state.FindingRecord{EntryID: f.EntryID, Captures: c})
+	}
+	return items, records
 }
