@@ -37,6 +37,7 @@ type LastDiagnosis struct {
 	Stderr         string
 	Family         string
 	Subcommand     string
+	Args           []string // arguments de la commande docker, nettoyés et masqués (absent des fichiers antérieurs)
 	ComposeDir     string
 	ComposeFiles   []string
 }
