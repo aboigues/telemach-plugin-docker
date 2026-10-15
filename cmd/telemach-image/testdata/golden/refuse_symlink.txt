@@ -1,0 +1,10 @@
+✖ ~/.docker/cli-plugins/docker-telemach existe déjà mais n'est pas un fichier ordinaire.
+
+📘 Concept — fichier existant
+   Un lien symbolique ou un dossier porte déjà ce nom. Par sécurité, TELEMACH ne
+   remplace pas ce qu'il ne reconnaît pas.
+
+💡 Correction
+   ls -l ~/.docker/cli-plugins/docker-telemach
+   # s'il n'est plus utile : rm -r ~/.docker/cli-plugins/docker-telemach
+   docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install

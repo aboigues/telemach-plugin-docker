@@ -1,0 +1,9 @@
+✖ Le dossier des plugins n'est pas accessible en écriture pour le conteneur.
+
+📘 Concept — identité du processus (--user)
+   Le conteneur s'exécute sans privilèges, avec un utilisateur qui n'est pas toi.
+   L'option --user "$(id -u):$(id -g)" lui donne ton identité : il peut alors écrire
+   dans ton dossier, et le fichier installé t'appartient.
+
+💡 Correction
+   docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install

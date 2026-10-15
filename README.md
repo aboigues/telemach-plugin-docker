@@ -205,6 +205,50 @@ gh attestation verify "$FICHIER" --repo aboigues/telemach-plugin-docker
 
 </details>
 
+#### Avec Docker seulement
+
+L'image officielle [`telemachlearning/telemach`](https://hub.docker.com/r/telemachlearning/telemach)
+copie le bon binaire dans ton dossier des plugins Docker, sans rien d'autre à installer.
+
+Linux et WSL2 :
+
+```bash
+mkdir -p ~/.docker/cli-plugins
+docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install
+```
+
+macOS (Docker Desktop) :
+
+```bash
+mkdir -p ~/.docker/cli-plugins
+docker run --rm --user "$(id -u):$(id -g)" -e HOST_OS=darwin -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install
+```
+
+Ce que fait chaque option, et ce qu'elle t'apprend de Docker :
+
+| Option | Rôle |
+|--------|------|
+| `mkdir -p ~/.docker/cli-plugins` | crée le dossier **avant** : sinon Docker le crée lui-même, avec le compte root, et tu ne pourrais plus le gérer sans `sudo` |
+| `-v ~/.docker/cli-plugins:/sortie` | **montage (bind mount)** : donne au conteneur accès à ce seul dossier de ta machine |
+| `--user "$(id -u):$(id -g)"` | le conteneur s'exécute avec **ton identité** : il peut écrire dans ton dossier et le fichier t'appartient |
+| `-e HOST_OS=darwin` | **variable d'environnement** : indique que ta machine est un Mac (binaire macOS au lieu de Linux) |
+| `--rm` | supprime le conteneur une fois l'installation terminée |
+| `:0.2.0` | **tag explicite** : tu sais exactement quelle version tu installes |
+
+L'image existe aussi sous le tag `latest`, mais préfère un tag de version : `latest` change
+à chaque publication, et une même commande pourrait installer deux versions différentes.
+Pour mettre à jour, relance la commande avec la nouvelle version : l'image indique la
+version remplacée.
+
+L'image est minimale (`FROM scratch` : ni shell, ni gestionnaire de paquets), s'exécute sans
+privilèges et est signée. Vérification avec cosign v3 :
+
+```bash
+cosign verify telemachlearning/telemach:0.2.0 \
+  --certificate-identity-regexp '^https://github\.com/aboigues/telemach-plugin-docker/\.github/workflows/release\.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
 #### Compiler depuis les sources
 
 Il faut Go 1.27 ou plus récent (la version exacte, 1.27.2, est téléchargée automatiquement

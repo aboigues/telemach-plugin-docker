@@ -94,6 +94,12 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
      la nécessité éventuelle de `packages: write` sont tranchés en T024 d'après la
      documentation de `actions/attest`, puis reportés à l'identique dans
      `contracts/image-tags.md` et `quickstart.md` (un seul nom partout).
+     **Tranché le 2026-10-15** (README d'`actions/attest` v4.2.2) : « When pushing to Docker
+     Hub, please use "docker.io" as the registry portion of the image name » → sujet
+     `docker.io/telemachlearning/telemach` ; `packages: write` ne sert qu'à GHCR et n'est pas
+     ajouté ; `create-storage-record: false` (réservé aux dépôts d'organisation). Les binaires
+     sont attestés via `subject-checksums: dist/checksums.txt`, car sur le disque ils portent
+     leur nom de compilation et non leur nom publié.
 - **Justification** : aucune clé à garder (FR-004, FR-011) ; deux voies de vérification, dont
   une (cosign) qui ne demande pas de compte GitHub. La somme SHA-256 reste la vérification
   minimale documentée en premier.

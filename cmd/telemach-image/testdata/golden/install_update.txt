@@ -1,0 +1,14 @@
+✔ TELEMACH 0.2.0 installé dans ~/.docker/cli-plugins (Linux, ARM64 — linux/arm64).
+  Version remplacée : 0.1.0.
+
+📘 Ce qui vient de se passer
+   Le conteneur a écrit dans un dossier de ta machine grâce au montage
+   « -v ~/.docker/cli-plugins:/sortie » (bind mount), avec ton identité (--user).
+   Docker découvre automatiquement les plugins placés dans ce dossier.
+
+   Sur un Mac, relance avec -e HOST_OS=darwin pour installer le binaire macOS.
+
+➜ Étape suivante : active l'explication automatique des erreurs
+   echo 'eval "$(docker telemach shell-init zsh)"' >> ~/.zshrc
+   (bash : echo 'eval "$(docker telemach shell-init bash)"' >> ~/.bashrc)
+   puis ouvre un nouveau terminal et vérifie : docker telemach --version

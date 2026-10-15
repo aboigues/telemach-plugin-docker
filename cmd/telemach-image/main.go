@@ -1,6 +1,7 @@
 package main
 
 import (
+	"debug/buildinfo"
 	"fmt"
 	"io"
 	"os"
@@ -31,6 +32,8 @@ type app struct {
 	exec           func(path string, argv, env []string) error
 	mountinfo      func() ([]byte, error)
 	getuid         func() int
+	owner          func(path string) (int, error)
+	buildInfo      func(path string) (*buildinfo.BuildInfo, error)
 	goarch         string
 	version        string
 	root, dest     string
@@ -45,6 +48,8 @@ func newApp() *app {
 		exec:      syscall.Exec,
 		mountinfo: func() ([]byte, error) { return os.ReadFile("/proc/self/mountinfo") },
 		getuid:    os.Getuid,
+		owner:     fileOwner,
+		buildInfo: readBuildInfo,
 		goarch:    runtime.GOARCH,
 		version:   version,
 		root:      imageRoot,
