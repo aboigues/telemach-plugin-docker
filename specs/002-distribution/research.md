@@ -99,7 +99,8 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
   - Contenu : `/opt/telemach/linux/docker-telemach` et `/opt/telemach/darwin/docker-telemach`
     (même architecture que l'image), plus un petit point d'entrée
     `/usr/local/bin/telemach-image`.
-  - Point d'entrée : nouveau programme Go `cmd/telemach-image` (bibliothèque standard seule).
+  - Point d'entrée : nouveau programme Go `cmd/telemach-image` (bibliothèque standard et
+    `internal/render` du projet, pour les couleurs et symboles ; aucune nouvelle dépendance).
     `install` → copie (R7) ; `--help` ou aucun argument → aide en français (FR-015) ; toute
     autre commande (`check`, `--version`…) → remplacement du processus par le binaire linux
     (`syscall.Exec`), pour un comportement identique au plugin installé (FR-012).

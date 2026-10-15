@@ -26,8 +26,9 @@ avant de publier depuis un environnement protégé « release ».
 **Language/Version**: Go 1.27.2 (inchangé) ; YAML GitHub Actions ; Dockerfile.
 
 **Primary Dependencies**:
-- code Go : **aucune nouvelle dépendance** ; `cmd/telemach-image` n'utilise que la
-  bibliothèque standard (`debug/buildinfo`, `syscall`, `os`) ;
+- code Go : **aucune nouvelle dépendance** ; `cmd/telemach-image` utilise la bibliothèque
+  standard (`debug/buildinfo`, `syscall`, `os`) et réutilise `internal/render` (couleurs et
+  symboles identiques au plugin, contrat [image-cli](contracts/image-cli.md)) ;
 - outils de publication (CI seulement, jamais embarqués) : GoReleaser OSS v2.18.3, cosign
   v3.1.3, Syft v1.54.1, Grype (via `anchore/scan-action` v7.4.2), buildx/QEMU ;
 - actions : voir le tableau des versions et SHA dans [research.md](research.md).
