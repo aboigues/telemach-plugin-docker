@@ -99,12 +99,13 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
   Valider avec `goreleaser check`.
 - [ ] T008 Vérifier les **risques R6** avec `goreleaser release --snapshot --clean` (en local si Docker répond, sinon dans la CI via T009) et consigner le résultat dans `specs/002-distribution/research.md` § R6 :
   (a) le contexte `dockers_v2` contient bien `darwin/<arch>/docker-telemach` et l'image contient les trois fichiers attendus (`docker create` + `docker export | tar -t`) ;
-  (b) un modèle de tag vide (pré-version) est ignoré : snapshot avec un tag de pré-version factice dans un **clone jetable** (jamais dans le dépôt).
+  (b) un modèle de tag vide (pré-version) est ignoré : snapshot avec un tag de pré-version factice dans un **clone jetable** (jamais dans le dépôt) ;
+  (c) les binaires de l'image snapshot ont les mêmes sommes SHA-256 que ceux de `dist/` (FR-009).
   **Si (a) ou (b) échoue** : appliquer le repli R6 (image construite par `docker/build-push-action` v7.4.0 `c3c9e263c25d99ce0380d002d59b67737d91b0dc` sur un contexte préparé à partir de `dist/`, mêmes binaires) et adapter T006, T007, T009 et T023 en conséquence.
 - [ ] T009 Modifier `.github/workflows/ci.yml` :
   - déclencheurs : retirer `tags: ['v*']` de `push` (la CI d'un tag est exécutée par `release.yml`) ; ajouter `workflow_call:` ;
-  - nouveau job `goreleaser-check` (`contents: read`) : checkout (`fetch-depth: 0`), setup-go, installation de Syft via `anchore/sbom-action/download-syft` (SHA de research), `goreleaser-action` (SHA de research, `version: v2.18.3`) avec `args: check`, puis `args: release --snapshot --clean --skip=sign,docker` (les tests du contrat des artefacts sont branchés sur ce job en T013) ;
-  - nouveau job `image-scan` (`contents: read`) : construction de l'image `linux/amd64` à partir d'un snapshot (setup-qemu, setup-buildx, `goreleaser release --snapshot --clean --skip=sign,sbom`, ou le repli de T008), puis `anchore/scan-action` (SHA de research) avec `image: <image snapshot>`, `fail-build: true`, `severity-cutoff: high`, `only-fixed: false` ;
+  - nouveau job `goreleaser-check` (`contents: read`) : checkout (`fetch-depth: 0`), setup-go, installation de Syft via `anchore/sbom-action/download-syft` (SHA de research, `syft-version: v1.54.1`), `goreleaser-action` (SHA de research, `version: v2.18.3`) avec `args: check`, puis `args: release --snapshot --clean --skip=sign,docker` (les tests du contrat des artefacts sont branchés sur ce job en T013) ;
+  - nouveau job `image-scan` (`contents: read`) : construction de l'image `linux/amd64` à partir d'un snapshot (setup-qemu, setup-buildx, `goreleaser release --snapshot --clean --skip=sign,sbom`, ou le repli de T008), puis `anchore/scan-action` (SHA de research) avec `image: <image snapshot>`, `grype-version: v0.120.1`, `fail-build: true`, `severity-cutoff: high`, `only-fixed: false` ;
   - garder le job `build` existant.
 - [ ] T010 Pousser la branche `002-distribution` et ouvrir une PR **en brouillon** pour valider les nouvelles gates avant d'écrire le reste du code (LL-005, quickstart V0). **Demander confirmation avant le push.** Attendu : `goreleaser-check`, `image-scan`, `dockerfile-lint` (qui analyse désormais le `Dockerfile`) et les gates existantes au vert. Toute gate rouge sans lien avec le code → entrée dans `LESSON-LEARNED.md`.
 
@@ -135,10 +136,10 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
   - `name: release` ; déclencheurs `push: tags: ['v*']` et `workflow_dispatch:` **sans entrée** (lancé avec `--ref vX.Y.Z`, research R9) ; `permissions: {}` au niveau du workflow ; `concurrency: { group: release-${{ github.ref }}, cancel-in-progress: false }` ;
   - job `verify` (`contents: read`) : contrôles minimaux pour cette histoire (`GITHUB_REF` commence par `refs/tags/v` et respecte `^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$`, lu via `env:`) ; les autres contrôles sont ajoutés en US4 ;
   - job `gates` : `uses: ./.github/workflows/ci.yml` (permissions `contents: read`) ;
-  - job `release` (`needs: [verify, gates]`, `environment: release`, permissions `contents: write`, `id-token: write`, `attestations: write`) : checkout (`fetch-depth: 0`, `persist-credentials: false`), setup-go, `cosign-installer` (SHA de research), installation de Syft, `goreleaser-action` (`args: release --clean`, `GITHUB_TOKEN` fourni par `secrets.GITHUB_TOKEN`), puis `actions/attest` (SHA de research) avec `subject-path: dist/docker-telemach_*` (binaires seulement), puis publication du brouillon : `gh release edit "$TAG" --draft=false` (`TAG` lu depuis `GITHUB_REF_NAME` via `env:`).
+  - job `release` (`needs: [verify, gates]`, `environment: release`, permissions `contents: write`, `id-token: write`, `attestations: write`) : checkout (`fetch-depth: 0`, `persist-credentials: false`), setup-go, `cosign-installer` (SHA de research, `cosign-release: v3.1.3`), installation de Syft (`syft-version: v1.54.1`), `goreleaser-action` (`args: release --clean`, `GITHUB_TOKEN` fourni par `secrets.GITHUB_TOKEN`), puis `actions/attest` (SHA de research) avec `subject-path: dist/docker-telemach_*` (binaires seulement), puis publication du brouillon : `gh release edit "$TAG" --draft=false` (`TAG` lu depuis `GITHUB_REF_NAME` via `env:`).
   Pour cette histoire, désactiver la partie image (`--skip=docker`) ; elle est activée en US2 (T026).
 - [ ] T015 [US1] Finaliser l'en-tête et le pied de page des notes de Release dans `.goreleaser.yaml` (`release.header`, `release.footer`) : commandes Linux et macOS **identiques** à celles du README (T016), vérification `sha256sum`/`shasum -a 256`, commande `cosign verify-blob` et `gh attestation verify` exactement comme dans `contracts/release-assets.md` § Garanties.
-- [ ] T016 [US1] Réécrire la section « Installation » de `README.md` dans l'ordre exigé par FR-020 ; dans cette histoire, rédiger « Installer depuis une Release (recommandé) » : variables `VERSION=0.1.0`, `OS` et `ARCH` détectés (`uname -s | tr A-Z a-z`, `uname -m` converti `x86_64→amd64`, `aarch64|arm64→arm64`), téléchargement en ligne de commande (`curl -fsSLO`) du binaire et de `checksums.txt`, vérification de somme (Linux `sha256sum --check --ignore-missing`, macOS `shasum -a 256 --check --ignore-missing`), vérification facultative de la signature (cosign v3.1.3) et de la provenance (`gh`), copie dans `~/.docker/cli-plugins/docker-telemach`, `chmod +x`, `docker telemach --version`. Ajouter l'avertissement sur le téléchargement par navigateur sous macOS (Edge Cases). Déplacer la procédure actuelle sous « Compiler depuis les sources » en dernier.
+- [ ] T016 [US1] Réécrire la section « Installation » de `README.md` dans l'ordre exigé par FR-020 ; dans cette histoire, rédiger « Installer depuis une Release (recommandé) » : variables `VERSION=0.2.0`, `OS` et `ARCH` détectés (`uname -s | tr A-Z a-z`, `uname -m` converti `x86_64→amd64`, `aarch64|arm64→arm64`), téléchargement en ligne de commande (`curl -fsSLO`) du binaire et de `checksums.txt`, vérification de somme (Linux `sha256sum --check --ignore-missing`, macOS `shasum -a 256 --check --ignore-missing`), vérification facultative de la signature (cosign v3.1.3) et de la provenance (`gh`), copie dans `~/.docker/cli-plugins/docker-telemach`, `chmod +x`, `docker telemach --version`. Ajouter l'avertissement sur le téléchargement par navigateur sous macOS (Edge Cases). Déplacer la procédure actuelle sous « Compiler depuis les sources » en dernier.
 - [ ] T017 [US1] Mettre à jour `specs/002-distribution/quickstart.md` § V6 avec les options exactes de `.goreleaser.yaml`.
 
 **Checkpoint**: un tag de pré-version poussé sur un dépôt de répétition (ou la première Release en Phase 7) produit une Release conforme au contrat, vérifiable avec les commandes du README.
@@ -172,8 +173,8 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 - [ ] T021 [P] [US2] Écrire `tests/integration/image_test.go` (étiquette `integration`, `t.Skip` sans démon Docker) qui reproduit **à la lettre** les commandes du README (LL-006) : préparer un contexte au format `dockers_v2` (binaires compilés par `go build` avec les options de T007 pour la plateforme courante et darwin de même architecture, sous `linux/<arch>/` et `darwin/<arch>/`), `docker buildx build --load -t telemach-test:<version>` ; dans un `HOME` temporaire : `mkdir -p ~/.docker/cli-plugins` puis `docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemach-test:<version> install` ; vérifier propriétaire = utilisateur, droits `0755`, `--version` du fichier installé ; puis les refus du tableau quickstart V3 (sans montage, sans `--user`, dossier créé par Docker, `HOST_OS=windows`, fichier étranger). Nettoyer l'image à la fin.
 - [ ] T022 [US2] Ajouter dans `release.yml`, job `verify`, le contrôle « tag d'image absent » : `curl -fsS https://hub.docker.com/v2/repositories/telemachlearning/telemach/tags/$VERSION/` doit répondre 404 (API publique, sans secret), sinon échec « image X.Y.Z déjà publiée ».
 - [ ] T023 [US2] Activer la partie image dans `release.yml`, job `release` : setup-qemu et setup-buildx (SHA de research) ; `docker/login-action` (SHA de research) avec `username: ${{ vars.DOCKERHUB_USERNAME }}` et `password: ${{ secrets.DOCKERHUB_TOKEN }}` ; retirer `--skip=docker` de GoReleaser.
-- [ ] T024 [US2] Dans `release.yml`, après GoReleaser : récupérer le digest de l'index publié (`docker buildx imagetools inspect docker.io/telemachlearning/telemach:$VERSION --format '{{json .Manifest}}'` → `digest`), signer par digest (`cosign sign --yes docker.io/telemachlearning/telemach@$DIGEST`) et attester (`actions/attest` avec `subject-name: index.docker.io/telemachlearning/telemach`, `subject-digest: $DIGEST`, `push-to-registry: true`). Ajouter `packages: write` **uniquement si** `actions/attest` l'exige pour un registre externe (vérifier sa documentation à ce moment-là ; sinon ne rien ajouter).
-- [ ] T025 [US2] Rédiger dans `README.md` la section « Installer avec Docker seulement » : commandes Linux/WSL2 et macOS **identiques** à `contracts/image-cli.md` (`mkdir -p` d'abord, `--user`, tag `0.1.0` explicite), explication courte de chaque option (pédagogie : bind mount, identité, `HOST_OS`), mise à jour, rappel sur `latest` (principe III).
+- [ ] T024 [US2] Dans `release.yml`, après GoReleaser : récupérer le digest de l'index publié (`docker buildx imagetools inspect docker.io/telemachlearning/telemach:$VERSION --format '{{json .Manifest}}'` → `digest`), signer par digest (`cosign sign --yes docker.io/telemachlearning/telemach@$DIGEST`) et attester (`actions/attest` avec `subject-name: index.docker.io/telemachlearning/telemach`, `subject-digest: $DIGEST`, `push-to-registry: true`). Ajouter `packages: write` **uniquement si** `actions/attest` l'exige pour un registre externe (vérifier sa documentation à ce moment-là ; sinon ne rien ajouter). Trancher aussi le nom du sujet (`index.docker.io/…` ou `docker.io/…`) d'après cette documentation, consigner les deux décisions dans `research.md` § R3, et reporter **le même nom** dans `contracts/image-tags.md` (Provenance), `quickstart.md` § V5, `README.md` et `docs/dockerhub.md`.
+- [ ] T025 [US2] Rédiger dans `README.md` la section « Installer avec Docker seulement » : commandes Linux/WSL2 et macOS **identiques** à `contracts/image-cli.md` (`mkdir -p` d'abord, `--user`, tag `0.2.0` explicite), explication courte de chaque option (pédagogie : bind mount, identité, `HOST_OS`), mise à jour, rappel sur `latest` (principe III).
 - [ ] T026 [P] [US2] Créer `docs/dockerhub.md` : texte en français de la page Docker Hub (présentation, deux usages, vérification de signature `cosign verify` de `contracts/image-tags.md`, lien vers le dépôt et https://www.telemach-learning.fr). L'utilisateur le copie lui-même dans Docker Hub.
 
 **Checkpoint**: `tests/integration/image_test.go` vert dans la CI ; l'image snapshot installe correctement le plugin.
@@ -211,8 +212,10 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 
 - [ ] T032 [US4] Compléter le job `verify` de `.github/workflows/release.yml` (variables via `env:` uniquement) : checkout `fetch-depth: 0` ; `git merge-base --is-ancestor "$GITHUB_SHA" origin/main` sinon échec « le tag doit pointer sur un commit de main » ; `gh release view "$TAG"` doit échouer (sinon « Release déjà publiée », y compris un brouillon : demander de le supprimer) ; garder le contrôle d'image de T022. Messages d'échec en français dans le journal (`::error::`).
 - [ ] T033 [US4] Vérifier les permissions de chaque job de `release.yml` et `ci.yml` (lecture seule partout sauf `release`) ; vérifier qu'aucun `${{ github.ref_name }}`, `${{ inputs.* }}` ou nom de branche n'apparaît dans un bloc `run:` (`grep -n '\${{' .github/workflows/*.yml` relu ligne à ligne) ; vérifier que toutes les actions sont épinglées par SHA complet suivi du commentaire de version.
-- [ ] T034 [US4] Ajouter à `CONTRIBUTING.md` une section « Publier une version » : prérequis (dépôt Docker Hub, jeton Read & Write limité au dépôt avec sa date d'expiration à renouveler, environnement `release` restreint aux tags `v*`, variable `DOCKERHUB_USERNAME`, secret `DOCKERHUB_TOKEN`, releases immuables activées — LL-005) ; procédure (`git tag -a vX.Y.Z -m … && git push origin vX.Y.Z`, ou `gh workflow run release.yml --ref vX.Y.Z` pour un tag existant) ; pré-versions ; que faire en cas d'échec (supprimer le brouillon, relancer ; une Release publiée ne se corrige que par une nouvelle version) ; rotation du jeton.
+- [ ] T034 [US4] Ajouter à `CONTRIBUTING.md` une section « Publier une version » : prérequis (dépôt Docker Hub, jeton Read & Write limité au dépôt avec sa date d'expiration à renouveler, environnement `release` restreint aux tags `v*`, variable `DOCKERHUB_USERNAME`, secret `DOCKERHUB_TOKEN`, releases immuables activées — LL-005) ; procédure (`git tag -a vX.Y.Z -m … && git push origin vX.Y.Z`, ou `gh workflow run release.yml --ref vX.Y.Z` pour un tag existant) ; pré-versions ; que faire en cas d'échec (supprimer le brouillon, relancer ; une Release publiée ne se corrige que par une nouvelle version) ; rotation du jeton ; revue trimestrielle des versions d'outils passées en paramètre des actions (GoReleaser, cosign, Syft, Grype), que Dependabot ne suit pas, en même temps que la revue de `LESSON-LEARNED.md`.
 - [ ] T035 [US4] Mettre à jour la protection de `main` : ajouter `goreleaser-check`, `image-scan` et `build` aux checks obligatoires (en conservant les six existants et `enforce_admins`). **Action visible : demander confirmation à l'utilisateur.** Mettre à jour la liste des checks dans `CONTRIBUTING.md` § « Gates et fusion ».
+
+- [ ] T036 [US4] Tester le refus d'un tag hors `main` (quickstart V1 étape 4), après fusion : **avec confirmation de l'utilisateur**, pousser `v0.0.0-test.1` sur un commit absent de `main` (dernier commit d'une branche de travail), vérifier que `verify` échoue avec le message « le tag doit pointer sur un commit de main » et que rien n'est publié, puis supprimer le tag (`git push --delete origin v0.0.0-test.1`, possible car aucune Release ne l'a verrouillé).
 
 **Checkpoint**: la chaîne refuse un tag hors `main` et une relance sur une version déjà publiée.
 
@@ -220,13 +223,13 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T036 [P] `go test -race ./...`, `golangci-lint run` (binaire compilé avec `GOTOOLCHAIN=go1.27.2`, LL-001), `goreleaser check`, hadolint sur `Dockerfile` ; tout au vert.
-- [ ] T037 [P] Relire `README.md`, `CONTRIBUTING.md`, `docs/dockerhub.md` et les notes de Release : français correct et accentué, chaque commande exécutable telle quelle avec un tag explicite, ordre FR-020 respecté, liens valides.
-- [ ] T038 Passer la PR de brouillon à prête, attendre toutes les gates vertes ; l'utilisateur relit et fusionne (workflow PR habituel).
-- [ ] T039 Première Release : après fusion et **confirmation de l'utilisateur**, `gh workflow run release.yml --ref v0.1.0` ; suivre l'exécution ; vérifier quickstart V1 (Release, image `0.1.0`, `0.1`, `latest` sur deux architectures, durée < 30 min, SC-004) et que l'étape de connexion Docker Hub valide le jeton.
-- [ ] T040 Validation SC-007 sur les plateformes cibles (quickstart V2 à V5) : Linux amd64 (WSL2 de l'utilisateur, Docker Desktop), Linux arm64 si disponible, macOS arm64 (**par l'utilisateur** ; confirmer le point ouvert R7 sur la propriété des fichiers) ; reporter les résultats et toute anomalie dans `specs/002-distribution/research.md`.
-- [ ] T041 Vérifications de sécurité post-publication (quickstart V5) : `cosign verify` de l'image, `gh attestation verify` des binaires et de l'image, absence de shell, utilisateur `65532:65532`, taille compressée < 15 Mo par architecture (SC-006).
-- [ ] T042 Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (gate rouge, publication ratée, mauvaise manipulation), avec règle préventive et suivi (principe V).
+- [ ] T037 [P] `go test -race ./...`, `golangci-lint run` (binaire compilé avec `GOTOOLCHAIN=go1.27.2`, LL-001), `goreleaser check`, hadolint sur `Dockerfile` ; tout au vert.
+- [ ] T038 [P] Relire `README.md`, `CONTRIBUTING.md`, `docs/dockerhub.md` et les notes de Release : français correct et accentué, chaque commande exécutable telle quelle avec un tag explicite, ordre FR-020 respecté, liens valides.
+- [ ] T039 Passer la PR de brouillon à prête, attendre toutes les gates vertes ; l'utilisateur relit et fusionne (workflow PR habituel).
+- [ ] T040 Première Release : après fusion et **confirmation de l'utilisateur**, poser et pousser le tag `v0.2.0` sur `main` (`git tag -a v0.2.0 -m "…" && git push origin v0.2.0` ; `v0.1.0`, antérieur à la chaîne de publication, reste sans Release) ; suivre l'exécution ; vérifier quickstart V1 étapes 1 à 3 (Release, image `0.2.0`, `0.2`, `latest` sur deux architectures, durée < 30 min, SC-004 ; relance refusée) et que l'étape de connexion Docker Hub valide le jeton.
+- [ ] T041 Validation SC-007 sur les plateformes cibles (quickstart V2 à V5) : Linux amd64 (WSL2 de l'utilisateur, Docker Desktop), Linux arm64 si disponible, macOS arm64 (**par l'utilisateur** ; confirmer le point ouvert R7 sur la propriété des fichiers) ; chronométrer l'installation par la Release (< 5 min, SC-001) et `docker run … install` image déjà téléchargée (< 1 min, SC-002) ; reporter les résultats et toute anomalie dans `specs/002-distribution/research.md`.
+- [ ] T042 Vérifications de sécurité post-publication (quickstart V5) : `cosign verify` de l'image, `gh attestation verify` des binaires et de l'image, absence de shell, utilisateur `65532:65532`, taille compressée < 15 Mo par architecture (SC-006), et binaires extraits de l'image identiques à ceux de la Release (sommes de `checksums.txt`, FR-009, quickstart V5).
+- [ ] T043 Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (gate rouge, publication ratée, mauvaise manipulation), avec règle préventive et suivi (principe V).
 
 ---
 
@@ -240,7 +243,7 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 - **US2 (Phase 4)** : dépend de la Phase 2 ; T022 à T024 modifient `release.yml`, donc **après T014** (US1).
 - **US3 (Phase 5)** : dépend de la Phase 2 (aiguillage de `main.go`) et de l'image de test de T021 pour T027.
 - **US4 (Phase 6)** : dépend de T014 (US1) et de T022 (US2) pour compléter `verify`.
-- **Polish (Phase 7)** : dépend de toutes les histoires ; T039 après fusion de la PR.
+- **Polish (Phase 7)** : dépend de toutes les histoires ; T040 (première Release) et T036 (tag hors `main`) après fusion de la PR (T039).
 
 ### Dépendances fines notables
 
@@ -248,7 +251,7 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 - T011, T012 → T013 ; T007 → T015 ; T016 ↔ T015 (commandes identiques)
 - T018 → T019 → T020 ; T019 + T006 → T021 ; T014 → T022 → T023 → T024
 - T021 → T027 ; T028 → T029 → T030
-- T014 + T022 → T032 ; T009 → T035 ; T038 → T039 → T040, T041
+- T014 + T022 → T032 ; T009 → T035 ; T039 → T040 → T041, T042 ; T039 (fusion) → T036
 
 ### Within Each User Story
 
@@ -262,7 +265,7 @@ procédures documentées soient testées de bout en bout (LL-006), et les refus 
 - US1 : T011 et T012 en parallèle.
 - US2 : T018, T021 (préparation du contexte) et T026 en parallèle ; T025 dès que T020 est stable.
 - US3 : T027 et T028 en parallèle.
-- Polish : T036 et T037 en parallèle.
+- Polish : T037 et T038 en parallèle.
 
 ---
 
@@ -290,7 +293,7 @@ Task: "Rédiger docs/dockerhub.md"
 1. Phases 1 et 2 : snapshot complet construit et scanné dans une PR brouillon (gates validées
    avant le code, LL-005).
 2. Phase 3 (US1) : Release de binaires signés et attestés + README.
-3. **S'arrêter et valider** : à ce stade, la fusion permet déjà de publier `v0.1.0` en binaires
+3. **S'arrêter et valider** : à ce stade, la fusion permet déjà de publier `v0.2.0` en binaires
    seuls (`--skip=docker`) si l'on veut livrer tôt.
 
 ### Livraison incrémentale
@@ -299,7 +302,7 @@ Task: "Rédiger docs/dockerhub.md"
 2. US2 → installation par l'image (publication de l'image activée).
 3. US3 → essai sans installation.
 4. US4 → durcissement de la publication, documentation mainteneur, checks obligatoires.
-5. Phase 7 → première Release `v0.1.0`, validation multi-plateforme.
+5. Phase 7 → première Release `v0.2.0`, validation multi-plateforme.
 
 Une seule PR pour la feature (comme la 001), avec des commits par phase ; la première Release
 n'est lancée qu'après fusion.

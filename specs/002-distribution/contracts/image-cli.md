@@ -9,7 +9,8 @@ Point d'entrée : `/usr/local/bin/telemach-image`. Utilisateur par défaut : `65
 | *(aucun)*, `--help`, `-h`, `help` | aide en français : les deux usages, avec les commandes complètes à copier (FR-015) ; code 0 |
 | `install` | installe le plugin dans `/sortie` (ci-dessous) |
 | `install --help` | aide détaillée de l'installation ; code 0 |
-| toute autre commande (`check …`, `--version`, `explain …`) | exécution directe de `/opt/telemach/linux/docker-telemach` avec les mêmes arguments ; sortie et code de sortie identiques au plugin installé (FR-012) |
+| `check …` dont le dossier visé (dernier argument positionnel, `/projet` par défaut) n'existe pas ou ne contient ni `compose.yaml`, ni `compose.yml`, ni `docker-compose.yaml`, ni `docker-compose.yml` | message propre à l'image en français (aucun fichier Compose trouvé, concept de montage, commande d'essai complète à copier) ; code 2, comme le plugin pour un fichier absent ; le plugin n'est pas exécuté |
+| toute autre commande (`check …` sur un dossier contenant un fichier Compose, `--version`, `explain …`) | exécution directe de `/opt/telemach/linux/docker-telemach` avec les mêmes arguments ; sortie et code de sortie identiques au plugin installé (FR-012) |
 
 ## Usages documentés (forme canonique, à reprendre telle quelle dans le README)
 

@@ -20,6 +20,32 @@ annotés).
 | `anchore/scan-action` (Grype) | v7.4.2 | `27805bf3b4e84b4a5c980df22ed233c00390a439` |
 | Syft (SBOM, appelé par GoReleaser) | v1.54.1 (2026-10-06) | installé via `anchore/sbom-action/download-syft` v0.24.3 `66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c` |
 
+Versions des outils fixées explicitement dans les actions (sinon elles prennent leur version
+par défaut, contraire au principe III) : `cosign-installer` → `cosign-release: v3.1.3` ;
+`download-syft` → `syft-version: v1.54.1` ; `anchore/scan-action` → `grype-version: v0.120.1`
+(dernière version vérifiée le 2026-10-15, publiée le 2026-10-06) ; `goreleaser-action` →
+`version: v2.18.3`. Ces versions ne sont pas suivies par Dependabot : elles sont revues chaque
+trimestre avec `LESSON-LEARNED.md` (voir CONTRIBUTING).
+
+### Licence et maintenance (constitution, « Chaîne d'approvisionnement »)
+
+Vérifié le 2026-10-15 via l'API GitHub (dépôt non archivé, dernier push). Tous ces outils ne
+servent qu'en CI : aucun n'est embarqué dans le plugin ni dans l'image. Toutes les licences
+sont compatibles avec Apache-2.0.
+
+| Projet | Licence | Maintenance |
+|---|---|---|
+| goreleaser/goreleaser | MIT | actif (push 2026-10-14), ~16 k étoiles |
+| goreleaser/goreleaser-action | MIT | actif (2026-10-12) |
+| sigstore/cosign | Apache-2.0 | actif (2026-10-14), projet OpenSSF |
+| sigstore/cosign-installer | Apache-2.0 | actif (2026-10-13) |
+| anchore/syft | Apache-2.0 | actif (2026-10-15), ~9,7 k étoiles |
+| anchore/grype | Apache-2.0 | actif (2026-10-15), ~13 k étoiles |
+| anchore/scan-action | MIT | actif (2026-10-09) |
+| anchore/sbom-action | Apache-2.0 | actif (2026-10-12) |
+| actions/attest | MIT | actif (2026-10-14), maintenu par GitHub |
+| docker/setup-qemu-action, setup-buildx-action, login-action | Apache-2.0 | actifs (2026-10-03 à 2026-10-14), maintenus par Docker |
+
 Actions non retenues mais vérifiées : `docker/metadata-action` v6.2.0, `docker/build-push-action`
 v7.4.0 (GoReleaser pilote buildx lui-même), `actions/attest-build-provenance` v4.2.2 (n'est plus
 qu'une surcouche de `actions/attest`, qui est recommandée pour les nouveaux usages).
@@ -64,7 +90,10 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
      aboigues/telemach-plugin-docker`.
   3. **Image** : `cosign sign` par digest (keyless) et `actions/attest` avec
      `push-to-registry: true` ; SBOM de l'image attaché par buildx (`sbom: true` dans
-     `dockers_v2`).
+     `dockers_v2`). Le nom du sujet de l'attestation (`index.docker.io/…` ou `docker.io/…`) et
+     la nécessité éventuelle de `packages: write` sont tranchés en T024 d'après la
+     documentation de `actions/attest`, puis reportés à l'identique dans
+     `contracts/image-tags.md` et `quickstart.md` (un seul nom partout).
 - **Justification** : aucune clé à garder (FR-004, FR-011) ; deux voies de vérification, dont
   une (cosign) qui ne demande pas de compte GitHub. La somme SHA-256 reste la vérification
   minimale documentée en premier.
@@ -174,7 +203,10 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
 
 - **Décision** : nouveau workflow `.github/workflows/release.yml` :
   - déclencheurs : `push` de tags `v*` et `workflow_dispatch` **sans entrée**, lancé sur le
-    tag lui-même (`gh workflow run release.yml --ref v0.1.0`, pour `v0.1.0` déjà existant).
+    tag lui-même (`gh workflow run release.yml --ref vX.Y.Z`), pour relancer un tag dont la
+    publication automatique a échoué. Un lancement manuel exécute le workflow **tel qu'il est
+    au tag** : un tag antérieur à `release.yml` (cas de `v0.1.0`) ne peut pas être publié, d'où
+    une première Release `v0.2.0` posée après la fusion.
     Ainsi `GITHUB_REF` vaut toujours `refs/tags/vX.Y.Z` : l'identité des signatures keyless
     (`release.yml@refs/tags/v…`) et la règle de déploiement de l'environnement restent les
     mêmes dans les deux cas. Une entrée `tag` lancée depuis `main` signerait avec l'identité

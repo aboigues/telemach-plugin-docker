@@ -141,7 +141,10 @@ sur le même tag n'écrase rien.
 - **Dossier des plugins inexistant** (installation par l'image, Linux) : si Docker crée
   lui-même le dossier monté, il appartient à root et l'utilisateur ne pourra plus le gérer.
   La commande documentée crée donc le dossier avant de lancer l'image, et l'installation
-  refuse d'écrire dans un dossier qui n'appartient pas à l'utilisateur, en expliquant pourquoi.
+  refuse d'écrire dans un dossier qui appartient à root alors qu'elle ne s'exécute pas en root
+  (signe que Docker l'a créé), en expliquant pourquoi. La règle ne compare pas le propriétaire
+  à l'utilisateur, car Docker Desktop (macOS) peut présenter les fichiers montés sous une autre
+  identité.
 - **Droits d'écriture** : l'image s'exécute sans privilèges root ; la commande documentée la
   lance avec l'identité de l'utilisateur, pour que le fichier installé lui appartienne. Sans
   droit d'écriture, l'installation s'arrête avec une explication en français (droits Unix,
@@ -164,8 +167,11 @@ sur le même tag n'écrase rien.
 - **Téléchargement par navigateur sous macOS** : un binaire téléchargé par un navigateur peut
   être bloqué par le système ; le README privilégie un téléchargement en ligne de commande et
   explique le message éventuel.
-- **Tag `v0.1.0` déjà existant sans Release** : la publication peut être déclenchée
-  manuellement pour un tag existant, afin de produire la Release `v0.1.0` sans réécrire le tag.
+- **Tag `v0.1.0` déjà existant sans Release** : ce tag pointe sur un commit antérieur à la
+  chaîne de publication (ni workflow ni configuration de publication) ; il ne peut donc pas
+  être publié. Il reste dans l'historique comme tag sans Release, et la première Release est
+  `v0.2.0`, posée après la fusion de cette feature. Le déclenchement manuel (FR-001) sert aux
+  tags futurs dont une publication automatique aurait échoué.
 - **Pré-versions** (`vX.Y.Z-rc.N`) : publiées comme pré-versions, sans déplacer le tag
   `latest` de l'image ni la « dernière version » de la page des Releases.
 
@@ -216,7 +222,8 @@ sur le même tag n'écrase rien.
   étape (`shell-init`).
 - **FR-014**: `install` MUST échouer avec une explication pédagogique en français, sans rien
   modifier, quand : le dossier de destination n'est pas monté, n'est pas accessible en
-  écriture, n'appartient pas à l'utilisateur, contient un fichier homonyme qui n'est pas un
+  écriture, appartient à root alors que l'installation ne s'exécute pas en root (dossier créé
+  par Docker), contient un fichier homonyme qui n'est pas un
   binaire TELEMACH, ou quand `HOST_OS` a une valeur non prise en charge.
 - **FR-015**: Lancée sans argument ou avec `--help`, l'image MUST afficher en français ses deux
   usages (essai et installation) avec les commandes complètes à copier.
@@ -285,8 +292,9 @@ sur le même tag n'écrase rien.
   natif, Homebrew et les paquets deb/rpm sont hors périmètre (Homebrew prévu plus tard).
 - La version provient uniquement du tag git, injectée à la compilation comme le fait déjà le
   job `build` de la CI ; aucun numéro n'est écrit en dur.
-- La première Release sera `v0.1.0`, produite par déclenchement manuel sur le tag existant
-  (le tag n'est ni supprimé ni déplacé).
+- La première Release sera `v0.2.0`, tag posé sur `main` après la fusion de cette feature.
+  Le tag `v0.1.0` (antérieur à la chaîne de publication) n'est ni supprimé ni déplacé et reste
+  sans Release.
 - Le mainteneur crée lui-même le compte, le dépôt Docker Hub `telemachlearning/telemach`, le
   jeton et le secret GitHub ; Claude Code ne manipule jamais ce jeton.
 - L'environnement « release » est restreint aux tags `v*` ; le push du tag par le mainteneur

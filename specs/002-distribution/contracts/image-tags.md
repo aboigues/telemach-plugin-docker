@@ -21,4 +21,8 @@ Règles :
     --certificate-oidc-issuer https://token.actions.githubusercontent.com
   ```
 
-- Provenance : `gh attestation verify oci://docker.io/telemachlearning/telemach:X.Y.Z --repo aboigues/telemach-plugin-docker`.
+- Provenance : `gh attestation verify oci://<nom du sujet>:X.Y.Z --repo aboigues/telemach-plugin-docker`,
+  où `<nom du sujet>` est **exactement** le `subject-name` utilisé par `actions/attest`
+  (`index.docker.io/telemachlearning/telemach` ou `docker.io/telemachlearning/telemach`,
+  tranché en T024 ; research R3). La même valeur est reprise dans le README, `docs/dockerhub.md`
+  et le quickstart.
