@@ -1,0 +1,9 @@
+✖ Aucun dossier de destination : /sortie n'est pas monté.
+
+📘 Concept — montage (bind mount)
+   Un conteneur ne voit pas les fichiers de ta machine. L'option -v DOSSIER_MACHINE:/sortie
+   lui donne accès à un dossier précis, ici celui des plugins Docker.
+
+💡 Correction
+   mkdir -p ~/.docker/cli-plugins
+   docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install

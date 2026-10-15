@@ -33,6 +33,37 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-008 — Commit local malgré un lint en échec (enchaînement non bloquant)
+
+- **Date** : 2026-10-15
+- **Catégorie** : processus
+- **Contexte** : feature 002, validation locale avant commit (`golangci-lint run … ; git commit …`).
+- **Cause racine** : les commandes de validation et de commit étaient enchaînées par `;` ; puis
+  `set -e` a été utilisé, mais il n'interrompt pas l'enchaînement dans le shell de l'outil
+  (zsh). Le commit a été créé alors que le lint venait d'échouer (deux fois).
+- **Impact** : deux commits locaux non conformes (errcheck, gosec G703), corrigés avant tout
+  push ; aucune gate contournée côté dépôt.
+- **Correctif** : commit de correction puis `--amend` du commit non poussé ; validations
+  rejouées.
+- **Règle préventive** : enchaîner validation et commit **uniquement** par `&&` (jamais `;`,
+  ne pas compter sur `set -e`) ; un commit n'est créé que si chaque validation a réussi.
+- **Suivi** : non automatisable dans la CI (geste local) ; les gates obligatoires de `main`
+  restent le filet de sécurité.
+
+### LL-007 — Le lint ignorait les tests à étiquette de build
+
+- **Date** : 2026-10-15
+- **Catégorie** : CI/gates
+- **Contexte** : feature 002, ajout de `tests/release` (étiquette `dist`).
+- **Cause racine** : golangci-lint n'analyse que les fichiers compilés sans étiquette ; les
+  tests `integration` (001) et `dist` (002) n'étaient donc jamais lintés, ni en local ni en CI.
+- **Impact** : deux `defer f.Close()` non vérifiés détectés seulement en lançant le lint à la
+  main avec `--build-tags` ; aucune gate ne les aurait vus.
+- **Correctif** : `run.build-tags: [integration, dist]` dans `.golangci.yml` (PR #5).
+- **Règle préventive** : toute nouvelle étiquette de build est ajoutée à `run.build-tags` de
+  `.golangci.yml` dans la même PR.
+- **Suivi** : automatisé — la gate `lint` couvre désormais ces fichiers.
+
 ### LL-006 — Fonction shell inactive après une installation réelle
 
 - **Date** : 2026-10-14

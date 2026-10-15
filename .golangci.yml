@@ -3,6 +3,10 @@ version: "2"
 
 run:
   timeout: 5m
+  # Analyser aussi les tests à étiquette de build (tests d'intégration, contrat des artefacts).
+  build-tags:
+    - integration
+    - dist
 
 linters:
   default: none

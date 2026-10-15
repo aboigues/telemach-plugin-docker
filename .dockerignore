@@ -1,0 +1,6 @@
+# Le contexte réel de l'image est préparé par GoReleaser (dockers_v2) et ne contient que les
+# binaires. Ce fichier protège les constructions locales : rien n'entre dans le contexte
+# hormis les dossiers de binaires par plateforme.
+*
+!linux/
+!darwin/
