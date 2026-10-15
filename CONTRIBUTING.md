@@ -43,6 +43,12 @@ La branche `main` est protégée :
 relit la PR puis la fusionne lui-même. Ce clic sur « Merge » vaut validation humaine : aucune
 approbation formelle n'est exigée, GitHub interdisant d'approuver sa propre PR.
 
+## Licence des contributions
+
+Le projet est distribué sous la [licence Apache 2.0](LICENSE). En proposant une contribution,
+tu acceptes qu'elle soit publiée sous cette même licence (section 5 de la licence). Toute
+nouvelle dépendance doit avoir une licence compatible (MIT, BSD, Apache 2.0…).
+
 ## Incidents
 
 Tout incident (CI rouge inattendue, faille, régression, gate contournée) est consigné dans

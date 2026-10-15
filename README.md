@@ -150,6 +150,7 @@ go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach
 Docker découvre automatiquement les plugins placés dans `~/.docker/cli-plugins/`. Vérifie :
 
 ```bash
+docker telemach --version        # version, licence et site du projet
 docker telemach --help
 docker --help | grep telemach    # « telemach*  Explique en français les erreurs… »
 ```
@@ -249,3 +250,10 @@ mémoire des incidents ([`LESSON-LEARNED.md`](LESSON-LEARNED.md)). Voir
 [`docs/catalogue.md`](docs/catalogue.md).
 
 Signalement de vulnérabilité : voir [`SECURITY.md`](SECURITY.md).
+
+## Licence
+
+TELEMACH PLUGIN DOCKER est un logiciel libre distribué sous la
+[licence Apache 2.0](LICENSE) — © 2026 [TELEMACH Learning](https://www.telemach-learning.fr).
+Tu peux l'utiliser, le modifier et le redistribuer, y compris pour tes formations, en
+conservant les mentions des fichiers [`LICENSE`](LICENSE) et [`NOTICE`](NOTICE).

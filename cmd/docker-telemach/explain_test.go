@@ -21,6 +21,7 @@ func testApp(t *testing.T, env map[string]string) (*app, *bytes.Buffer, *bytes.B
 		now:        func() time.Time { return time.Date(2026, 10, 14, 10, 0, 0, 0, time.UTC) },
 		executable: func() string { return "/opt/telemach/docker-telemach" },
 		store:      state.Store{Dir: filepath.Join(t.TempDir(), "telemach")},
+		version:    "1.2.3",
 	}, &out, &errb
 }
 
