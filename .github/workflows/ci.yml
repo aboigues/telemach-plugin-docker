@@ -6,6 +6,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -40,6 +41,36 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zsh
       - name: Tests unitaires et de régression
         run: go test -race -cover ./...
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Historique et tags complets : nécessaires à git describe.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Compiler avec la version issue du tag git
+        # Sur un tag v0.1.0 : « 0.1.0 » ; après le tag : « 0.1.0-3-gabc1234 » ; sans tag :
+        # le commit abrégé. La version est injectée par -ldflags (main.version).
+        run: |
+          version="$(git describe --tags --match 'v[0-9]*' --always --dirty)"
+          version="${version#v}"
+          echo "Version : ${version}"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          go build -trimpath -ldflags "-X main.version=${version}" -o docker-telemach ./cmd/docker-telemach
+      - name: Vérifier la version affichée
+        run: |
+          ./docker-telemach --version
+          first_line="$(./docker-telemach --version | head -n 1)"
+          if [ "${first_line}" != "TELEMACH PLUGIN DOCKER ${VERSION}" ]; then
+            echo "::error::--version affiche « ${first_line} » au lieu de la version ${VERSION}"
+            exit 1
+          fi
+          ./docker-telemach docker-cli-plugin-metadata | grep -F "\"Version\":\"${VERSION}\""
 
   fuzz:
     runs-on: ubuntu-latest

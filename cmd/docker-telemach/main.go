@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -33,6 +34,7 @@ type app struct {
 	getwd          func() (string, error)
 	executable     func() string
 	store          state.Store
+	version        string
 
 	colorFlag string
 	width     int
@@ -55,7 +57,8 @@ func newApp() *app {
 			}
 			return p
 		},
-		store: state.Store{Dir: state.DefaultDir(os.Getenv)},
+		store:   state.Store{Dir: state.DefaultDir(os.Getenv)},
+		version: resolveVersion(version, debug.ReadBuildInfo),
 	}
 }
 
@@ -88,6 +91,7 @@ func (a *app) rootCommand() *cobra.Command {
 		Use:           "docker-telemach",
 		Short:         "Explique en français les erreurs Docker et Docker Compose",
 		Long:          "TELEMACH aide à apprendre Docker : il explique en français les erreurs des commandes docker et docker compose, et vérifie les fichiers Compose.",
+		Version:       a.version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(*cobra.Command, []string) error {
@@ -107,13 +111,14 @@ func (a *app) rootCommand() *cobra.Command {
 	root.SetHelpCommand(&cobra.Command{Hidden: true})
 	root.CompletionOptions.DisableDefaultCmd = true
 	frenchHelp(root)
+	root.SetVersionTemplate(versionTemplate)
 
 	root.AddCommand(&cobra.Command{
 		Use:    plugin.MetadataSubcommand,
 		Hidden: true,
 		Args:   cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
-			return plugin.WriteMetadata(a.stdout, version)
+			return plugin.WriteMetadata(a.stdout, a.version)
 		},
 	})
 	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.lastCommand(), a.deepenCommand())
@@ -136,6 +141,7 @@ Options globales :
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
 `)
 	root.Flags().BoolP("help", "h", false, "affiche l'aide")
+	root.Flags().BoolP("version", "v", false, "affiche la version, la licence et le site du projet")
 }
 
 // renderOptions construit les options de rendu communes.
