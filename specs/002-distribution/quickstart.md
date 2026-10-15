@@ -129,4 +129,5 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 sha256sum docker-telemach_0.2.0_linux_amd64    # même somme que dans checksums.txt
 ```
 
-(Les options exactes seront recopiées de `.goreleaser.yaml` à l'implémentation.)
+Ces options sont exactement celles de `.goreleaser.yaml` ; la CI le vérifie à chaque PR
+(`tests/release/reproducible_test.go`).

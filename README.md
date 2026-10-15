@@ -132,13 +132,83 @@ clair.
 
 | Outil | Version | Vérification |
 |-------|---------|--------------|
-| Go | 1.27 ou plus récent (la version exacte, 1.27.2, est téléchargée automatiquement par Go) | `go version` |
 | Docker Engine ou Docker Desktop | avec le plugin Compose v2 | `docker version` et `docker compose version` |
 | Shell | bash ou zsh (Linux, macOS, WSL2) | `echo $SHELL` |
+| `curl` | toute version récente | `curl --version` |
 
-Windows natif (PowerShell) n'est pas pris en charge ; sous Windows, utilise WSL2.
+Go n'est **pas** nécessaire, sauf pour compiler depuis les sources. Windows natif (PowerShell)
+n'est pas pris en charge ; sous Windows, utilise WSL2.
 
-### 1. Compiler et installer le plugin
+### 1. Installer le plugin
+
+#### Depuis une Release (recommandé)
+
+Chaque version publie, sur la [page des Releases](https://github.com/aboigues/telemach-plugin-docker/releases),
+un binaire par système (Linux, macOS) et par processeur (amd64, arm64), avec un fichier de
+sommes de contrôle signé. Télécharge en ligne de commande plutôt qu'avec un navigateur : sous
+macOS, un fichier téléchargé par un navigateur peut être bloqué au premier lancement.
+
+Linux et WSL2 :
+
+```bash
+VERSION=0.2.0
+ARCH=$(uname -m); case "$ARCH" in x86_64) ARCH=amd64 ;; aarch64|arm64) ARCH=arm64 ;; esac
+FICHIER=docker-telemach_${VERSION}_linux_${ARCH}
+curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/${FICHIER}"
+curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/checksums.txt"
+sha256sum --check --ignore-missing checksums.txt
+mkdir -p ~/.docker/cli-plugins
+install -m 0755 "$FICHIER" ~/.docker/cli-plugins/docker-telemach
+docker telemach --version
+```
+
+macOS :
+
+```bash
+VERSION=0.2.0
+ARCH=$(uname -m); case "$ARCH" in x86_64) ARCH=amd64 ;; aarch64|arm64) ARCH=arm64 ;; esac
+FICHIER=docker-telemach_${VERSION}_darwin_${ARCH}
+curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/${FICHIER}"
+curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/checksums.txt"
+shasum -a 256 --check --ignore-missing checksums.txt
+mkdir -p ~/.docker/cli-plugins
+install -m 0755 "$FICHIER" ~/.docker/cli-plugins/docker-telemach
+docker telemach --version
+```
+
+La ligne `--check` doit afficher `OK` : la somme du fichier téléchargé correspond à celle
+publiée. Si elle affiche `FAILED`, **n'installe pas ce fichier** (téléchargement corrompu ou
+altéré) : supprime-le et recommence.
+
+<details>
+<summary>Aller plus loin : vérifier la signature et la provenance</summary>
+
+Le fichier `checksums.txt` est signé sans clé privée à conserver (signature « keyless »
+Sigstore) : la signature prouve qu'il a été produit par le workflow de publication officiel
+du dépôt. Avec [cosign](https://github.com/sigstore/cosign) v3 :
+
+```bash
+curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/checksums.txt.sigstore.json"
+cosign verify-blob \
+  --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github\.com/aboigues/telemach-plugin-docker/\.github/workflows/release\.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  checksums.txt
+```
+
+Chaque binaire a aussi une attestation de provenance (SLSA) qui le relie au commit et au
+workflow qui l'ont construit. Avec la CLI GitHub :
+
+```bash
+gh attestation verify "$FICHIER" --repo aboigues/telemach-plugin-docker
+```
+
+</details>
+
+#### Compiler depuis les sources
+
+Il faut Go 1.27 ou plus récent (la version exacte, 1.27.2, est téléchargée automatiquement
+par Go).
 
 ```bash
 git clone https://github.com/aboigues/telemach-plugin-docker.git
@@ -146,6 +216,8 @@ cd telemach-plugin-docker
 mkdir -p ~/.docker/cli-plugins
 go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach
 ```
+
+#### Vérifier l'installation
 
 Docker découvre automatiquement les plugins placés dans `~/.docker/cli-plugins/`. Vérifie :
 
@@ -179,11 +251,8 @@ docker telemach deepen   # approfondit cette erreur
 
 ### Mettre à jour
 
-```bash
-cd telemach-plugin-docker
-git pull
-go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach
-```
+Refais l'étape 1 avec la nouvelle version (`VERSION=…`) : le binaire est remplacé. Depuis les
+sources : `git pull` puis la même commande `go build`.
 
 ### Désinstaller
 
@@ -199,7 +268,7 @@ go build -o ~/.docker/cli-plugins/docker-telemach ./cmd/docker-telemach
 
 | Symptôme | Cause probable et solution |
 |----------|----------------------------|
-| `docker: unknown command: docker telemach` | Le binaire n'est pas dans `~/.docker/cli-plugins/` ou n'est pas exécutable : relance l'étape 1. |
+| `docker: unknown command: docker telemach` | Le binaire n'est pas dans `~/.docker/cli-plugins/`, n'est pas exécutable, ou ne correspond pas à ton système : relance l'étape 1. |
 | Aucune explication après une erreur | Vérifie avec `type docker` que la fonction est active, et que `TELEMACH_DISABLE` n'est pas à `1`. |
 | Pas de couleurs | La sortie n'est pas un terminal, ou `NO_COLOR` est défini. Force avec `--color=always`. |
 | `go: downloading go1.27.2…` lors de la compilation | Normal : Go télécharge la bonne version de sa chaîne d'outils. |

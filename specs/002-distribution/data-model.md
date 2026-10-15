@@ -38,7 +38,7 @@ main.
 | `os` | `linux`, `darwin` |
 | `arch` | `amd64`, `arm64` |
 | `sha256` | identique dans `checksums.txt` et dans l'image (FR-009) |
-| infos de build Go | module `github.com/aboigues/telemach-plugin-docker`, réglage `-ldflags` contenant `-X main.version=<version>` |
+| infos de build Go | module `github.com/aboigues/telemach-plugin-docker`, version du module `v<version>` (tag git ; `-ldflags` n'est pas inscrit à cause de `-trimpath`) |
 
 ## Image
 

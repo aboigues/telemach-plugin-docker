@@ -187,7 +187,10 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
     binaire TELEMACH (lecture des informations de build Go avec `debug/buildinfo.ReadFile`,
     qui fonctionne aussi sur un binaire darwin : chemin de module
     `github.com/aboigues/telemach-plugin-docker`). Un lien symbolique ou un autre fichier est
-    refusé. L'ancienne version est lue dans les réglages de build (`-X main.version=…`).
+    refusé. L'ancienne version est la **version du module** (`Main.Version`, `vX.Y.Z` pour une
+    Release, compilée depuis le tag sur un dépôt propre), sans le `v`. Constat du
+    2026-10-15 : avec `-trimpath`, Go n'inscrit **pas** `-ldflags` dans les informations de
+    build, la valeur de `-X main.version` n'y est donc pas lisible.
   - Écriture atomique : fichier temporaire dans `/sortie`, droits `0755`, puis renommage.
 - **Point ouvert à valider sur Mac (SC-007)** : la propriété apparente des fichiers d'un
   montage Docker Desktop (virtiofs) avec `--user`. La règle « refus si propriétaire root » est
