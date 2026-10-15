@@ -19,6 +19,33 @@ docker() (
 		exit $?
 	fi
 
+	# Feature 003 : run, create et exec (y compris « container … », après les options globales
+	# de Docker) sont analysés après une exécution réussie ; les autres commandes, jamais.
+	__telemach_lint=0
+	if [ "${TELEMACH_LINT:-}" != "0" ]; then
+		__telemach_skip=0
+		__telemach_mgmt=0
+		for __telemach_arg in "$@"; do
+			if [ "$__telemach_skip" = 1 ]; then
+				__telemach_skip=0
+				continue
+			fi
+			case "$__telemach_arg" in
+			-c | --context | -H | --host | --config | -l | --log-level | --tlscacert | --tlscert | --tlskey) __telemach_skip=1 ;;
+			-*) [ "$__telemach_mgmt" = 1 ] && break ;;
+			container)
+				[ "$__telemach_mgmt" = 1 ] && break
+				__telemach_mgmt=1
+				;;
+			run | create | exec)
+				__telemach_lint=1
+				break
+				;;
+			*) break ;;
+			esac
+		done
+	fi
+
 	# Commande interactive : on ne touche pas à stderr pour ne pas perturber le terminal.
 	__telemach_interactive=0
 	__telemach_login=0
@@ -40,6 +67,8 @@ docker() (
 		if [ "$__telemach_rc" -ne 0 ]; then
 			command "$__telemach_bin" explain --exit-code "$__telemach_rc" --interactive \
 				--docker-version "$__telemach_docker_version" -- "$@" || true
+		elif [ "$__telemach_lint" = 1 ]; then
+			command "$__telemach_bin" lint --after -- "$@" || true
 		fi
 		exit "$__telemach_rc"
 	fi
@@ -63,6 +92,8 @@ docker() (
 	if [ "$__telemach_rc" -ne 0 ]; then
 		command "$__telemach_bin" explain --exit-code "$__telemach_rc" --stderr-file "$__telemach_tmp" \
 			--docker-version "$__telemach_docker_version" -- "$@" || true
+	elif [ "$__telemach_lint" = 1 ]; then
+		command "$__telemach_bin" lint --after -- "$@" || true
 	fi
 	exit "$__telemach_rc"
 )

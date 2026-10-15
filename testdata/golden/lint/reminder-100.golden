@@ -1,0 +1,1 @@
+↺ Encore : Option Docker placée après l'image : -p 8090:80 a été transmis au conteneur, pas à Docker. → docker run -d -p 8090:80 nginx — détails : docker telemach last

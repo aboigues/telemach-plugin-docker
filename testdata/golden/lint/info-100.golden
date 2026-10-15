@@ -1,0 +1,2 @@
+ℹ Image sans tag explicite : nginx désigne nginx:latest, qui change à chaque publication.
+   💡 Préfère un tag précis, par exemple nginx:1.30-alpine.

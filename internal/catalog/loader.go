@@ -100,8 +100,14 @@ func validate(e *Entry) []error {
 	if len(e.Patterns) == 0 && len(e.ExitCodes) == 0 && e.Fallback == "" {
 		fail("au moins un motif est requis (ou des codes de sortie, ou fallback)")
 	}
-	if e.Fallback != "" && e.Fallback != "application" && e.Fallback != "compose-issue" {
-		fail("fallback inconnu %q (valeurs possibles : application, compose-issue)", e.Fallback)
+	if e.Fallback != "" && e.Fallback != "application" && e.Fallback != "compose-issue" && e.Fallback != "cmdline" {
+		fail("fallback inconnu %q (valeurs possibles : application, compose-issue, cmdline)", e.Fallback)
+	}
+	switch {
+	case e.Fallback == "cmdline" && e.Severity != "warning" && e.Severity != "info":
+		fail("severity obligatoire pour un piège de ligne de commande : warning ou info (reçu %q)", e.Severity)
+	case e.Fallback != "cmdline" && e.Severity != "":
+		fail("severity réservée aux pièges de ligne de commande (fallback: cmdline)")
 	}
 	e.compiled = nil
 	for _, p := range e.Patterns {

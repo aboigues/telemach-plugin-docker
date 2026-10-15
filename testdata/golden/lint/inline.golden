@@ -1,0 +1,10 @@
+
+⚠ Dans ta commande — cause probable
+   Option Docker placée après l'image : -p 8090:80 a été transmis au conteneur,
+   pas à Docker.
+   📘 Concept — ordre des arguments de docker run
+      docker run [OPTIONS] IMAGE [COMMANDE] [ARG...] : les options de Docker se
+      placent avant l'image ; tout ce qui suit l'image est donné au programme du
+      conteneur.
+      Placer les options avant l'image.
+      docker run -d -p 8090:80 nginx

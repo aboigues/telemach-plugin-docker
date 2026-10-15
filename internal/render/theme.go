@@ -25,6 +25,12 @@ const (
 	LabelLast      = "↺ Explication complète"
 	LabelProblem   = "✖ Problème"
 	LabelFixedPart = "💡 Version corrigée"
+	// Feature 003 : pièges de la ligne de commande.
+	SymbolWarning  = "⚠"
+	SymbolInfo     = "ℹ"
+	SymbolReminder = "↺"
+	LabelFix       = "💡 Correction"
+	LabelInCommand = "⚠ Dans ta commande — cause probable"
 )
 
 // Theme applique les styles de chaque rôle. Sans couleur, il renvoie le texte tel quel.

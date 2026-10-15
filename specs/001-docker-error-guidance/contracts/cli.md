@@ -146,6 +146,9 @@ Garanties du code généré (vérifiées par les tests) :
    `__telemach_docker_version` et transmise par `--docker-version`. Aucune autre commande
    n'est exécutée.
 
+Garanties 8 à 10 (appel de `lint` après une commande `run|create|exec` réussie,
+`TELEMACH_LINT=0`) : voir `specs/003-command-line-analysis/contracts/cli-lint.md`.
+
 Shell non pris en charge → message d'erreur en français, code `2`.
 
 ---

@@ -38,9 +38,28 @@ type LastDiagnosis struct {
 	Family         string
 	Subcommand     string
 	Args           []string // arguments de la commande docker, nettoyés et masqués (absent des fichiers antérieurs)
-	ComposeDir     string
-	ComposeFiles   []string
+
+	// Feature 003 : avertissement sur la ligne de commande.
+	Kind         string          // KindError (défaut, fichiers antérieurs) ou KindCmdline
+	Findings     []FindingRecord // pièges affichés en complet (captures nettoyées et masquées)
+	ComposeDir   string
+	ComposeFiles []string
 }
+
+// Nature du dernier diagnostic.
+const (
+	KindError   = "error"
+	KindCmdline = "cmdline"
+)
+
+// FindingRecord conserve un piège de ligne de commande pour « last » et « deepen ».
+type FindingRecord struct {
+	EntryID  string
+	Captures map[string]string
+}
+
+// IsCmdline indique si le dernier diagnostic est un avertissement sur la ligne de commande.
+func (d LastDiagnosis) IsCmdline() bool { return d.Kind == KindCmdline }
 
 // Store lit et écrit l'état dans un répertoire privé.
 type Store struct {
@@ -66,6 +85,9 @@ func (s Store) Load() (LastDiagnosis, bool) {
 	if err := json.Unmarshal(data, &d); err != nil || d.SchemaVersion != SchemaVersion {
 		return LastDiagnosis{}, false
 	}
+	if d.Kind == "" {
+		d.Kind = KindError
+	}
 	return d, true
 }
 
@@ -76,17 +98,26 @@ func (s Store) Save(d LastDiagnosis) error {
 	if len(d.Stderr) > MaxStderr {
 		d.Stderr = d.Stderr[len(d.Stderr)-MaxStderr:]
 	}
-	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
-		return err
-	}
-	if err := os.Chmod(s.Dir, 0o700); err != nil { //nolint:gosec // un répertoire privé a besoin du droit x
-		return err
+	if d.Kind == "" {
+		d.Kind = KindError
 	}
 	data, err := json.Marshal(d)
 	if err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(s.Dir, ".last-*.json")
+	return writePrivate(s.Dir, fileName, data)
+}
+
+// writePrivate écrit name dans dir de façon atomique (fichier temporaire puis renommage),
+// avec les droits 0700 pour le répertoire et 0600 pour le fichier.
+func writePrivate(dir, name string, data []byte) error {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	if err := os.Chmod(dir, 0o700); err != nil { //nolint:gosec // un répertoire privé a besoin du droit x
+		return err
+	}
+	tmp, err := os.CreateTemp(dir, "."+name+"-*")
 	if err != nil {
 		return err
 	}
@@ -102,7 +133,7 @@ func (s Store) Save(d LastDiagnosis) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmp.Name(), filepath.Join(s.Dir, fileName))
+	return os.Rename(tmp.Name(), filepath.Join(dir, name))
 }
 
 // IsRepeat indique si l'empreinte est identique à celle du dernier diagnostic, enregistré
