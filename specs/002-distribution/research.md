@@ -266,3 +266,23 @@ contre une réécriture du tag ; Dependabot proposera les mises à jour suivante
   {{ .CommitTimestamp }}`, chaîne d'outils épinglée par `go.mod` (`toolchain go1.27.2`). Le
   quickstart contient la procédure de reconstruction locale d'un binaire et la comparaison
   de sa somme avec `checksums.txt`.
+
+## Résultats de la première publication (v0.2.0, 2026-10-15)
+
+- Tag `v0.2.0` sur `2941f4a` (fusion de la PR #5) ; workflow `release` réussi en **4 min 54 s**
+  (SC-004 : < 30 min) : `verify`, 11 gates, `release`.
+- Release `TELEMACH 0.2.0` : immuable, 4 binaires, 4 SBOM, `checksums.txt` et son bundle
+  cosign ; signature (`cosign verify-blob`) et provenance (`gh attestation verify`, SLSA v1,
+  8 sujets, `release.yml@refs/tags/v0.2.0`) vérifiées.
+- Image `telemachlearning/telemach` : tags `0.2.0`, `0.2`, `latest` ; amd64 13,0 Mo et arm64
+  12,0 Mo compressés (SC-006) ; utilisateur `65532:65532`, aucun shell ; `cosign verify` et
+  `gh attestation verify oci://docker.io/…` réussis ; les 4 binaires embarqués (2 images ×
+  linux/darwin) ont exactement les sommes de `checksums.txt` (FR-009).
+- Procédures du README rejouées sur les vrais fichiers (WSL2, Linux amd64) : installation
+  depuis la Release en 3 s hors saisie (SC-001), par l'image en 2 s une fois l'image
+  téléchargée (SC-002), essai `check` identique au plugin installé (V4) ; fichier altéré rejeté.
+- T036 : tag `v0.0.0-test.1` sur un commit hors `main` refusé par `verify` (« Le tag doit
+  pointer sur un commit de main »), `gates` et `release` non exécutés (jeton jamais exposé) ;
+  tag supprimé, rien de publié.
+- Reste T041 : validation sur macOS (Mac de l'utilisateur, point ouvert R7 sur la propriété
+  des fichiers) et, si disponible, Linux arm64.

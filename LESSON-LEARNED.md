@@ -33,6 +33,26 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-009 — Vérification affichée comme réussie sans avoir rien comparé (zsh)
+
+- **Date** : 2026-10-15
+- **Catégorie** : processus
+- **Contexte** : vérification post-publication de v0.2.0 (FR-009 : binaires de l'image
+  identiques à ceux de la Release), script lancé dans le shell de l'outil (zsh).
+- **Cause racine** : `set -- $p` ne découpe pas une variable en mots sous zsh (contrairement
+  à bash) ; les deux sommes comparées étaient vides, donc égales, et le script a affiché
+  « identique à la Release ».
+- **Impact** : faux positif repéré immédiatement grâce aux erreurs `No such file` ; contrôle
+  refait en bash (les 4 binaires sont bien identiques). Aucune conséquence, mais une
+  publication aurait pu être validée à tort.
+- **Correctif** : vérification réécrite en `bash -c`, avec contrôle explicite que la valeur
+  attendue n'est pas vide (`[ -n "$want" ] && [ "$got" = "$want" ]`).
+- **Règle préventive** : tout script de vérification ad hoc s'exécute dans `bash -c` (jamais
+  dans le shell interactif zsh) et échoue si une valeur comparée est vide ; un contrôle qui
+  n'a rien comparé est un échec, pas un succès.
+- **Suivi** : non automatisable (vérification manuelle post-publication) ; la comparaison
+  FR-009 pourra devenir une étape du workflow `release` lors d'une prochaine évolution.
+
 ### LL-008 — Commit local malgré un lint en échec (enchaînement non bloquant)
 
 - **Date** : 2026-10-15
