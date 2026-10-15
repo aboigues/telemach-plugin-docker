@@ -97,7 +97,7 @@ func sha256File(t *testing.T, path string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
 		t.Fatal(err)
@@ -112,7 +112,7 @@ func checksums(t *testing.T, path string) map[string]string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	sums := map[string]string{}
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
