@@ -67,8 +67,8 @@ image, chemin) surlignés : on apprend aussi à lire soi-même les erreurs Docke
 
 - **Ne jamais inventer.** Une erreur inconnue est présentée comme telle, avec des pistes et
   un lien vers la documentation officielle, mais sans cause supposée.
-- **Ne jamais agir à ta place.** TELEMACH propose, tu décides : il n'exécute aucune commande
-  et ne modifie aucun fichier.
+- **Ne jamais agir à ta place.** TELEMACH propose, tu décides : il ne modifie aucun fichier,
+  ne démarre, n'arrête ni ne supprime aucun conteneur ; il se contente de lire.
 - **Enseigner les bonnes pratiques.** Les exemples évitent root, `--privileged` et les
   secrets écrits en clair ; une solution dangereuse est toujours signalée comme telle.
 
@@ -176,6 +176,46 @@ Pour vérifier une commande **avant** de la lancer :
 ```bash
 docker telemach lint -- run -d nginx -p 8090:80
 ```
+
+### Comprendre un conteneur qui s'est arrêté
+
+Un conteneur lancé en arrière-plan peut s'arrêter aussitôt : `docker run -d` a réussi, l'erreur
+n'est que dans son journal. Quelques secondes après un `docker run -d`, TELEMACH vérifie l'état
+du conteneur et te prévient à l'invite suivante :
+
+```text
+$ docker run -d postgres:18-alpine
+4f2a…
+$
+⚠ Le conteneur « eager_pg » s'est arrêté avec le code 1, moins d'une seconde après son lancement : docker telemach ps pour comprendre pourquoi.
+```
+
+`docker telemach ps` retrouve alors le dernier conteneur arrêté en erreur, montre la fin de son
+journal et en explique la cause :
+
+```text
+$ docker telemach ps
+✖ Le conteneur « eager_pg » (postgres:18-alpine) s'est arrêté avec le code 1, moins d'une
+   seconde après son démarrage (il y a 2 min).
+   L'image postgres:18-alpine exige la variable POSTGRES_PASSWORD, absente au lancement.
+
+── Fin du journal (7 dernières lignes) ───────────────────────────────────────
+   Error: Database is uninitialized and superuser password is not specified.
+          You must specify POSTGRES_PASSWORD to a non-empty value for the
+   …
+
+💡 Corrections
+   1. Mettre la variable dans un fichier lisible par toi seul (chmod 600), jamais ajouté à
+      git, puis le passer avec --env-file.
+      docker run -d --env-file db.env postgres:18-alpine
+```
+
+Causes reconnues : variable obligatoire absente, option de `docker run` placée après l'image,
+commande introuvable ou non exécutable, accès refusé, port déjà utilisé, fichier introuvable,
+image d'une autre architecture, manque de mémoire, erreur de démarrage, arrêt par
+`docker stop`/`docker kill`, plantage (erreur de segmentation). Sinon, TELEMACH le dit et
+t'oriente vers `docker logs`. `docker telemach ps <nom>` explique un conteneur précis ; les
+autres conteneurs en erreur sont listés sous l'analyse.
 
 ## Installation
 
@@ -398,6 +438,7 @@ la fonction `docker` de l'ancienne version. `docker telemach last` te le signale
 | Commande | Rôle |
 |----------|------|
 | `docker telemach check [-f fichier]... [dossier]` | Vérifie un projet Compose **avant** de le lancer (code 0 : aucun problème, 1 : problème trouvé, 2 : fichier introuvable) |
+| `docker telemach ps [conteneur]` | Explique pourquoi le dernier conteneur (ou celui que tu nommes) s'est arrêté en erreur (code 0 : analyse ou rien à signaler, 1 : démon injoignable ou conteneur introuvable) |
 | `docker telemach lint -- <arguments docker…>` | Vérifie une ligne `docker run`, `create` ou `exec` **sans l'exécuter** (code 0 : rien ou informations seulement, 1 : avertissement) |
 | `docker telemach last` | Réaffiche l'explication complète de la dernière erreur ou du dernier avertissement (après un rappel d'une ligne, ou si tu as effacé ton terminal) |
 | `docker telemach deepen [--exercise]` | Approfondit le concept de la dernière erreur ou du dernier avertissement |
@@ -406,10 +447,15 @@ la fonction `docker` de l'ancienne version. `docker telemach last` te le signale
 
 ## Confidentialité et sécurité
 
-- Fonctionne **100 % en local**, sans aucun accès réseau.
-- **N'exécute aucune commande** et ne modifie aucun de tes fichiers : il propose, tu décides.
-  Seule exception : `docker --version`, lu une fois à l'activation pour connaître ta version
-  de Docker.
+- Fonctionne **100 % en local**, sans aucun accès réseau (hormis la connexion à ton démon
+  Docker, celle que ta CLI utilise déjà, contexte distant compris).
+- **Ne modifie rien** : ni tes fichiers, ni tes conteneurs. Il ne lance que des **lectures** :
+  `docker --version` une fois à l'activation ; pour `docker telemach ps`, la liste des
+  conteneurs arrêtés, leur état et la fin de leur journal ; après un `docker run -d`, l'état du
+  conteneur lancé (historique des événements du démon). Jamais `start`, `stop`, `rm`, `exec`
+  ni `pull`.
+- Les **valeurs des variables d'environnement** d'un conteneur ne sont jamais lues au-delà de
+  leur nom : elles sont écartées dès la réception, jamais affichées ni conservées.
 - **Masque les secrets** (mots de passe, jetons, clés) partout où il affiche ou enregistre
   quelque chose.
 - Pour les avertissements sur la ligne de commande, ne lit que deux choses sur ta machine : la
@@ -434,9 +480,11 @@ La sortie est colorée dans un terminal ; chaque bloc garde aussi un symbole et 
 ```bash
 TELEMACH_DISABLE=1 docker …   # ni explication ni avertissement
 TELEMACH_LINT=0 docker …      # sans avertissement sur la ligne de commande ; les erreurs restent expliquées
+TELEMACH_WATCH=0 docker …     # sans vérification après un docker run -d
 ```
 
-Pour toute une session (une démonstration, par exemple) : `export TELEMACH_LINT=0`.
+Pour toute une session (une démonstration, par exemple) : `export TELEMACH_LINT=0` ou
+`export TELEMACH_WATCH=0`.
 
 ## Contribuer
 

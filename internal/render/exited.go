@@ -91,7 +91,10 @@ func nbsp(s string) string { return strings.ReplaceAll(s, " ", "\u00a0") }
 func exitedHeader(c map[string]string) string {
 	who := fmt.Sprintf("Le conteneur « %s » (%s)", c["name"], c["image"])
 	if c["state"] == "created" {
-		return fmt.Sprintf("%s n'a pas pu démarrer (code %s, %s).", who, c["code"], nbsp(c["age"]))
+		if a := c["age"]; a != "" {
+			return fmt.Sprintf("%s n'a pas pu démarrer (code %s, %s).", who, c["code"], nbsp(a))
+		}
+		return fmt.Sprintf("%s n'a pas pu démarrer (code %s).", who, c["code"])
 	}
 	s := fmt.Sprintf("%s s'est arrêté avec le code %s", who, c["code"])
 	if l := c["lifetime"]; l != "" {

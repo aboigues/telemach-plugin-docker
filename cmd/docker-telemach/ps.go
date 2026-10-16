@@ -91,8 +91,15 @@ func (a *app) ps(args []string) error {
 	if d.Entry != nil {
 		entryID = d.Entry.ID
 	}
+	// L'ancienneté (« il y a 2 min ») vieillirait : « last » la recalcule dans son en-tête.
+	saved := make(map[string]string, len(d.Captures))
+	for k, v := range d.Captures {
+		if k != "age" {
+			saved[k] = v
+		}
+	}
 	_ = a.store.Save(state.LastDiagnosis{
-		Kind: state.KindExited, EntryID: entryID, Captures: d.Captures, RecordedAt: now,
+		Kind: state.KindExited, EntryID: entryID, Captures: saved, RecordedAt: now,
 		Container:  state.ContainerRef{Name: target.Name, ID: shortID(target.ID)},
 		LogExcerpt: view.Log, Fingerprint: "exited:" + target.ID,
 	})

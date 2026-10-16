@@ -71,7 +71,12 @@ cas avec secrets et des mesures (LL-012) ; LL-002 exige les tests du script shel
 - US3 et US4 faites (T027–T030) : liste des autres conteneurs (résumé français), désignation
   par nom ou préfixe d'identifiant (vérifié sur le démon), redémarrages et Compose ; `last`
   réaffiche l'analyse sans le démon, `deepen` l'approfondit.
-- Reste : phase 7 (T031–T036).
+- Phase 7 (2026-10-16) : T031 (SC-004 : `docker ps` coûte ~12 ms par conteneur renvoyé →
+  lectures bornées ; p95 1,19 s avec 200 conteneurs), T032 (README), T033 (validation : tout
+  vert sauf `TestSC003LintLatency`, test instable de la 003 sous charge de la machine — même
+  temps sur `main` et sur la branche, mesuré en alternance), T034 (V1 et V7 vérifiés avec la
+  vraie CLI, dans de vrais terminaux), T035 (PR).
+- Reste : T036 (publication v0.3.0, sur confirmation, après fusion).
 
 ---
 
@@ -191,10 +196,10 @@ cas avec secrets et des mesures (LL-012) ; LL-002 exige les tests du script shel
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [X] T031 [P] Ajouter à `tests/integration/exited_test.go` la mesure SC-004 : 200 conteneurs arrêtés (dont 20 en erreur) et un journal de 120 000 lignes ; 20 exécutions de `docker telemach ps` → p95 < 2 s (seuil CI documenté si le runner est plus lent) ; rapporter les valeurs dans `specs/004-exited-containers-analysis/research.md` ; nettoyage garanti par un piège installé avant la création (LL-003).
-- [ ] T032 [P] Documenter dans `README.md` : section « Comprendre un conteneur qui s'est arrêté » (exemple de l'issue #8, signal après `run -d`, `docker telemach ps [nom]`, `TELEMACH_WATCH=0`, ce qui est lu et ce qui ne l'est jamais) ; tableau « Commandes » ; § « Confidentialité et sécurité » (exception à « n'exécute aucune commande », lectures seules, valeurs des variables jamais lues au-delà du décodage) ; § « Mettre à jour » (relancer ses terminaux pour activer le signal).
-- [ ] T033 `go test -race ./...`, `go test -tags integration ./tests/integration/...` (Docker local), `golangci-lint run` (binaire compilé avec `GOTOOLCHAIN=go1.27.2`, LL-001), tests shell sous bash **et** zsh ; tout vert, validations enchaînées par `&&` (LL-008).
-- [ ] T034 Relire `internal/catalog/data/exited.yaml`, la documentation et les messages : français correct et accentué, commandes exécutables telles quelles avec tags explicites, ton pédagogique (« probablement »), aucun secret d'exemple réaliste ; validation manuelle du quickstart V1 à V7 dans un vrai terminal (bash et zsh).
-- [ ] T035 Passer `spec.md` en `Status: Accepted`, pousser la branche et ouvrir la PR (corps : résumé, corpus SC-001 chiffré, mesures SC-004 et SC-005, exception de sécurité, « Closes #8 ») ; attendre les 11 checks verts ; l'utilisateur relit et fusionne.
+- [X] T032 [P] Documenter dans `README.md` : section « Comprendre un conteneur qui s'est arrêté » (exemple de l'issue #8, signal après `run -d`, `docker telemach ps [nom]`, `TELEMACH_WATCH=0`, ce qui est lu et ce qui ne l'est jamais) ; tableau « Commandes » ; § « Confidentialité et sécurité » (exception à « n'exécute aucune commande », lectures seules, valeurs des variables jamais lues au-delà du décodage) ; § « Mettre à jour » (relancer ses terminaux pour activer le signal).
+- [X] T033 `go test -race ./...`, `go test -tags integration ./tests/integration/...` (Docker local), `golangci-lint run` (binaire compilé avec `GOTOOLCHAIN=go1.27.2`, LL-001), tests shell sous bash **et** zsh ; tout vert, validations enchaînées par `&&` (LL-008).
+- [X] T034 Relire `internal/catalog/data/exited.yaml`, la documentation et les messages : français correct et accentué, commandes exécutables telles quelles avec tags explicites, ton pédagogique (« probablement »), aucun secret d'exemple réaliste ; validation manuelle du quickstart V1 à V7 dans un vrai terminal (bash et zsh).
+- [X] T035 Passer `spec.md` en `Status: Accepted`, pousser la branche et ouvrir la PR (corps : résumé, corpus SC-001 chiffré, mesures SC-004 et SC-005, exception de sécurité, « Closes #8 ») ; attendre les 11 checks verts ; l'utilisateur relit et fusionne.
 - [ ] T036 Après fusion, proposer à l'utilisateur la publication `v0.3.0` (**action irréversible : confirmation obligatoire**) ; si accord, tag annoté sur `main`, suivi du workflow `release`, vérifications post-publication de la 002 (quickstart 002 V1, V2, V5), puis validation de l'exemple de l'issue #8 par l'utilisateur (SC-006). Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (principe V).
 
 ---
