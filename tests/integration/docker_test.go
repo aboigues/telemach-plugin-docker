@@ -98,3 +98,30 @@ func TestV4ApplicationError(t *testing.T) {
 		t.Errorf("l'erreur doit être attribuée au programme du conteneur :\n%s", stderr)
 	}
 }
+
+// Issue #9 — option placée après l'image : la commande réussit, l'avertissement s'affiche,
+// et la commande corrigée publie réellement le port.
+func TestIssue9OptionAfterImage(t *testing.T) {
+	h := newHarness(t)
+	const name = "telemach-it-issue9"
+	t.Cleanup(func() { _ = exec.Command("docker", "rm", "-f", name).Run() })
+
+	stdout, stderr := h.shell(t, `docker run -d --name `+name+` nginxinc/nginx-unprivileged:1.30-alpine -p 18092:8080; echo "rc=$?"`)
+	lines := strings.Split(strings.TrimSpace(stdout), "\n")
+	if len(lines) != 2 || len(lines[0]) != 64 || lines[1] != "rc=0" {
+		t.Errorf("stdout = identifiant du conteneur puis rc=0 attendu : %q", stdout)
+	}
+	fixed := "docker run -d --name " + name + " -p 18092:8080 nginxinc/nginx-unprivileged:1.30-alpine"
+	for _, want := range []string{"Option Docker placée après l'image", fixed} {
+		if !strings.Contains(stderr, want) {
+			t.Errorf("avertissement sans %q :\n%s", want, stderr)
+		}
+	}
+
+	docker(t, "rm", "-f", name)
+	docker(t, strings.Fields(fixed)[1:]...)
+	out, err := exec.Command("docker", "port", name, "8080").CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "18092") {
+		t.Errorf("port 18092 non publié par la commande corrigée : %v\n%s", err, out)
+	}
+}

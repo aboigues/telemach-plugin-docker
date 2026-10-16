@@ -46,7 +46,7 @@ doivent d'abord échouer.
 
 ## État de reprise (2026-10-15, session interrompue à la demande de l'utilisateur)
 
-- Fait : phases 1 et 2 (T001–T014, commit `ab8c7a1`) ; US1 : T015, T016, T018–T021.
+- Fait : phases 1 et 2 (T001–T014, commit `ab8c7a1`) ; US1 complète (T015–T021) ; T017 écrit mais non exécuté en local (pas de démon Docker dans WSL), à valider par le job `integration` de la CI.
   Corpus misplaced : 15/15 détectés, 36/36 légitimes silencieux. Règle « image sans tag »
   (piège 4, prévue en T023) déjà écrite dans `internal/lint/pitfalls.go` avec son entrée de
   catalogue (nécessaire à la ligne de l'issue #9).
@@ -60,7 +60,7 @@ doivent d'abord échouer.
   `--docker-version`) ; adresses web écartées de la règle des volumes
   (`curl -v https://…`) ; les pièges 1 à 7 ne portent que sur les options lues par Docker
   (avant l'image). Non appliqués (textes de spec, accord requis) : I1, I2, I4.
-- Reste : T017, US2 (T022–T026, sauf piège 4 déjà fait), US3 (T027–T030),
+- Reste : US2 (T022–T026, sauf piège 4 déjà fait), US3 (T027–T030),
   phase 6 (T031–T036).
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -106,7 +106,7 @@ doivent d'abord échouer.
 
 - [X] T015 [P] [US1] Constituer `testdata/cmdline/misplaced-faulty.tsv` (**au moins 10 lignes** : `run -d nginx -p 8090:80`, `run nginx:1.30-alpine -p 8080:80 --name web`, `run alpine:3.24 --rm echo hi`, `create redis:8-alpine -v ./data:/data`, `run postgres:18-alpine -e POSTGRES_PASSWORD=x`, `container run alpine:3.24 -it sh`, `exec web -it sh`, `exec web -e A=1 env`, `run --context x nginx -p 1:2`, une ligne avec `--` après l'image…) et `testdata/cmdline/misplaced-legit.tsv` (**au moins 25 lignes**, dont **au moins 20** passant des options légitimes au programme du conteneur : `run postgres:18-alpine postgres -p 5433`, `run redis:8-alpine redis-server --port 7000`, `run alpine:3.24 ls -d /tmp`, `run alpine:3.24 sh -c 'echo -e x'`, `run curlimages/curl:<tag vérifié> -v https://example.org`, `run nginx:1.30-alpine nginx -g 'daemon off;'`, `run node:<tag vérifié> node -e "1"`, `run python:<tag vérifié> python -m http.server 8000`, `exec web ls -l`, `container run -it alpine:3.24 sh`, `run alpine:3.24 -- -p 8080:80`…). Vérifier chaque tag d'image ajouté sur Docker Hub (LL-004).
 - [X] T016 [P] [US1] Écrire `internal/lint/corpus_test.go` : charge tous les `testdata/cmdline/*.tsv` (format du README de T001), construit `Env` à partir des colonnes, compare l'ensemble des identifiants obtenus à `ATTENDU` ; rapport final « N fautifs détectés / M légitimes silencieux » ; échec dès un faux positif (SC-002) ou un oubli (SC-001).
-- [ ] T017 [P] [US1] Ajouter à `tests/integration/docker_test.go` (étiquette `integration`, vrai démon, intégration shell activée comme dans le README) : `docker run -d nginx:1.30-alpine -p 18090:80` → stdout = identifiant du conteneur, code 0, stderr contient « Option Docker placée après l'image » et la commande corrigée ; exécuter la commande corrigée (après suppression du premier conteneur) et vérifier que `docker port` publie `18090` ; nettoyage des conteneurs.
+- [X] T017 [P] [US1] Ajouter à `tests/integration/docker_test.go` (étiquette `integration`, vrai démon, intégration shell activée comme dans le README) : `docker run -d nginx:1.30-alpine -p 18090:80` → stdout = identifiant du conteneur, code 0, stderr contient « Option Docker placée après l'image » et la commande corrigée ; exécuter la commande corrigée (après suppression du premier conteneur) et vérifier que `docker port` publie `18090` ; nettoyage des conteneurs.
 
 ### Implementation for User Story 1
 
