@@ -68,7 +68,10 @@ cas avec secrets et des mesures (LL-012) ; LL-002 exige les tests du script shel
   terminaux (pseudo-terminal) : signal à l'invite suivante, aucun message de tâche. Ajout au
   lancement : 4 à 5 ms au p95 (SC-005). Écarts : `$EPOCHREALTIME` de zsh a 10 décimales
   (tronquées à 9) ; `TELEMACH_LINT=0` ne désactive plus la détection de `run`.
-- Reste : US3 (T027–T028), US4 (T029–T030), phase 7.
+- US3 et US4 faites (T027–T030) : liste des autres conteneurs (résumé français), désignation
+  par nom ou préfixe d'identifiant (vérifié sur le démon), redémarrages et Compose ; `last`
+  réaffiche l'analyse sans le démon, `deepen` l'approfondit.
+- Reste : phase 7 (T031–T036).
 
 ---
 
@@ -157,11 +160,11 @@ cas avec secrets et des mesures (LL-012) ; LL-002 exige les tests du script shel
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T027 [P] [US3] Étendre `cmd/docker-telemach/ps_test.go` et `internal/exited/select_test.go` : liste « Autres conteneurs arrêtés en erreur » (au plus 10, du plus récent au plus ancien, nom, code, ancienneté, résumé d'une ligne) ; `ps api` et `ps 3f1c` (préfixe) ; `ps inconnu` → introuvable, noms proches (`textdist`), code 1 ; conteneur en cours d'exécution ou arrêté avec 0 désigné → message clair, code 1 ; `restarting` inclus avec son nombre de redémarrages et la politique ; étiquettes Compose → « projet x, service y ».
+- [X] T027 [P] [US3] Étendre `cmd/docker-telemach/ps_test.go` et `internal/exited/select_test.go` : liste « Autres conteneurs arrêtés en erreur » (au plus 10, du plus récent au plus ancien, nom, code, ancienneté, résumé d'une ligne) ; `ps api` et `ps 3f1c` (préfixe) ; `ps inconnu` → introuvable, noms proches (`textdist`), code 1 ; conteneur en cours d'exécution ou arrêté avec 0 désigné → message clair, code 1 ; `restarting` inclus avec son nombre de redémarrages et la politique ; étiquettes Compose → « projet x, service y ».
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Compléter `internal/exited/select.go` (désignation par nom ou préfixe, noms proches), `internal/exited/diagnose.go` (captures `restart_count`, `restart_policy`, `compose_project`, `compose_service`) et `internal/render/exited.go` (`RenderOthers`, mentions redémarrage et Compose) ; brancher dans `cmd/docker-telemach/ps.go`. Faire passer T027.
+- [X] T028 [US3] Compléter `internal/exited/select.go` (désignation par nom ou préfixe, noms proches), `internal/exited/diagnose.go` (captures `restart_count`, `restart_policy`, `compose_project`, `compose_service`) et `internal/render/exited.go` (`RenderOthers`, mentions redémarrage et Compose) ; brancher dans `cmd/docker-telemach/ps.go`. Faire passer T027.
 
 **Checkpoint**: V4 passe.
 
@@ -175,11 +178,11 @@ cas avec secrets et des mesures (LL-012) ; LL-002 exige les tests du script shel
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T029 [P] [US4] Étendre `cmd/docker-telemach/last_test.go` et `deepen_test.go` : après `ps`, `last` affiche l'en-tête « analyse enregistrée le … : conteneur <nom> » puis le même rendu, **sans** appel au faux `docker` ; `deepen` approfondit l'entrée retenue ; un signal de `watch` ne remplace pas `last.json` ; l'avertissement d'intégration périmée (issue #7) reste affiché en tête.
+- [X] T029 [P] [US4] Étendre `cmd/docker-telemach/last_test.go` et `deepen_test.go` : après `ps`, `last` affiche l'en-tête « analyse enregistrée le … : conteneur <nom> » puis le même rendu, **sans** appel au faux `docker` ; `deepen` approfondit l'entrée retenue ; un signal de `watch` ne remplace pas `last.json` ; l'avertissement d'intégration périmée (issue #7) reste affiché en tête.
 
 ### Implementation for User Story 4
 
-- [ ] T030 [US4] Compléter `cmd/docker-telemach/last.go` et `deepen.go` pour `Kind == exited`. Faire passer T029.
+- [X] T030 [US4] Compléter `cmd/docker-telemach/last.go` et `deepen.go` pour `Kind == exited`. Faire passer T029.
 
 **Checkpoint**: US1 à US4 fonctionnent indépendamment.
 

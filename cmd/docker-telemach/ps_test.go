@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,17 +14,21 @@ import (
 const fakeDockerPS = `#!/bin/sh
 echo "$*" >> "$FAKE_DIR/calls.log"
 [ -f "$FAKE_DIR/fail" ] && { cat "$FAKE_DIR/fail" >&2; exit 1; }
-for a in "$@"; do
-  case "$a" in
+while [ $# -gt 0 ]; do
+  case "$1" in
   ps) cat "$FAKE_DIR/ps.out" 2>/dev/null; exit 0 ;;
-  inspect) shift_done=1 ;;
   logs) cat "$FAKE_DIR/logs.out" 2>/dev/null; exit 0 ;;
+  inspect) shift; break ;;
   esac
+  shift
 done
-# inspect <nom> : renvoie <nom>.json, ou « No such object ».
-last=""; for a in "$@"; do last="$a"; done
-if [ -f "$FAKE_DIR/$last.json" ]; then cat "$FAKE_DIR/$last.json"; exit 0; fi
-echo "Error: No such object: $last" >&2; exit 1
+# inspect <id>… : un tableau JSON qui regroupe les <id>.json, ou « No such object ».
+for id in "$@"; do
+  [ -f "$FAKE_DIR/$id.json" ] || { echo "Error: No such object: $id" >&2; exit 1; }
+done
+printf '['; sep=""
+for id in "$@"; do printf '%s' "$sep"; sed '1s/^\[//; $s/\]$//' "$FAKE_DIR/$id.json"; sep=","; done
+printf ']'
 `
 
 type psFake struct{ dir string }
@@ -160,6 +165,78 @@ func TestPSGlobalOptionsPassedToReads(t *testing.T) {
 	for _, c := range f.calls(t) {
 		if !strings.HasPrefix(c, "--context essai ") {
 			t.Errorf("options globales absentes : docker %s", c)
+		}
+	}
+}
+
+// US3 : plusieurs conteneurs en erreur — le plus récent est expliqué, les autres listés ;
+// redémarrages et projet Compose mentionnés ; désignation par préfixe d'identifiant.
+func TestPSListAndContext(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	f := newPSFake(t, a)
+	var ps strings.Builder
+	load := func(name string) map[string]any {
+		raw, err := os.ReadFile(filepath.Join("..", "..", "testdata", "exited", name, "inspect.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var v []map[string]any
+		if err := json.Unmarshal(raw, &v); err != nil {
+			t.Fatal(err)
+		}
+		return v[0]
+	}
+	put := func(id string, c map[string]any, status string) {
+		c["Id"] = id
+		data, _ := json.Marshal([]any{c})
+		f.write(t, id+".json", string(data))
+		f.write(t, strings.TrimPrefix(c["Name"].(string), "/")+".json", string(data))
+		fmt.Fprintf(&ps, `{"ID":%q,"Names":%q,"State":"exited","Status":%q}`+"\n", id, strings.TrimPrefix(c["Name"].(string), "/"), status)
+	}
+	loop := load("restart-loop")
+	loop["State"].(map[string]any)["FinishedAt"] = "2026-10-16T13:59:00Z"
+	compose := load("generic-1")
+	compose["Name"] = "/boutique-api-1"
+	compose["Config"].(map[string]any)["Labels"] = map[string]any{"com.docker.compose.project": "boutique", "com.docker.compose.service": "api"}
+	compose["State"].(map[string]any)["FinishedAt"] = "2026-10-16T13:00:00Z"
+	put("aaaa1111", loop, "Exited (1) 1 minute ago")
+	put("bbbb2222", compose, "Exited (1) 1 hour ago")
+	f.write(t, "ps.out", ps.String())
+
+	if code := run(a, []string{"ps", "--color=never", "--width", "200"}); code != 0 {
+		t.Fatalf("code = %d\n%s", code, errb.String())
+	}
+	got := errb.String()
+	for _, want := range []string{
+		"telemach-exited-restart-loop", "Redémarré 3 fois (politique de redémarrage : on-failure)",
+		"Autres conteneurs arrêtés en erreur", "boutique-api-1", "docker telemach ps <nom>",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("%q absent :\n%s", want, got)
+		}
+	}
+	errb.Reset()
+	if code := run(a, []string{"ps", "--color=never", "--width", "200", "bbbb2222"}); code != 0 {
+		t.Fatalf("préfixe : code = %d\n%s", code, errb.String())
+	}
+	if !strings.Contains(errb.String(), "Projet Compose « boutique », service « api »") {
+		t.Errorf("projet Compose attendu :\n%s", errb.String())
+	}
+}
+
+func TestPSNotAnalyzable(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	f := newPSFake(t, a)
+	for name, state := range map[string]string{"web": "running", "fini": "exited"} {
+		f.write(t, name+".json", fmt.Sprintf(`[{"Id":"%s","Name":"/%s","State":{"Status":%q,"ExitCode":0}}]`, name, name, state))
+	}
+	for name, want := range map[string]string{"web": "en cours d'exécution", "fini": "sans erreur (code 0)"} {
+		errb.Reset()
+		if code := run(a, []string{"ps", "--color=never", "--width", "200", name}); code != 1 {
+			t.Errorf("%s : code = %d, attendu 1", name, code)
+		}
+		if !strings.Contains(errb.String(), want) {
+			t.Errorf("%s : %q attendu :\n%s", name, want, errb.String())
 		}
 	}
 }

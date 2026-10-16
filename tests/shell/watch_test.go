@@ -35,6 +35,20 @@ func waitLog(t *testing.T, e env, want string) string {
 	return readLog(t, e)
 }
 
+// waitDone attend que n tâches « watch » de fond soient terminées : le test ne doit pas
+// s'achever (et supprimer ses dossiers temporaires) pendant qu'elles écrivent encore.
+func waitDone(t *testing.T, e env, n int) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		if strings.Count(readLog(t, e), "watch-fin") >= n {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Errorf("%d tâches de fond attendues, terminées : %d", n, strings.Count(readLog(t, e), "watch-fin"))
+}
+
 // Garantie 11 : après un « run » réussi, en session interactive, « watch » est lancé une fois,
 // en arrière-plan (jamais attendu), entrées et sorties sur /dev/null ; sorties et code de
 // docker inchangés.
@@ -66,6 +80,7 @@ func TestWatchLaunchedAfterRun(t *testing.T) {
 				t.Errorf("%s attendu :\n%s", fd, log)
 			}
 		}
+		waitDone(t, e, 2)
 	})
 }
 
@@ -103,7 +118,8 @@ func TestWatchNotLaunched(t *testing.T) {
 		if _, _, err := runInteractive(t, shell, e, []string{"TELEMACH_LINT=0"}, "docker run -d alpine:3.24"); err != nil {
 			t.Fatal(err)
 		}
-		log := waitLog(t, e, "telemach watch")
+		waitDone(t, e, 1)
+		log := readLog(t, e)
 		if len(watchCalls(log)) != 1 || len(lintCalls(log)) != 0 {
 			t.Errorf("TELEMACH_LINT=0 : watch sans lint attendu :\n%s", log)
 		}
@@ -177,6 +193,7 @@ done`
 		if err != nil {
 			t.Fatal(err)
 		}
+		waitDone(t, e, 40)
 		var with, without []float64
 		for _, line := range strings.Split(strings.TrimSpace(stdout), "\n") {
 			f := strings.Fields(strings.ReplaceAll(line, ",", "."))

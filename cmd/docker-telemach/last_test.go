@@ -182,3 +182,39 @@ func TestLastAndDeepenAfterWarning(t *testing.T) {
 		t.Errorf("l'erreur plus récente doit remplacer l'avertissement :\n%s", errb.String())
 	}
 }
+
+// US4 (feature 004) : après « ps », last réaffiche l'analyse sans interroger le démon, et
+// deepen approfondit la cause retenue.
+func TestLastAndDeepenAfterPS(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	f := newPSFake(t, a)
+	f.useCase(t, "missing-env-postgres")
+	run(a, []string{"ps", "--color=never", "--width", "200"})
+	full := errb.String()
+	_ = os.Remove(filepath.Join(f.dir, "calls.log"))
+
+	errb.Reset()
+	a.now = func() time.Time { return time.Date(2026, 10, 14, 10, 5, 0, 0, time.UTC) }
+	if code := run(a, []string{"last", "--color=never", "--width", "200"}); code != 0 {
+		t.Fatalf("code = %d", code)
+	}
+	header, body, _ := strings.Cut(errb.String(), "\n")
+	if !strings.Contains(header, "analyse enregistrée le 14/10/2026 à 10:00") || !strings.Contains(header, "conteneur telemach-exited-missing-env-postgres") {
+		t.Errorf("en-tête : %q", header)
+	}
+	if !strings.HasPrefix(full, body) && !strings.HasPrefix(body, strings.TrimSuffix(full, "\n")) {
+		// L'analyse est identique ; seule la liste des autres conteneurs n'est pas conservée.
+		if !strings.Contains(body, "exige la variable POSTGRES_PASSWORD") || !strings.Contains(body, "You must specify POSTGRES_PASSWORD") {
+			t.Errorf("last doit réafficher l'analyse :\n%s", body)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(f.dir, "calls.log")); err == nil {
+		t.Error("last ne doit pas interroger le démon")
+	}
+
+	errb.Reset()
+	run(a, []string{"deepen", "--color=never"})
+	if !strings.Contains(errb.String(), "Concept — variable d'environnement obligatoire") || !strings.Contains(errb.String(), "POSTGRES_PASSWORD_FILE") {
+		t.Errorf("deepen doit approfondir la cause retenue :\n%s", errb.String())
+	}
+}
