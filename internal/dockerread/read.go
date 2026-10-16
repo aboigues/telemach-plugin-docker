@@ -107,7 +107,7 @@ func (r Runner) ListCandidates() ([]Candidate, error) {
 		created, createdErr = r.listPS("--filter", "status=created", "--last", strconv.Itoa(MaxCreated))
 		close(done)
 	}()
-	stopped, err := r.listPS("--filter", "status=exited", "--filter", "status=restarting", "--last", strconv.Itoa(MaxStopped))
+	stopped, err := r.ListStopped()
 	<-done
 	if err != nil {
 		return nil, err
@@ -124,6 +124,12 @@ func (r Runner) ListCandidates() ([]Candidate, error) {
 		}
 	}
 	return cs, nil
+}
+
+// ListStopped liste seulement les conteneurs arrêtés ou en boucle de redémarrage, les plus
+// récents d'abord (utilisé aussi par la complétion de « docker telemach ps <Tab> »).
+func (r Runner) ListStopped() ([]Candidate, error) {
+	return r.listPS("--filter", "status=exited", "--filter", "status=restarting", "--last", strconv.Itoa(MaxStopped))
 }
 
 func (r Runner) listPS(filters ...string) ([]Candidate, error) {

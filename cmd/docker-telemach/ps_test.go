@@ -240,3 +240,55 @@ func TestPSNotAnalyzable(t *testing.T) {
 		}
 	}
 }
+
+// Complétion de « docker telemach ps <Tab> » : seulement les conteneurs que ps sait analyser
+// (arrêtés avec un code ≠ 0, en boucle de redémarrage), par une seule lecture « docker ps ».
+func TestPSCompletion(t *testing.T) {
+	complete := func(t *testing.T, fail bool, args ...string) (string, psFake) {
+		t.Helper()
+		a, out, _ := testApp(t, nil)
+		f := newPSFake(t, a)
+		f.write(t, "ps.out", `{"ID":"a","Names":"essai-pg","State":"exited","Status":"Exited (1) 2 minutes ago"}
+{"ID":"b","Names":"fini","State":"exited","Status":"Exited (0) 1 hour ago"}
+{"ID":"c","Names":"boucle","State":"restarting","Status":"Restarting (2) 3 seconds ago"}
+{"ID":"d","Names":"cree","State":"created","Status":"Created"}
+{"ID":"e","Names":"essai-oom","State":"exited","Status":"Exited (137) 5 minutes ago"}
+`)
+		if fail {
+			f.write(t, "fail", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock.\n")
+		}
+		_, plugin := splitPluginArgs(append([]string{"__complete", "telemach"}, args...))
+		if code := run(a, plugin); code != 0 {
+			t.Fatalf("code = %d", code)
+		}
+		return out.String(), f
+	}
+
+	got, f := complete(t, false, "ps", "")
+	for _, want := range []string{"essai-pg\tcode 1", "essai-oom\tcode 137", "boucle\tcode 2, redémarre en boucle"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("%q absent :\n%s", want, got)
+		}
+	}
+	for _, absent := range []string{"fini", "cree"} {
+		if strings.Contains(got, absent+"\t") {
+			t.Errorf("%s ne doit pas être proposé :\n%s", absent, got)
+		}
+	}
+	if calls := f.calls(t); len(calls) != 1 || !strings.HasPrefix(calls[0], "ps -a") || !strings.Contains(calls[0], "--last") {
+		t.Errorf("une seule lecture « docker ps » bornée attendue : %q", calls)
+	}
+	if !strings.Contains(got, ":4") {
+		t.Errorf("aucune complétion de fichiers attendue (directive 4) :\n%s", got)
+	}
+
+	if got, _ := complete(t, false, "ps", "essai-o"); !strings.Contains(got, "essai-oom") || strings.Contains(got, "essai-pg") {
+		t.Errorf("filtrage sur le début du nom attendu :\n%s", got)
+	}
+	if got, f := complete(t, false, "ps", "essai-pg", ""); strings.Contains(got, "essai") || len(f.calls(t)) != 1 || f.calls(t)[0] != "" {
+		t.Errorf("un seul conteneur par commande, sans lecture du démon :\n%s %q", got, f.calls(t))
+	}
+	if got, _ := complete(t, true, "ps", ""); strings.Contains(got, "essai") || strings.Contains(got, "Cannot connect") {
+		t.Errorf("démon injoignable : rien proposé, sans message :\n%s", got)
+	}
+}

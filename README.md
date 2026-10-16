@@ -446,7 +446,8 @@ la fonction `docker` de l'ancienne version. `docker telemach last` te le signale
 | `docker telemach explain …` | Utilisée par l'intégration shell (tu n'as pas à l'appeler) |
 
 La complétion de Docker (`docker completion bash|zsh`) propose aussi les sous-commandes et les
-options de `docker telemach`.
+options de `docker telemach`, et, après `docker telemach ps`, les conteneurs arrêtés en erreur
+avec leur code.
 
 ## Confidentialité et sécurité
 
@@ -454,7 +455,8 @@ options de `docker telemach`.
   Docker, celle que ta CLI utilise déjà, contexte distant compris).
 - **Ne modifie rien** : ni tes fichiers, ni tes conteneurs. Il ne lance que des **lectures** :
   `docker --version` une fois à l'activation ; pour `docker telemach ps`, la liste des
-  conteneurs arrêtés, leur état et la fin de leur journal ; après un `docker run -d`, l'état du
+  conteneurs arrêtés, leur état et la fin de leur journal (et, quand tu appuies sur Tab après
+  `docker telemach ps`, la seule liste des conteneurs arrêtés) ; après un `docker run -d`, l'état du
   conteneur lancé (historique des événements du démon). Jamais `start`, `stop`, `rm`, `exec`
   ni `pull`.
 - Les **valeurs des variables d'environnement** d'un conteneur ne sont jamais lues au-delà de

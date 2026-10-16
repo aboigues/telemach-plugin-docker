@@ -18,6 +18,13 @@
   conteneur lancé et signale un arrêt en erreur (option C). L'exception de FR-010 est élargie à
   cette seule lecture, encadrée par FR-013 à FR-016.
 
+### Session 2026-10-16 (après fusion)
+
+- Q: `docker telemach ps <Tab>` doit-il proposer les noms de conteneurs, ce qui demande une
+  lecture du démon pendant la complétion ? → A: Oui (choix de l'utilisateur) : seulement les
+  conteneurs arrêtés avec un code ≠ 0 ou en boucle de redémarrage, par une seule lecture
+  `docker ps` bornée ; FR-010 est complétée en conséquence.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Comprendre pourquoi le dernier conteneur s'est arrêté en erreur (Priority: P1)
@@ -238,13 +245,14 @@ par US1.
 - **FR-009**: Les valeurs des variables d'environnement d'un conteneur MUST NOT être affichées,
   conservées ni transmises ; seuls leurs noms peuvent être utilisés, par exemple pour constater
   qu'une variable attendue est absente.
-- **FR-010**: Cette commande et la vérification de FR-013 sont les **seules exceptions** à la
-  règle « le plugin n'exécute aucune commande » (FR-015 de la feature 001), et elles MUST rester
-  dans ce cadre :
+- **FR-010**: Cette commande, sa complétion et la vérification de FR-013 sont les **seules
+  exceptions** à la règle « le plugin n'exécute aucune commande » (FR-015 de la feature 001), et
+  elles MUST rester dans ce cadre :
   - interrogation du démon Docker **uniquement** sur demande explicite de l'apprenant
-    (`docker telemach ps`), à une exception près : la vérification automatique de FR-013, qui
-    ne lit que l'**état** du seul conteneur qui vient d'être lancé, une seule fois, sans lire
-    son journal ;
+    (`docker telemach ps`, ou la touche Tab après `docker telemach ps`, qui ne lit que la liste
+    bornée des conteneurs arrêtés, sans inspection ni journal, avec un délai de 3 s), à une
+    exception près : la vérification automatique de FR-013, qui ne lit que l'**état** du seul
+    conteneur qui vient d'être lancé, une seule fois, sans lire son journal ;
   - **lectures seules** : liste des conteneurs, état et configuration d'un conteneur, fin de
     son journal ; aucune action qui démarre, arrête, supprime, modifie, inspecte l'intérieur ou
     télécharge quoi que ce soit ;

@@ -33,6 +33,12 @@ Conteneurs retenus : arrêtés (`exited`) ou en boucle de redémarrage (`restart
 Lectures effectuées, et elles seules (research R2) : `ps -a … --format`, `inspect`,
 `logs --tail 200`. Chaque lecture a un délai maximal de 10 s.
 
+Complétion (`docker telemach ps <Tab>`) : une seule lecture, `ps -a … --last 20 --format` sur
+les conteneurs arrêtés ou en boucle de redémarrage, délai de 3 s ; sont proposés les noms de
+ceux dont le code est ≠ 0, avec leur code (« code 1 », « code 2, redémarre en boucle ») ; les
+démarrages échoués (`created`) ne sont pas proposés (il faudrait une inspection) ; démon
+injoignable ou lent : rien n'est proposé, sans message.
+
 ### Rendu (exemple)
 
 ```text
