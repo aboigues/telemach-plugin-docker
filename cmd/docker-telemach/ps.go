@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -33,9 +35,41 @@ TELEMACH ne fait que lire l'état des conteneurs et la fin de leur journal : il 
 n'arrête, ne supprime ni ne modifie aucun conteneur.
 
 Exemple : docker telemach ps`,
-		Args: cobra.MaximumNArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error { return a.ps(args) },
+		Args:              cobra.MaximumNArgs(1),
+		RunE:              func(_ *cobra.Command, args []string) error { return a.ps(args) },
+		ValidArgsFunction: a.completeFailedContainers,
 	}
+}
+
+// completionTimeout borne la lecture faite pendant la complétion : Tab ne doit jamais rester
+// bloqué (démon lent ou injoignable : rien n'est proposé).
+const completionTimeout = 3 * time.Second
+
+// completeFailedContainers propose, pour « docker telemach ps <Tab> », les conteneurs que ps sait
+// analyser : arrêtés avec un code ≠ 0 ou en boucle de redémarrage. Une seule lecture, « docker
+// ps » bornée (FR-010) ; les démarrages échoués (« Created ») demanderaient une inspection et ne
+// sont pas proposés.
+func (a *app) completeFailedContainers(_ *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	r := dockerread.Runner{Bin: a.dockerBin, Global: a.dockerGlobal, Timeout: completionTimeout}
+	cands, err := r.ListStopped()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	var out []cobra.Completion
+	for _, c := range cands {
+		if !c.HasCode || c.Code == 0 || !strings.HasPrefix(c.Name, toComplete) {
+			continue
+		}
+		desc := fmt.Sprintf("code %d", c.Code)
+		if c.State == "restarting" {
+			desc += ", redémarre en boucle"
+		}
+		out = append(out, cobra.CompletionWithDesc(c.Name, desc))
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
 func (a *app) ps(args []string) error {
