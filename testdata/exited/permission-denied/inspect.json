@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "256393642f7386ee54b725d3cb6a7e5d561e6c68cd31d4d995d3f924464f6a97",
+    "Name": "/telemach-exited-permission-denied",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo démarrage; echo x > /etc/app.conf"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:19.051759961Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:19.160490149Z",
+      "FinishedAt": "2026-10-16T13:17:19.340500935Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

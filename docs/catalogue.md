@@ -69,6 +69,8 @@ Deux valeurs de `fallback` existent pour des entrées sans motif :
   (`compose.<type>`) ; ses `tests` désignent alors des dossiers de `testdata/compose/`.
 - `cmdline` : piège de la ligne de commande (`cmdline.<piège>`), une écriture que Docker
   accepte mais qui ne fait pas ce qui est voulu ; voir ci-dessous.
+- `exited` : cause d'arrêt d'un conteneur (`exited.<cause>`, catégorie `exited`), utilisée par
+  `docker telemach ps` ; voir ci-dessous.
 
 ## Ajouter un piège de la ligne de commande
 
@@ -88,6 +90,26 @@ Les pièges sont repérés par `internal/lint`, sans rien exécuter, sur `docker
    `{{.cleanup}}` et `{{.cleanup_command}}`, renseignées seulement après exécution
    (conseil de suppression du conteneur déjà créé).
 4. **Lancer les tests** : `go test ./internal/lint/ ./internal/catalog/ ./cmd/...`.
+
+## Ajouter une cause d'arrêt de conteneur
+
+`docker telemach ps` explique un conteneur arrêté avec un code différent de 0, à partir de son
+état et de la fin de son journal (`internal/exited`).
+
+1. **Capturer un vrai cas** : ajouter une ligne à `testdata/exited/capture.sh`, puis lancer
+   `testdata/exited/capture.sh <cas>` ; le script écrit `case.sh`, `inspect.json` (variables
+   réduites à leurs noms) et `logs.txt`. N'invente pas de journal : un cas non reproductible
+   est retranscrit et signalé comme tel dans son `case.sh`.
+2. **Écrire `expected.yaml`** (`entry_id`, `source` : `state`, `log`, `code` ou `unknown`,
+   captures attendues).
+3. **Ajouter l'entrée** dans `internal/catalog/data/exited.yaml`, avec `category: exited`,
+   `fallback: exited`, des `patterns` (appliqués à l'erreur de démarrage enregistrée par Docker
+   et aux 10 dernières lignes du journal) ou des `exit_codes`, et `tests` qui nomme le dossier
+   du cas. L'ordre compte : une entrée spécifique se place avant une entrée générale. Ajoute
+   aussi un **cas légitime voisin**, que le motif ne doit pas capter (LESSON-LEARNED LL-010).
+4. **Lancer les tests** : `go test ./internal/exited/ ./internal/catalog/`.
+
+Ces entrées ne servent jamais à expliquer le message d'erreur d'une commande.
 
 ## Règles vérifiées automatiquement
 

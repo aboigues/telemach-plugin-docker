@@ -127,6 +127,12 @@ func Parse(args []string) Command {
 	return cmd
 }
 
+// GlobalEnd renvoie l'indice du premier argument qui suit les options globales de la CLI
+// Docker (--context x, -H hôte, --tlsverify…) placées en tête de args.
+func GlobalEnd(args []string) int {
+	return skipFlags(args, 0, globalValueFlags, nil)
+}
+
 // Layout situe les éléments d'une ligne docker : sous-commande, premier argument après la
 // sous-commande et cible (image pour run/create, conteneur pour exec).
 type Layout struct {

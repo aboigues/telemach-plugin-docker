@@ -1,0 +1,36 @@
+[
+  {
+    "Id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "Name": "/telemach-exited-exec-format",
+    "Path": "/usr/local/bin/app",
+    "Args": [],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:34.971839869Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 255,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:35.095413254Z",
+      "FinishedAt": "2026-10-16T13:17:35.282534897Z"
+    },
+    "Config": {
+      "Image": "app-arm64:1.0",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

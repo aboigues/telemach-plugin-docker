@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "a7644eb53ebc80e7cbd45a866b452d4edf18511809a9de9c99b630c2ae995cac",
+    "Name": "/telemach-exited-restart-loop",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo tentative; exit 1"
+    ],
+    "RestartCount": 3,
+    "Created": "2026-10-16T13:17:37.904068748Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:39.445492798Z",
+      "FinishedAt": "2026-10-16T13:17:39.559846738Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "on-failure"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

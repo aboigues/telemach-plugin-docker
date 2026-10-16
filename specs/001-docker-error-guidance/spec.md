@@ -220,8 +220,10 @@ relié à l'erreur d'origine.
 **Sécurité et respect de l'utilisateur**
 
 - **FR-015**: Le plugin MUST NOT exécuter de commande, corrective ou autre, ni modifier de
-  fichier de l'apprenant : il se limite à proposer. Seule exception : la lecture de la version
-  du client Docker définie en FR-001b.
+  fichier de l'apprenant : il se limite à proposer. Exceptions : la lecture de la version
+  du client Docker définie en FR-001b, et les **lectures seules** du démon de la feature 004
+  (`docker telemach ps` à la demande, vérification de l'état d'un conteneur après un
+  `docker run -d`), bornées par FR-010 de `specs/004-exited-containers-analysis/spec.md`.
 - **FR-016**: Le plugin MUST masquer dans tout ce qu'il affiche ou journalise les valeurs
   sensibles (mots de passe, jetons, clés, variables marquées comme secrètes).
 - **FR-017**: Le plugin MUST traiter le contenu des messages d'erreur et des fichiers Compose
@@ -260,7 +262,8 @@ relié à l'erreur d'origine.
   colorées, et 100 % restent complètes et compréhensibles avec la couleur désactivée (mêmes
   blocs, symboles et libellés).
 - **SC-007**: 0 commande n'est exécutée et 0 fichier de l'apprenant n'est modifié par le plugin,
-  hormis la lecture de version de FR-001b.
+  hormis la lecture de version de FR-001b et les lectures seules de la feature 004 (FR-010),
+  vérifiées par leurs propres tests (liste fermée, état des conteneurs inchangé).
 
 ## Assumptions
 

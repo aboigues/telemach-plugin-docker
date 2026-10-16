@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "ff63a2a41b969a49ad23235c319b99e6c60f042bfa0110c2a69e05edf2997970",
+    "Name": "/telemach-exited-usage-2",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo \"usage: app [--port PORT] FICHIER\" >&2; exit 2"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:35.832083574Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 2,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:36.023896379Z",
+      "FinishedAt": "2026-10-16T13:17:36.241891658Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

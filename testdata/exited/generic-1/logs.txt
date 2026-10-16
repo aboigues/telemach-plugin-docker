@@ -1,0 +1,2 @@
+erreur : configuration invalide
+démarrage du service

@@ -1,0 +1,17 @@
+bind: address already in use, nouvelle tentative
+traitement 0
+traitement 1
+traitement 2
+traitement 3
+traitement 4
+traitement 5
+traitement 6
+traitement 7
+traitement 8
+traitement 9
+traitement 10
+traitement 11
+traitement 12
+traitement 13
+traitement 14
+erreur : base de données injoignable

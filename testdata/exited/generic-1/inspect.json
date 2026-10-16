@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "231e18f1220ec3bc34ff80f99ab14643943f3bed38fcc1399bfe93a1a6e01fe1",
+    "Name": "/telemach-exited-generic-1",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo démarrage du service; echo \"erreur : configuration invalide\" >&2; exit 1"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:34.971839869Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:35.095413254Z",
+      "FinishedAt": "2026-10-16T13:17:35.282534897Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

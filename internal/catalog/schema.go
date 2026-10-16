@@ -9,6 +9,7 @@ type Category string
 var Categories = map[Category]bool{
 	"network": true, "image": true, "container": true, "volume": true, "daemon": true,
 	"permission": true, "build": true, "compose": true, "runtime": true, "cmdline": true,
+	"exited": true,
 }
 
 // Entry est une entrée du catalogue d'erreurs. Les textes sont en français et peuvent

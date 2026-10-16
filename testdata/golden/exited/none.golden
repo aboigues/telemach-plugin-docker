@@ -1,0 +1,3 @@
+✔ Aucun conteneur arrêté en erreur.
+   Un conteneur lancé avec --rm est supprimé à l'arrêt : il ne peut plus être
+   analysé.

@@ -107,6 +107,47 @@ func TestCmdlineEntries(t *testing.T) {
 	})
 }
 
+// exitedEntry est une entrée minimale de cause d'arrêt d'un conteneur (feature 004).
+var exitedEntry = strings.NewReplacer(
+	"id: run.port-already-allocated", "id: exited.address-in-use",
+	"category: network", "category: exited",
+	"patterns: ['port is already allocated']", "fallback: exited\n  patterns: ['address already in use']",
+).Replace(validEntry)
+
+func TestExitedEntries(t *testing.T) {
+	if err := load(t, exitedEntry); err != nil {
+		t.Fatalf("entrée exited à motifs refusée : %v", err)
+	}
+	byCode := strings.Replace(exitedEntry, "patterns: ['address already in use']", "exit_codes: [137]", 1)
+	if err := load(t, byCode); err != nil {
+		t.Fatalf("entrée exited par code refusée : %v", err)
+	}
+	bare := strings.Replace(exitedEntry, "\n  patterns: ['address already in use']", "", 1)
+	if err := load(t, bare); err != nil {
+		t.Fatalf("entrée exited sans motif ni code (cause inconnue) refusée : %v", err)
+	}
+	if err := load(t, strings.Replace(exitedEntry, "fallback: exited", "fallback: cmdline\n  severity: info", 1)); err == nil {
+		t.Error("catégorie exited avec un autre fallback : refus attendu")
+	}
+}
+
+// Une entrée exited ne s'applique jamais au message d'erreur d'une commande, même si son motif
+// correspond (le journal d'un conteneur et la sortie d'erreur de docker sont distincts).
+func TestExitedEntriesIgnoredForCommandErrors(t *testing.T) {
+	c, err := Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range c.Entries {
+		if e.Fallback == "exited" && e.Category != "exited" {
+			t.Errorf("%s : fallback exited hors de la catégorie exited", e.ID)
+		}
+		if e.Category == "exited" && !strings.HasPrefix(e.ID, "exited.") {
+			t.Errorf("%s : identifiant exited.* attendu", e.ID)
+		}
+	}
+}
+
 func TestDuplicateID(t *testing.T) {
 	if err := load(t, validEntry+strings.TrimPrefix(validEntry, "\n")); err == nil || !strings.Contains(err.Error(), "en double") {
 		t.Errorf("identifiant en double non détecté : %v", err)
@@ -139,6 +180,17 @@ func TestEmbeddedCatalog(t *testing.T) {
 					t.Errorf("%s : corpus introuvable : %v", e.ID, err)
 				} else if !strings.Contains(string(data), e.ID) {
 					t.Errorf("%s : aucune ligne de %s.tsv n'attend cette entrée", e.ID, name)
+				}
+				continue
+			}
+			if e.Fallback == "exited" {
+				// Cause d'arrêt d'un conteneur : le cas de test est un dossier de
+				// testdata/exited/ dont expected.yaml attend cette entrée.
+				data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "exited", name, "expected.yaml"))
+				if err != nil {
+					t.Errorf("%s : cas exited introuvable : %v", e.ID, err)
+				} else if !strings.Contains(string(data), "entry_id: "+e.ID) {
+					t.Errorf("%s : %s/expected.yaml n'attend pas cette entrée", e.ID, name)
 				}
 				continue
 			}

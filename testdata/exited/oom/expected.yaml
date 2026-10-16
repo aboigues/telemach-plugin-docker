@@ -1,0 +1,4 @@
+entry_id: exited.oom
+source: state
+captures:
+  memory_limit: 8 Mo

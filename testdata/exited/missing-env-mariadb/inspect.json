@@ -1,0 +1,41 @@
+[
+  {
+    "Id": "d621166121d80112a87207607045b12cc19c9e3f95451d0c6d1a958ae07e6c24",
+    "Name": "/telemach-exited-missing-env-mariadb",
+    "Path": "docker-entrypoint.sh",
+    "Args": [
+      "mariadbd"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:17.745513314Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:17.853605655Z",
+      "FinishedAt": "2026-10-16T13:17:18.678232589Z"
+    },
+    "Config": {
+      "Image": "mariadb:13.0",
+      "Env": [
+        "PATH",
+        "GOSU_VERSION",
+        "LANG",
+        "MARIADB_VERSION"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

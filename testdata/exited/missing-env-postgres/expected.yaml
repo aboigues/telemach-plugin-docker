@@ -1,0 +1,4 @@
+entry_id: exited.missing-required-env
+source: log
+captures:
+  variable: POSTGRES_PASSWORD

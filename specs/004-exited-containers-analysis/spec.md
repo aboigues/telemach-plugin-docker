@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-16
 
-**Status**: Draft
+**Status**: Accepted
 
 **Input**: User description: "004 — Analyse des conteneurs arrêtés en erreur (issue GitHub #8). Ajouter une sous-commande « docker telemach ps » qui repère le ou les derniers conteneurs terminés avec un code de sortie différent de 0 (exited ≠ 0) et tente d'expliquer la cause en français, de façon pédagogique comme les explications existantes (concept, cause probable, corrections, approfondissement). Cas typiques : un conteneur lancé avec -d qui s'arrête aussitôt (le docker run a réussi, donc aucune explication n'a été affichée), code 1 de l'application, 125/126/127, 137 (OOM ou kill), 139, 143. Particularité : pour lire l'état des conteneurs et la fin de leurs journaux, le plugin devra interroger le démon Docker, ce qui remet en cause la règle actuelle « le plugin n'exécute aucune commande » (features 001 et 003) ; la spec doit cadrer précisément ces lectures (lecture seule, sans modifier ni relancer aucun conteneur, sans réseau externe), masquer les secrets des journaux et de la configuration, et ne jamais afficher de variable d'environnement en clair."
 
@@ -202,8 +202,10 @@ par US1.
 **Sélection**
 
 - **FR-001**: TELEMACH MUST fournir la sous-commande `docker telemach ps`, qui repère les
-  conteneurs arrêtés avec un code de sortie différent de 0, ainsi que les conteneurs en boucle
-  de redémarrage dont le dernier arrêt a un code différent de 0.
+  conteneurs arrêtés avec un code de sortie différent de 0, les conteneurs en boucle de
+  redémarrage dont le dernier arrêt a un code différent de 0, et les conteneurs dont le
+  démarrage a échoué (créés mais jamais démarrés, avec une erreur enregistrée par Docker, par
+  exemple une commande introuvable dans l'image).
 - **FR-002**: Sans argument, la commande MUST analyser le conteneur en erreur arrêté le plus
   récemment et lister les autres (au plus 10, du plus récent au plus ancien) ; avec un nom ou un
   préfixe d'identifiant, elle MUST analyser ce conteneur, et le dire clairement s'il n'existe

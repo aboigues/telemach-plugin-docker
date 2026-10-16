@@ -31,6 +31,15 @@ func (a *app) lastCommand() *cobra.Command {
 					"« docker telemach last » réaffiche son explication complète.", width, "   "))
 				return nil
 			}
+			if last.IsExited() {
+				// Analyse d'un conteneur arrêté (feature 004) : réaffichée sans interroger le démon.
+				fmt.Fprintln(w, theme.Dim(lastHeader(last, a.now())))
+				view := render.ExitedView{Captures: last.Captures, Log: last.LogExcerpt}
+				if cat, err := catalog.Default(); err == nil {
+					view.Entry, _ = cat.Get(last.EntryID)
+				}
+				return render.RenderExited(w, view, render.Options{Theme: theme, Width: width})
+			}
 			if last.IsCmdline() {
 				// Avertissement d'une commande réussie (feature 003) : même rendu que lint.
 				fmt.Fprintln(w, theme.Dim(lastHeader(last, a.now())))
@@ -113,6 +122,8 @@ const maxHeaderCommand = 120
 func lastHeader(last state.LastDiagnosis, now time.Time) string {
 	command := "docker"
 	switch {
+	case last.IsExited():
+		command = "conteneur " + last.Container.Name
 	case len(last.Args) > 0:
 		command += " " + strings.Join(last.Args, " ")
 	case last.Family == "compose":
@@ -127,8 +138,11 @@ func lastHeader(last state.LastDiagnosis, now time.Time) string {
 		return render.LabelLast + " de la dernière erreur enregistrée : " + command
 	}
 	what := "erreur enregistrée"
-	if last.IsCmdline() {
+	switch {
+	case last.IsCmdline():
 		what = "avertissement enregistré"
+	case last.IsExited():
+		what = "analyse enregistrée"
 	}
 	at := last.RecordedAt.In(now.Location())
 	return fmt.Sprintf("%s — %s le %s à %s (%s) : %s", render.LabelLast, what,

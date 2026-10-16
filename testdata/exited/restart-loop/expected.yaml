@@ -1,0 +1,4 @@
+entry_id: exited.code-1
+source: code
+captures:
+  restart_count: "3"

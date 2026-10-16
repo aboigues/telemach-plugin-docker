@@ -13,6 +13,37 @@ __telemach_bin=__TELEMACH_BIN__
 # (issue #7). Seule variable exportée par ce script.
 export TELEMACH_SHELL=__TELEMACH_SHELL__
 
+# Feature 004 : après un « docker run -d » réussi, « docker telemach watch » vérifie en
+# arrière-plan, environ 3 s plus tard, que le conteneur ne s'est pas arrêté en erreur ; son
+# signal est déposé dans __telemach_pending et affiché à l'invite suivante, jamais pendant une
+# saisie. Seulement dans un shell interactif (il faut une invite où l'afficher).
+__telemach_pending=__TELEMACH_PENDING__
+__telemach_shell_pid=$$
+zmodload zsh/datetime 2>/dev/null
+__telemach_watch_on=0
+[[ -o interactive ]] && __telemach_watch_on=1
+
+# Lance la vérification sans attendre ni rien afficher (entrées et sorties sur /dev/null).
+__telemach_watch() {
+	[[ "$__telemach_watch_on" == 1 && "${TELEMACH_WATCH:-}" != "0" && -n "${__telemach_t0:-}" ]] || return 0
+	command "$__telemach_bin" watch --since "$__telemach_t0" --shell-pid "$__telemach_shell_pid" -- "$@" </dev/null >/dev/null 2>&1 &!
+}
+
+# Crochet d'invite : affiche puis supprime les signaux de ce shell ; sans signal, aucun
+# programme n'est lancé. Le code de retour de la dernière commande est préservé.
+__telemach_prompt() {
+	local __telemach_status=$? __telemach_f
+	for __telemach_f in "$__telemach_pending"/pending-"$__telemach_shell_pid"-*(N); do
+		print -r -- "$(<"$__telemach_f")" >&2
+		command rm -f -- "$__telemach_f"
+	done
+	return $__telemach_status
+}
+if [[ "$__telemach_watch_on" == 1 ]]; then
+	# add-zsh-hook n'ajoute pas deux fois la même fonction (chargement répété de shell-init).
+	autoload -Uz add-zsh-hook && add-zsh-hook precmd __telemach_prompt
+fi
+
 # Version du client Docker, lue une seule fois (commande locale, sans contact avec le démon).
 __telemach_docker_version="$(command docker --version 2>/dev/null | sed -n 's/^Docker version \([^,]*\),.*/\1/p')"
 
@@ -27,10 +58,15 @@ docker() (
 		exit $?
 	fi
 
+	# Heure de début, pour retrouver le conteneur lancé (feature 004).
+	__telemach_t0=${EPOCHREALTIME:-}
+
 	# Feature 003 : run, create et exec (y compris « container … », après les options globales
 	# de Docker) sont analysés après une exécution réussie ; les autres commandes, jamais.
+	# La détection a lieu même si TELEMACH_LINT=0 : la vérification de la feature 004 se
+	# désactive séparément (TELEMACH_WATCH=0).
 	__telemach_lint=0
-	if [ "${TELEMACH_LINT:-}" != "0" ]; then
+	if :; then
 		__telemach_skip=0
 		__telemach_mgmt=0
 		for __telemach_arg in "$@"; do
@@ -76,7 +112,10 @@ docker() (
 			command "$__telemach_bin" explain --exit-code "$__telemach_rc" --interactive \
 				--docker-version "$__telemach_docker_version" -- "$@" || true
 		elif [[ "$__telemach_lint" == 1 ]]; then
-			command "$__telemach_bin" lint --after -- "$@" || true
+			if [ "${TELEMACH_LINT:-}" != "0" ]; then
+				command "$__telemach_bin" lint --after -- "$@" || true
+			fi
+			__telemach_watch "$@"
 		fi
 		exit "$__telemach_rc"
 	fi
@@ -101,7 +140,10 @@ docker() (
 		command "$__telemach_bin" explain --exit-code "$__telemach_rc" --stderr-file "$__telemach_tmp" \
 			--docker-version "$__telemach_docker_version" -- "$@" || true
 	elif [[ "$__telemach_lint" == 1 ]]; then
-		command "$__telemach_bin" lint --after -- "$@" || true
+		if [ "${TELEMACH_LINT:-}" != "0" ]; then
+			command "$__telemach_bin" lint --after -- "$@" || true
+		fi
+		__telemach_watch "$@"
 	fi
 	exit "$__telemach_rc"
 )

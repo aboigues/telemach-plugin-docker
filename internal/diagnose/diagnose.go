@@ -90,7 +90,7 @@ func matchPatterns(in Input, cat *catalog.Catalog) (*catalog.Entry, map[string]s
 		return nil, nil, false
 	}
 	for _, e := range cat.Entries {
-		if len(e.Compiled()) == 0 || !applies(e, in) {
+		if len(e.Compiled()) == 0 || e.Fallback == "exited" || !applies(e, in) {
 			continue
 		}
 		for _, re := range e.Compiled() {
@@ -113,7 +113,8 @@ func matchPatterns(in Input, cat *catalog.Catalog) (*catalog.Entry, map[string]s
 // matchExitCode cherche une entrée qui déclare explicitement ce code de sortie.
 func matchExitCode(in Input, cat *catalog.Catalog) (*catalog.Entry, bool) {
 	for _, e := range cat.Entries {
-		if len(e.ExitCodes) > 0 && applies(e, in) {
+		// Les causes d'arrêt de conteneur (feature 004) ne valent pas pour une commande.
+		if len(e.ExitCodes) > 0 && e.Fallback != "exited" && applies(e, in) {
 			return e, true
 		}
 	}

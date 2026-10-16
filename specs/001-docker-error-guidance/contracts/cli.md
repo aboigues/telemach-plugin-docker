@@ -126,6 +126,13 @@ docker telemach deepen [--exercise]
 
 ---
 
+## `ps` et `watch` — conteneurs arrêtés en erreur (feature 004)
+
+Seules sous-commandes qui interrogent le démon, en lecture seule (`ps`, `inspect`,
+`logs --tail`, `events --until`) : voir `specs/004-exited-containers-analysis/contracts/cli-ps.md`.
+
+---
+
 ## `lint` — ligne de commande (feature 003)
 
 Vérification d'une ligne `docker run|create|exec`, à la main ou après une commande réussie
@@ -158,6 +165,8 @@ Garanties du code généré (vérifiées par les tests) :
 
 Garanties 8 à 10 (appel de `lint` après une commande `run|create|exec` réussie,
 `TELEMACH_LINT=0`) : voir `specs/003-command-line-analysis/contracts/cli-lint.md`.
+Garanties 11 à 14 (vérification après un `docker run -d` réussi, crochet d'invite,
+`TELEMACH_WATCH=0`) : voir `specs/004-exited-containers-analysis/contracts/cli-ps.md`.
 
 Shell non pris en charge → message d'erreur en français, code `2`.
 

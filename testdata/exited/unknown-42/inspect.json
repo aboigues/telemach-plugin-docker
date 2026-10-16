@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "d2ab7669f1c62f2c1dc352f178d5f913a7a521ab8fdda33fb62767307d40fa8d",
+    "Name": "/telemach-exited-unknown-42",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo traitement terminé; exit 42"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:36.915288945Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 42,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:37.10488104Z",
+      "FinishedAt": "2026-10-16T13:17:37.298310266Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

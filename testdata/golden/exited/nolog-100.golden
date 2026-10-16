@@ -1,0 +1,20 @@
+✖ Le conteneur « essai-pg » (postgres:18-alpine) s'est arrêté avec le code 1, 1 s après son
+   démarrage (il y a 2 min).
+   L'image postgres:18-alpine exige la variable POSTGRES_PASSWORD.
+
+── Fin du journal : illisible
+   configured logging driver does not support reading
+
+📘 Concept — variable d'environnement obligatoire
+   Certaines images refusent de démarrer sans une variable de configuration, par exemple un mot de
+   passe d'administration.
+
+🔎 Cause probable
+   Le conteneur a été lancé sans POSTGRES_PASSWORD : son programme s'est arrêté aussitôt.
+
+💡 Corrections
+   1. Mettre la variable dans un fichier lisible par toi seul, puis le passer avec --env-file.
+      docker run -d --env-file db.env postgres:18-alpine
+   2. Ou utiliser un secret monté et la variable POSTGRES_PASSWORD_FILE.
+
+➜ Pour aller plus loin : docker telemach deepen

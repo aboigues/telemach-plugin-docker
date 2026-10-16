@@ -1,0 +1,45 @@
+[
+  {
+    "Id": "64a2bac1501cc24ec2a51198019fbf2285e4a5169572eea7a3c1445924f36abe",
+    "Name": "/telemach-exited-address-in-use",
+    "Path": "/docker-entrypoint.sh",
+    "Args": [
+      "nginx",
+      "-g",
+      "daemon off;"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:21.321785541Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:21.561909414Z",
+      "FinishedAt": "2026-10-16T13:17:24.421716591Z"
+    },
+    "Config": {
+      "Image": "nginxinc/nginx-unprivileged:1.30-alpine",
+      "Env": [
+        "PATH",
+        "NGINX_VERSION",
+        "PKG_RELEASE",
+        "DYNPKG_RELEASE",
+        "NJS_VERSION",
+        "NJS_RELEASE"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

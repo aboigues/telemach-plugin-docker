@@ -1,0 +1,44 @@
+[
+  {
+    "Id": "bdad826e0a13bb7cfbc2c9b4a6e33bafa15af66b9e34d38743aa32297b5bd3fb",
+    "Name": "/telemach-exited-option-after-image",
+    "Path": "/docker-entrypoint.sh",
+    "Args": [
+      "-p",
+      "8090:8080"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:23:14.101929527Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 2,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:23:14.239415648Z",
+      "FinishedAt": "2026-10-16T13:23:14.392139127Z"
+    },
+    "Config": {
+      "Image": "nginxinc/nginx-unprivileged:1.30-alpine",
+      "Env": [
+        "PATH",
+        "NGINX_VERSION",
+        "PKG_RELEASE",
+        "DYNPKG_RELEASE",
+        "NJS_VERSION",
+        "NJS_RELEASE"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]
