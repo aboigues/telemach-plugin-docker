@@ -46,14 +46,12 @@ doivent d'abord échouer.
 
 ## État de reprise (2026-10-15, session interrompue à la demande de l'utilisateur)
 
-- Fait : phases 1 et 2 (T001–T014, commit `ab8c7a1`) ; US1 : T015, T016, T018, T019, T021.
+- Fait : phases 1 et 2 (T001–T014, commit `ab8c7a1`) ; US1 : T015, T016, T018–T021.
   Corpus misplaced : 15/15 détectés, 36/36 légitimes silencieux. Règle « image sans tag »
   (piège 4, prévue en T023) déjà écrite dans `internal/lint/pitfalls.go` avec son entrée de
   catalogue (nécessaire à la ligne de l'issue #9).
-- **En cours, T020** : `TestLintIssue9Phrasing` (`cmd/docker-telemach/lint_test.go`) échoue
-  seulement parce que le texte est replié à la largeur du terminal ; ajouter `--width 200`
-  aux deux appels `lint` du test. Le reste de T020 est implémenté (captures `transmis`,
-  `effect`/`effect_cond`, `cleanup`/`cleanup_command` vides à la main).
+- T020 terminé (2026-10-16) : `--width 200` dans `TestLintIssue9Phrasing`, golden files
+  `cmd/docker-telemach/testdata/golden/issue9-{after,manual}.golden`.
 - Décision prise en T021 : la section « ⚠ Dans ta commande — cause probable » est affichée
   **avant** l'explication générique (contrat mis à jour) : l'explication du code 126 seule
   était trompeuse pour `docker exec web -it sh`.
@@ -62,7 +60,7 @@ doivent d'abord échouer.
   `--docker-version`) ; adresses web écartées de la règle des volumes
   (`curl -v https://…`) ; les pièges 1 à 7 ne portent que sur les options lues par Docker
   (avant l'image). Non appliqués (textes de spec, accord requis) : I1, I2, I4.
-- Reste : T017, T020 (fin), US2 (T022–T026, sauf piège 4 déjà fait), US3 (T027–T030),
+- Reste : T017, US2 (T022–T026, sauf piège 4 déjà fait), US3 (T027–T030),
   phase 6 (T031–T036).
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -114,7 +112,7 @@ doivent d'abord échouer.
 
 - [X] T018 [US1] Implémenter `internal/lint/misplaced.go` (research R4) : arguments après l'image (`run`, `create`) ou le conteneur (`exec`), arrêt à `--` ; **signaux forts** — `-p/--publish` au format `[IP:]port[-port]:port[-port][/tcp|udp|sctp]`, `-v/--volume SOURCE:/CHEMIN_ABSOLU[:options]`, `-e/--env NOM=VALEUR` (NOM `^[A-Za-z_][A-Za-z0-9_]*$`), `--env-file`, `--network/--net VALEUR`, `--restart no|always|on-failure[:n]|unless-stopped`, `--mount type=…`, `--rm`, `-it`, `-ti`, `--detach`, `--interactive`, `--tty`, `--privileged` (formes `--opt=val` comprises) ; **signaux faibles** retenus seulement si un signal fort est présent : `-d`, `-i`, `-t`, `--name V`, `-u/--user V`, `-w/--workdir V`, `-m/--memory V` ; pour `exec` : options d'`exec` (`-it`, `-ti`, `-i`, `-t`, `-e`, `-u`, `-w`, `-d`, `--detach`). Captures : `options` (masquées), `image` ou `container`, `fixed_command` (via `fix.go`), `effect` (par exemple « le port 8090 de ta machine n'est pas publié » pour `-p`, « le conteneur ne sera pas supprimé à l'arrêt » pour `--rm`). Faire passer T016 pour les fichiers `misplaced-*`.
 - [X] T019 [P] [US1] Ajouter à `internal/catalog/data/cmdline.yaml` les entrées `cmdline.option-after-image` et `cmdline.option-after-container` (`fallback: cmdline`, `severity: warning`, concept « ordre des arguments de docker run » / « de docker exec » avec la forme `docker run [OPTIONS] IMAGE [COMMANDE] [ARG...]`, cause, correction `{{.fixed_command}}`, conseil `docker rm -f <conteneur>` quand `--after`, deepen avec exemple exécutable et exercice) ; mettre à jour `docs/catalogue.md` (section « Pièges de la ligne de commande »).
-- [ ] T020 [US1] Formulations selon `--after` : au passé dans `lint --after` (« a été transmis au conteneur », « le conteneur a démarré, mais… »), au conditionnel sans `--after` ; capture `when` gérée par `cmd/docker-telemach/lint.go` et utilisée dans les gabarits de `cmdline.yaml`. Golden files de rendu réel dans `cmd/docker-telemach/testdata/golden/` (issue #9 avec et sans `--after`).
+- [X] T020 [US1] Formulations selon `--after` : au passé dans `lint --after` (« a été transmis au conteneur », « le conteneur a démarré, mais… »), au conditionnel sans `--after` ; capture `when` gérée par `cmd/docker-telemach/lint.go` et utilisée dans les gabarits de `cmdline.yaml`. Golden files de rendu réel dans `cmd/docker-telemach/testdata/golden/` (issue #9 avec et sans `--after`).
 - [X] T021 [US1] Intégrer l'analyse à `explain` (FR-010, `contracts/cli-lint.md` § explain) dans `cmd/docker-telemach/explain.go` : si `TELEMACH_LINT` ≠ `0` et au moins un Finding de niveau warning, rendu `RenderInline` après l'explication reconnue, ou à la place du bloc « non reconnue » ; les Findings sont ajoutés à `LastDiagnosis.Findings` ; informations ignorées. Tests dans `cmd/docker-telemach/explain_test.go` : `exec web -it sh` avec le message « exec: "-it": executable file not found in $PATH » → un seul affichage, `-it` présenté comme cause probable, correction `docker exec -it web sh`.
 
 **Checkpoint**: V1, V2, V5 du quickstart passent ; corpus misplaced : 100 % détectés, 0 faux positif.

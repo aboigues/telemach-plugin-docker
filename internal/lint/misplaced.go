@@ -130,13 +130,14 @@ func misplacedOptions(l *line) (Finding, bool) {
 	id, targetKey := "cmdline.option-after-image", "image"
 	effect := "Docker ne les a pas appliquées : elles ont été données au programme du conteneur."
 	effectCond := "Docker ne les appliquerait pas : elles seraient données au programme du conteneur."
-	if sub == "exec" {
+	switch {
+	case sub == "exec":
 		id, targetKey = "cmdline.option-after-container", "container"
 		effect = "Docker ne les a pas appliquées : elles ont été données à la commande lancée dans le conteneur."
 		effectCond = "Docker ne les appliquerait pas : elles seraient données à la commande lancée dans le conteneur."
-	} else if sub == "create" {
+	case sub == "create":
 		effect = "Le conteneur a été créé, mais Docker n'a pas appliqué ces options : elles seront données au programme du conteneur."
-	} else if len(ports) > 0 {
+	case len(ports) > 0:
 		effect = "Le conteneur a pu démarrer, mais le port " + strings.Join(ports, ", ") + " de ta machine n'est pas publié."
 		effectCond = "Le conteneur démarrerait, mais le port " + strings.Join(ports, ", ") + " de ta machine ne serait pas publié."
 	}
