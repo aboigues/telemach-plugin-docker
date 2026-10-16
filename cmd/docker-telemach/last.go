@@ -23,6 +23,7 @@ func (a *app) lastCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
 			theme, w, width := a.output(a.stderr)
+			a.shellStatusWarning(w, theme, width)
 			last, ok := a.store.Load()
 			if !ok {
 				fmt.Fprintln(w, theme.Hint("Aucune erreur récente à réafficher."))

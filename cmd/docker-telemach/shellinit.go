@@ -21,7 +21,7 @@ La fonction « docker » ainsi définie explique chaque commande docker en éche
 ponctuelle : TELEMACH_DISABLE=1.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			script, err := shellinit.Script(args[0], a.executable())
+			script, err := shellinit.Script(args[0], a.executable(), a.version)
 			if err != nil {
 				fmt.Fprintf(a.stderr, "docker telemach : %v\n", err)
 				return exitError{code: 2}

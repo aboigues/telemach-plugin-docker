@@ -18,6 +18,7 @@ func (a *app) deepenCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
 			theme, w, width := a.output(a.stderr)
+			a.shellStatusWarning(w, theme, width)
 			last, ok := a.store.Load()
 			cat, err := catalog.Default()
 			var entry *catalog.Entry

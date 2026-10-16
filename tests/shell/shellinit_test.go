@@ -77,7 +77,7 @@ func run(t *testing.T, shell string, e env, extraEnv []string, body string) (std
 	if _, lookErr := exec.LookPath(shell); lookErr != nil {
 		t.Skipf("%s non installé", shell)
 	}
-	script, scriptErr := shellinit.Script(shell, os.Getenv("TELEMACH_TEST_BIN"))
+	script, scriptErr := shellinit.Script(shell, os.Getenv("TELEMACH_TEST_BIN"), "9.9.9")
 	if scriptErr != nil {
 		t.Fatal(scriptErr)
 	}
@@ -180,7 +180,7 @@ func TestInterruptCleansUp(t *testing.T) {
 		if _, err := exec.LookPath(shell); err != nil {
 			t.Skipf("%s non installé", shell)
 		}
-		script, _ := shellinit.Script(shell, "")
+		script, _ := shellinit.Script(shell, "", "9.9.9")
 		initFile := filepath.Join(t.TempDir(), "init.sh")
 		if err := os.WriteFile(initFile, []byte(script), 0o600); err != nil {
 			t.Fatal(err)
@@ -297,7 +297,7 @@ func TestVersionReadOnce(t *testing.T) {
 }
 
 func TestUnsupportedShell(t *testing.T) {
-	if _, err := shellinit.Script("fish", ""); err == nil || !strings.Contains(err.Error(), "non pris en charge") {
+	if _, err := shellinit.Script("fish", "", "9.9.9"); err == nil || !strings.Contains(err.Error(), "non pris en charge") {
 		t.Errorf("erreur en français attendue pour fish, obtenu %v", err)
 	}
 }
@@ -338,6 +338,21 @@ func TestBinaryOutsidePath(t *testing.T) {
 		}
 		if !strings.HasSuffix(stdout, "rc=125\n") || !strings.Contains(readLog(t, e), "telemach explain --exit-code 125") {
 			t.Errorf("explain doit être appelé par son chemin absolu :\nstdout=%q\n%s", stdout, readLog(t, e))
+		}
+	})
+}
+
+// Issue #7 : l'intégration exporte TELEMACH_SHELL (shell et version du plugin), visible des
+// programmes lancés ensuite, dont « docker telemach last ».
+func TestShellVariableExported(t *testing.T) {
+	forEachShell(t, func(t *testing.T, shell string) {
+		e := setup(t, true)
+		stdout, stderr, err := run(t, shell, e, nil, `sh -c 'echo "vu=$TELEMACH_SHELL"'`)
+		if err != nil {
+			t.Fatal(err, stderr)
+		}
+		if want := "vu=" + shell + ":9.9.9\n"; stdout != want {
+			t.Errorf("stdout = %q, attendu %q", stdout, want)
 		}
 	})
 }

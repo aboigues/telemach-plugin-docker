@@ -142,7 +142,10 @@ docker telemach shell-init bash|zsh
 Écrit sur stdout le code shell à évaluer : `eval "$(docker telemach shell-init zsh)"`.
 
 Garanties du code généré (vérifiées par les tests) :
-1. définit uniquement une fonction `docker` et des variables préfixées `__telemach_` ;
+1. définit uniquement une fonction `docker` et des variables préfixées `__telemach_`, et
+   exporte une seule variable, `TELEMACH_SHELL=<shell>:<version du plugin>` (issue #7) :
+   `last` et `deepen` signalent par un ⚠ un terminal où elle est absente (intégration
+   inactive, ou chargée par une version antérieure) ou différente de la version installée ;
 2. stdin et stdout de `docker` ne sont jamais redirigés ;
 3. le **code de sortie d'origine** est toujours renvoyé ;
 4. le fichier temporaire est créé en `0600` et supprimé dans tous les cas (y compris Ctrl-C) ;
