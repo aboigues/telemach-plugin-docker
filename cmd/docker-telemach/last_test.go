@@ -138,3 +138,47 @@ func TestLastReprintsCmdlineCause(t *testing.T) {
 		t.Errorf("last doit reproduire l'explication.\n--- explain ---\n%s\n--- last ---\n%s", full, body)
 	}
 }
+
+// T028 : last et deepen après un avertissement de ligne de commande.
+func TestLastAndDeepenAfterWarning(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	run(a, []string{"lint", "--color=never", "--after", "--", "run", "-d", "-e", "API_TOKEN=abc123", "nginx", "-p", "8090:80"})
+	full := errb.String()
+	if !strings.Contains(full, "Option Docker placée après l'image") {
+		t.Fatalf("avertissement attendu :\n%s", full)
+	}
+
+	errb.Reset()
+	a.now = func() time.Time { return time.Date(2026, 10, 14, 10, 30, 0, 0, time.UTC) }
+	if code := run(a, []string{"last", "--color=never"}); code != 0 {
+		t.Fatalf("code = %d", code)
+	}
+	header, body, _ := strings.Cut(errb.String(), "\n")
+	for _, want := range []string{"avertissement enregistré le 14/10/2026 à 10:00", "il y a 30 min", "docker run -d -e API_TOKEN=••••••"} {
+		if !strings.Contains(header, want) {
+			t.Errorf("en-tête sans %q : %q", want, header)
+		}
+	}
+	if strings.Contains(errb.String(), "abc123") {
+		t.Errorf("secret affiché par last :\n%s", errb.String())
+	}
+	if body != full {
+		t.Errorf("last doit reproduire l'avertissement.\n--- lint ---\n%s\n--- last ---\n%s", full, body)
+	}
+
+	errb.Reset()
+	run(a, []string{"deepen", "--color=never"})
+	// Premier piège affiché : le secret (placé avant l'image), avant l'option mal placée.
+	if !strings.HasPrefix(full, "⚠ Secret écrit en clair") || !strings.Contains(errb.String(), "Concept — secret") {
+		t.Errorf("deepen doit approfondir le premier piège affiché :\n%s", errb.String())
+	}
+
+	// Une erreur plus récente remplace l'avertissement.
+	f := writeStderr(t, "docker: Error response from daemon: pull access denied for ngnix, repository does not exist or may require 'docker login'\n")
+	run(a, []string{"explain", "--color=never", "--exit-code", "125", "--stderr-file", f, "--", "run", "ngnix:1.0"})
+	errb.Reset()
+	run(a, []string{"last", "--color=never"})
+	if !strings.Contains(errb.String(), "ngnix") || strings.Contains(errb.String(), "Option Docker placée") {
+		t.Errorf("l'erreur plus récente doit remplacer l'avertissement :\n%s", errb.String())
+	}
+}

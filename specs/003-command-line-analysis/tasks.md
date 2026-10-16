@@ -68,8 +68,10 @@ doivent d'abord échouer.
   avec l'accord de l'utilisateur (F1 : piège secret resserré ; F2 : `docker stop` puis
   `docker rm` au lieu de `rm -f` ; F5 : commandes corrigées exécutées en intégration ; autres :
   textes). Corpus : 50/50 fautives, 72/72 légitimes. Intégration verte sur démon local.
-- Reste : US3 (T027–T030, `last` pour les erreurs avec piège déjà fait),
-  phase 6 (T031–T036).
+- US3 (2026-10-16) : T027–T030 faits. La répétition (T027) fonctionnait déjà depuis la
+  phase 2 ; `last` affiche « avertissement enregistré » et le rendu de `lint`, `deepen`
+  approfondit le premier piège affiché.
+- Reste : phase 6 (T031–T036).
 
 ## Phase 1: Setup (Shared Infrastructure)
 
@@ -156,13 +158,13 @@ doivent d'abord échouer.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T027 [P] [US3] Étendre `cmd/docker-telemach/lint_test.go` : même ligne fautive deux fois en < 10 min → rappel d'une ligne avec la commande corrigée et renvoi à `docker telemach last` ; après 10 min → complet ; information « image sans tag » : une fois par image et par 24 h ; un rappel ne réécrit pas `last.json`.
-- [ ] T028 [P] [US3] Étendre `cmd/docker-telemach/last_test.go` et `deepen_test.go` : après un avertissement complet, `last` affiche l'en-tête (date, ancienneté, commande masquée) puis le même rendu complet ; `deepen` approfondit le premier piège (deepen de son entrée) ; une erreur plus récente remplace l'avertissement dans `last`.
+- [X] T027 [P] [US3] Étendre `cmd/docker-telemach/lint_test.go` : même ligne fautive deux fois en < 10 min → rappel d'une ligne avec la commande corrigée et renvoi à `docker telemach last` ; après 10 min → complet ; information « image sans tag » : une fois par image et par 24 h ; un rappel ne réécrit pas `last.json`.
+- [X] T028 [P] [US3] Étendre `cmd/docker-telemach/last_test.go` et `deepen_test.go` : après un avertissement complet, `last` affiche l'en-tête (date, ancienneté, commande masquée) puis le même rendu complet ; `deepen` approfondit le premier piège (deepen de son entrée) ; une erreur plus récente remplace l'avertissement dans `last`.
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Compléter `cmd/docker-telemach/last.go` et `deepen.go` pour `LastDiagnosis.Kind == "cmdline"` (rendu `RenderFindings` à partir de `Findings`, sans `--after` dans le libellé si l'ancienneté dépasse 10 min) ; faire passer T027 et T028.
-- [ ] T030 [US3] Documenter dans `README.md` : section « Avertissements sur la ligne de commande » (exemple de l'issue #9, les 8 pièges — options mal placées et les 7 de FR-004 — en une ligne chacun, rappel court, `TELEMACH_LINT=0`, `docker telemach lint -- …` pour vérifier une commande sans l'exécuter) ; tableau « Commandes » et § « Désactivation ponctuelle » mis à jour ; `specs/001-docker-error-guidance/contracts/cli.md` renvoie vers `contracts/cli-lint.md`.
+- [X] T029 [US3] Compléter `cmd/docker-telemach/last.go` et `deepen.go` pour `LastDiagnosis.Kind == "cmdline"` (rendu `RenderFindings` à partir de `Findings`, sans `--after` dans le libellé si l'ancienneté dépasse 10 min) ; faire passer T027 et T028.
+- [X] T030 [US3] Documenter dans `README.md` : section « Avertissements sur la ligne de commande » (exemple de l'issue #9, les 8 pièges — options mal placées et les 7 de FR-004 — en une ligne chacun, rappel court, `TELEMACH_LINT=0`, `docker telemach lint -- …` pour vérifier une commande sans l'exécuter) ; tableau « Commandes » et § « Désactivation ponctuelle » mis à jour ; `specs/001-docker-error-guidance/contracts/cli.md` renvoie vers `contracts/cli-lint.md`.
 
 **Checkpoint**: US1 à US3 fonctionnent indépendamment.
 

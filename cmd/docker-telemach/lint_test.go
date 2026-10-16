@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 var update = flag.Bool("update", false, "réécrit les fichiers golden")
@@ -153,5 +154,53 @@ func TestLintLocalReads(t *testing.T) {
 	}
 	if !env.DirExists("data") {
 		t.Error("DirExists(\"data\") attendu vrai")
+	}
+}
+
+// T027 : répétition. Rappel d'une ligne dans les 10 minutes, complet ensuite ; un rappel ne
+// remplace pas le dernier diagnostic.
+func TestLintRepetition(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	start := a.now()
+	at := func(d time.Duration) { a.now = func() time.Time { return start.Add(d) } }
+	lintAfter := func(args ...string) string {
+		errb.Reset()
+		run(a, append([]string{"lint", "--color=never", "--width", "200", "--after", "--"}, args...))
+		return errb.String()
+	}
+	issue := []string{"run", "-d", "nginx:1.30-alpine", "-p", "8090:80"}
+
+	if full := lintAfter(issue...); !strings.Contains(full, "Cause probable") {
+		t.Fatalf("premier affichage complet attendu :\n%s", full)
+	}
+	at(5 * time.Minute)
+	reminder := lintAfter(issue...)
+	if strings.Count(reminder, "\n") != 1 || !strings.Contains(reminder, "↺ Encore") ||
+		!strings.Contains(reminder, "docker run -d -p 8090:80 nginx:1.30-alpine") || !strings.Contains(reminder, "docker telemach last") {
+		t.Errorf("rappel d'une ligne avec la commande corrigée attendu :\n%s", reminder)
+	}
+	if last, _ := a.store.Load(); !last.RecordedAt.Equal(start) {
+		t.Errorf("un rappel ne doit pas réécrire last.json (RecordedAt = %v)", last.RecordedAt)
+	}
+	at(16 * time.Minute) // plus de 10 minutes après le dernier affichage complet
+	if again := lintAfter(issue...); !strings.Contains(again, "Cause probable") {
+		t.Errorf("affichage complet attendu après 10 minutes :\n%s", again)
+	}
+
+	// Image sans tag : une fois par image et par 24 h.
+	at(0)
+	if first := lintAfter("run", "--rm", "nginx"); !strings.Contains(first, "Image sans tag explicite") {
+		t.Fatalf("information attendue :\n%s", first)
+	}
+	at(time.Hour)
+	if second := lintAfter("run", "--rm", "nginx:latest"); second != "" {
+		t.Errorf("même image dans les 24 h : rien attendu :\n%s", second)
+	}
+	if other := lintAfter("run", "--rm", "redis"); !strings.Contains(other, "redis") {
+		t.Errorf("autre image : information attendue :\n%s", other)
+	}
+	at(25 * time.Hour)
+	if later := lintAfter("run", "--rm", "nginx"); !strings.Contains(later, "Image sans tag explicite") {
+		t.Errorf("information attendue après 24 h :\n%s", later)
 	}
 }

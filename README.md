@@ -338,13 +338,65 @@ sources : `git pull` puis la même commande `go build`.
 | Pas de couleurs | La sortie n'est pas un terminal, ou `NO_COLOR` est défini. Force avec `--color=always`. |
 | `go: downloading go1.27.2…` lors de la compilation | Normal : Go télécharge la bonne version de sa chaîne d'outils. |
 
+### Avertissements sur la ligne de commande
+
+Certaines commandes réussissent sans faire ce que tu voulais. Après une commande
+`docker run`, `create` ou `exec` réussie, TELEMACH relit la ligne tapée (sans rien exécuter)
+et t'avertit s'il y repère un piège :
+
+```text
+$ docker run -d nginx:1.30-alpine -p 8090:80
+3f1c…
+⚠ Option Docker placée après l'image : -p 8090:80 a été transmis au conteneur, pas à Docker.
+   Le conteneur a pu démarrer, mais le port 8090 de ta machine n'est pas publié.
+
+📘 Concept — ordre des arguments de docker run
+   docker run [OPTIONS] IMAGE [COMMANDE] [ARG...] : les options de Docker se placent avant
+   le nom de l'image ; tout ce qui suit l'image est donné au programme du conteneur.
+
+🔎 Cause probable
+   Docker arrête de lire ses propres options dès qu'il rencontre le nom de l'image […]
+
+💡 Correction
+   Placer les options de Docker avant le nom de l'image.
+   docker run -d -p 8090:80 nginx:1.30-alpine
+   Si le conteneur a été créé sans ces options, l'arrêter et le supprimer, puis le relancer
+   avec la commande corrigée.
+   docker stop <conteneur> && docker rm <conteneur>
+```
+
+Les pièges repérés :
+
+| Niveau | Piège | Exemple |
+|--------|-------|---------|
+| ⚠ | option Docker placée après l'image ou le conteneur | `docker run nginx -p 8090:80`, `docker exec web -it sh` |
+| ⚠ | volume nommé au lieu du dossier local (un dossier `data` existe) | `-v data:/app` au lieu de `-v ./data:/app` |
+| ℹ | port de la machine choisi au hasard | `-p 80` au lieu de `-p 8080:80` |
+| ⚠ | variable d'environnement non définie dans ton shell | `-e DB_HOST` |
+| ℹ | image sans tag explicite (une fois par image et par 24 h) | `nginx`, `nginx:latest` |
+| ⚠ | ports ignorés en réseau `host` | `--network host -p 8080:80` |
+| ⚠ | secret écrit en clair (jamais réaffiché) | `-e DB_PASSWORD=…` |
+| ⚠ | privilèges excessifs (anti-pattern) | `--privileged`, socket Docker monté |
+
+En cas de doute, TELEMACH se tait : `docker run postgres:18-alpine postgres -p 5433` ou
+`docker run redis:8-alpine redis-server --port 7000` ne déclenchent rien. Si tu refais la même
+erreur dans les 10 minutes, tu n'as qu'un rappel d'une ligne, avec la commande corrigée. Si la
+commande échoue, le piège est présenté comme cause probable de l'erreur, une seule fois.
+
+Pour vérifier une commande **avant** de la lancer :
+
+```bash
+docker telemach lint -- run -d nginx -p 8090:80
+```
+
 ## Commandes
 
 | Commande | Rôle |
 |----------|------|
 | `docker telemach check [-f fichier]... [dossier]` | Vérifie un projet Compose **avant** de le lancer (code 0 : aucun problème, 1 : problème trouvé, 2 : fichier introuvable) |
-| `docker telemach last` | Réaffiche l'explication complète de la dernière erreur (après une erreur répétée, ou si tu as effacé ton terminal) |
-| `docker telemach deepen [--exercise]` | Approfondit le concept de la dernière erreur expliquée |
+| `docker telemach lint -- <arguments docker…>` | Vérifie une ligne `docker run`, `create` ou `exec` **sans l'exécuter** (code 0 : rien ou informations seulement, 1 : avertissement) |
+| `docker telemach last` | Réaffiche l'explication complète de la dernière erreur ou du dernier avertissement (après un rappel d'une ligne, ou si tu as effacé ton terminal) |
+| `docker telemach deepen [--exercise]` | Approfondit le concept de la dernière erreur ou du dernier avertissement |
 | `docker telemach shell-init bash\|zsh` | Affiche le code d'intégration à évaluer dans ton shell |
 | `docker telemach explain …` | Utilisée par l'intégration shell (tu n'as pas à l'appeler) |
 
@@ -356,8 +408,12 @@ sources : `git pull` puis la même commande `go build`.
   de Docker.
 - **Masque les secrets** (mots de passe, jetons, clés) partout où il affiche ou enregistre
   quelque chose.
+- Pour les avertissements sur la ligne de commande, ne lit que deux choses sur ta machine : la
+  **présence** d'une variable d'environnement (jamais sa valeur) et l'existence d'un dossier
+  dans le dossier courant.
 - Le dernier diagnostic, déjà masqué, est conservé dans `~/.local/state/telemach/`
-  (droits `0600`) pour la commande `deepen`.
+  (droits `0600`) pour les commandes `last` et `deepen`, avec les empreintes des
+  avertissements déjà affichés (`hints.json`, sans aucune valeur de ta commande).
 
 ## Couleurs
 
@@ -372,8 +428,11 @@ La sortie est colorée dans un terminal ; chaque bloc garde aussi un symbole et 
 ## Désactivation ponctuelle
 
 ```bash
-TELEMACH_DISABLE=1 docker …
+TELEMACH_DISABLE=1 docker …   # ni explication ni avertissement
+TELEMACH_LINT=0 docker …      # sans avertissement sur la ligne de commande ; les erreurs restent expliquées
 ```
+
+Pour toute une session (une démonstration, par exemple) : `export TELEMACH_LINT=0`.
 
 ## Contribuer
 

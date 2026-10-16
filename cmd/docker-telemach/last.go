@@ -19,7 +19,7 @@ import (
 func (a *app) lastCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "last",
-		Short: "Réaffiche l'explication complète de la dernière erreur",
+		Short: "Réaffiche l'explication complète de la dernière erreur ou du dernier avertissement",
 		Args:  cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
 			theme, w, width := a.output(a.stderr)
@@ -29,6 +29,11 @@ func (a *app) lastCommand() *cobra.Command {
 				fmt.Fprintln(w, render.Wrap("Dès qu'une commande docker échoue avec l'intégration shell activée, "+
 					"« docker telemach last » réaffiche son explication complète.", width, "   "))
 				return nil
+			}
+			if last.IsCmdline() {
+				// Avertissement d'une commande réussie (feature 003) : même rendu que lint.
+				fmt.Fprintln(w, theme.Dim(lastHeader(last, a.now())))
+				return render.RenderFindings(w, findingItems(last.Findings), render.Options{Theme: theme, Width: width})
 			}
 			cmd := command.Command{
 				Family:       command.Family(last.Family),
@@ -120,8 +125,12 @@ func lastHeader(last state.LastDiagnosis, now time.Time) string {
 	if last.RecordedAt.IsZero() {
 		return render.LabelLast + " de la dernière erreur enregistrée : " + command
 	}
+	what := "erreur enregistrée"
+	if last.IsCmdline() {
+		what = "avertissement enregistré"
+	}
 	at := last.RecordedAt.In(now.Location())
-	return fmt.Sprintf("%s — erreur enregistrée le %s à %s (%s) : %s", render.LabelLast,
+	return fmt.Sprintf("%s — %s le %s à %s (%s) : %s", render.LabelLast, what,
 		at.Format("02/01/2006"), at.Format("15:04"), age(now.Sub(last.RecordedAt)), command)
 }
 

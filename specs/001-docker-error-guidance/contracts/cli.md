@@ -126,6 +126,13 @@ docker telemach deepen [--exercise]
 
 ---
 
+## `lint` — ligne de commande (feature 003)
+
+Vérification d'une ligne `docker run|create|exec`, à la main ou après une commande réussie
+(`--after`) : voir `specs/003-command-line-analysis/contracts/cli-lint.md`.
+
+---
+
 ## `shell-init` — intégration shell (R2)
 
 ```text
