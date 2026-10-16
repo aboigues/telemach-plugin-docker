@@ -33,6 +33,28 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-015 — Image de l'utilisateur supprimée par un essai censé échouer
+
+- **Date** : 2026-10-16
+- **Catégorie** : processus
+- **Contexte** : étude de couverture du catalogue (`docs/couverture-catalogue.md`) ; il
+  fallait reproduire le message de conflit de `docker rmi` sur le poste de l'utilisateur.
+- **Cause racine** : l'essai a lancé `docker rmi alpine:3.24` sur une image de l'utilisateur,
+  en comptant sur le refus du démon (un conteneur l'utilisait). Mais un second tag de test
+  pointait sur la même image : le démon a seulement retiré le tag `alpine:3.24`, sans
+  conflit. La commande destructive visait un objet qui n'appartenait pas à l'essai.
+- **Impact** : le tag local `alpine:3.24` de l'utilisateur a disparu. Il a été retéléchargé
+  aussitôt (`docker pull alpine:3.24`) ; aucune donnée perdue, aucun conteneur touché.
+- **Correctif** : l'essai a été refait sur une image dédiée, construite pour l'occasion
+  (`essai-couv:1`, `FROM alpine:3.24` plus un `LABEL`, donc un identifiant propre), puis
+  supprimée.
+- **Règle préventive** : un essai qui lance une commande destructive (`rm`, `rmi`, `prune`,
+  `volume rm`…) ne vise que des objets créés par l'essai lui-même, avec un nom et un
+  identifiant propres. On ne compte jamais sur un refus attendu pour protéger un objet de
+  l'utilisateur. On vérifie avant qu'aucun tag ne partage l'identifiant.
+- **Suivi** : non automatisable (manipulation interactive sur le poste) ; règle à appliquer à
+  chaque essai, comme LL-009.
+
 ### LL-014 — Toutes les sous-commandes cassées par une option globale de Docker
 
 - **Date** : 2026-10-16
