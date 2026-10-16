@@ -100,8 +100,12 @@ func validate(e *Entry) []error {
 	if len(e.Patterns) == 0 && len(e.ExitCodes) == 0 && e.Fallback == "" {
 		fail("au moins un motif est requis (ou des codes de sortie, ou fallback)")
 	}
-	if e.Fallback != "" && e.Fallback != "application" && e.Fallback != "compose-issue" && e.Fallback != "cmdline" {
-		fail("fallback inconnu %q (valeurs possibles : application, compose-issue, cmdline)", e.Fallback)
+	if e.Fallback != "" && e.Fallback != "application" && e.Fallback != "compose-issue" && e.Fallback != "cmdline" && e.Fallback != "exited" {
+		fail("fallback inconnu %q (valeurs possibles : application, compose-issue, cmdline, exited)", e.Fallback)
+	}
+	// Feature 004 : les causes d'arrêt de conteneur forment leur propre catégorie.
+	if (e.Category == "exited") != (e.Fallback == "exited") {
+		fail("la catégorie exited va de pair avec fallback: exited")
 	}
 	switch {
 	case e.Fallback == "cmdline" && e.Severity != "warning" && e.Severity != "info":

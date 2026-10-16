@@ -1,0 +1,23 @@
+[1;38;2;255;122;122m✖ Le conteneur « essai-127 » (alpine:3.24) n'a pas pu démarrer (code 127, il y a 5 s).[m
+   L'image alpine:3.24 exige la variable X.
+[2;38;2;138;143;152m   Projet Compose « app », service « web ».[m
+
+[2;38;2;138;143;152m── Fin du journal (4 dernières lignes) ─────────────────────────────────────────────────────────────[m
+          You must specify POSTGRES_PASSWORD to a non-empty value for the
+          superuser. For example, "-e POSTGRES_PASSWORD=password" on "docker run".
+
+          You may also use "POSTGRES_HOST_AUTH_METHOD=trust" to allow all connections without a pas…
+
+[1;38;2;122;162;247m📘 Concept — variable d'environnement obligatoire[m
+   Certaines images refusent de démarrer sans une variable de configuration, par exemple un mot de
+   passe d'administration.
+
+[1;38;2;224;175;104m🔎 Cause probable[m
+   Le conteneur a été lancé sans X : son programme s'est arrêté aussitôt.
+
+[1;38;2;158;206;106m💡 Corrections[m
+   1. Mettre la variable dans un fichier lisible par toi seul, puis le passer avec --env-file.
+      [38;2;248;248;242mdocker run -d --env-file db.env alpine:3.24[0m
+   2. Ou utiliser un secret monté et la variable X_FILE.
+
+[3;38;2;125;207;255m➜ Pour aller plus loin : docker telemach deepen[m

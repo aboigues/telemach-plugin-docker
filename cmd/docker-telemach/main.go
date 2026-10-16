@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aboigues/telemach-plugin-docker/internal/command"
 	"github.com/aboigues/telemach-plugin-docker/internal/plugin"
 	"github.com/aboigues/telemach-plugin-docker/internal/render"
 	"github.com/aboigues/telemach-plugin-docker/internal/state"
@@ -36,6 +37,7 @@ type app struct {
 	executable     func() string
 	store          state.Store
 	version        string
+	dockerGlobal   []string // options globales de Docker reçues avant « telemach » (feature 004)
 
 	colorFlag string
 	width     int
@@ -65,12 +67,25 @@ func newApp() *app {
 }
 
 func main() {
-	args := os.Args[1:]
-	// Appelé par la CLI Docker (« docker telemach … »), le plugin reçoit son nom en premier.
-	if len(args) > 0 && args[0] == "telemach" {
-		args = args[1:]
+	global, args := splitPluginArgs(os.Args[1:])
+	a := newApp()
+	a.dockerGlobal = global
+	os.Exit(run(a, args))
+}
+
+// splitPluginArgs sépare les arguments reçus de la CLI Docker (« docker telemach … ») :
+// options globales de Docker placées avant le nom du plugin (« --context x »), à repasser
+// aux lectures du démon, puis arguments du plugin. Appelé directement (intégration shell),
+// le binaire ne reçoit que ses propres arguments.
+func splitPluginArgs(args []string) (global, plugin []string) {
+	i := command.GlobalEnd(args)
+	if i < len(args) && args[i] == "telemach" {
+		if i > 0 {
+			global = args[:i]
+		}
+		return global, args[i+1:]
 	}
-	os.Exit(run(newApp(), args))
+	return nil, args
 }
 
 // run exécute la commande et renvoie le code de sortie.

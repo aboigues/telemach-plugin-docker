@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -93,5 +94,35 @@ func TestIsRepeat(t *testing.T) {
 	}
 	if s.IsRepeat("autre", now.Add(time.Minute)) {
 		t.Error("pas de répétition pour une autre empreinte")
+	}
+}
+
+// Feature 004 : analyse d'un conteneur arrêté, réaffichée par « last » sans le démon.
+func TestLastDiagnosisExited(t *testing.T) {
+	s := Store{Dir: t.TempDir()}
+	lines := make([]string, 30)
+	for i := range lines {
+		lines[i] = fmt.Sprintf("ligne %d", i)
+	}
+	in := LastDiagnosis{
+		Kind: KindExited, EntryID: "exited.code-1", Captures: map[string]string{"name": "essai"},
+		Container: ContainerRef{Name: "essai", ID: "ccb3e54ad7a2"}, LogExcerpt: lines, RecordedAt: time.Now(),
+	}
+	if err := s.Save(in); err != nil {
+		t.Fatal(err)
+	}
+	d, ok := s.Load()
+	if !ok || !d.IsExited() || d.Container.Name != "essai" || d.Container.ID != "ccb3e54ad7a2" {
+		t.Fatalf("analyse non conservée : %+v", d)
+	}
+	if len(d.LogExcerpt) != MaxLogExcerpt || d.LogExcerpt[MaxLogExcerpt-1] != "ligne 29" {
+		t.Errorf("extrait : %d lignes (attendu %d, les dernières) : %q", len(d.LogExcerpt), MaxLogExcerpt, d.LogExcerpt)
+	}
+	// Un fichier antérieur, sans ces champs, reste lisible.
+	if err := s.Save(LastDiagnosis{Fingerprint: "x"}); err != nil {
+		t.Fatal(err)
+	}
+	if d, ok := s.Load(); !ok || d.IsExited() || d.Container.Name != "" {
+		t.Errorf("ancien format : %+v", d)
 	}
 }

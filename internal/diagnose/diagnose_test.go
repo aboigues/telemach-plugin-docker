@@ -118,3 +118,21 @@ func TestFingerprintNormalization(t *testing.T) {
 		t.Error("deux erreurs différentes doivent avoir des empreintes différentes")
 	}
 }
+
+// Feature 004 : une cause d'arrêt de conteneur (motif de journal, code) ne sert jamais à
+// expliquer le message d'erreur d'une commande docker.
+func TestExitedEntriesNeverMatchCommandErrors(t *testing.T) {
+	cat, err := catalog.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, code := range []int{1, 2, 125, 126, 127, 137, 139, 143} {
+		in := Input{
+			Command: command.Parse([]string{"run", "postgres:18-alpine"}), ExitCode: code,
+			Stderr: "Error: You must specify POSTGRES_PASSWORD; listen tcp :8080: bind: address already in use; permission denied",
+		}
+		if d := Diagnose(in, cat); d.Entry != nil && d.Entry.Fallback == "exited" {
+			t.Errorf("code %d : entrée exited %s retenue pour une commande", code, d.Entry.ID)
+		}
+	}
+}

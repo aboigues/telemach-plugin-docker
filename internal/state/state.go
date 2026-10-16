@@ -40,8 +40,13 @@ type LastDiagnosis struct {
 	Args           []string // arguments de la commande docker, nettoyés et masqués (absent des fichiers antérieurs)
 
 	// Feature 003 : avertissement sur la ligne de commande.
-	Kind         string          // KindError (défaut, fichiers antérieurs) ou KindCmdline
-	Findings     []FindingRecord // pièges affichés en complet (captures nettoyées et masquées)
+	Kind     string          // KindError (défaut, fichiers antérieurs) ou KindCmdline
+	Findings []FindingRecord // pièges affichés en complet (captures nettoyées et masquées)
+
+	// Feature 004 : analyse d'un conteneur arrêté en erreur (jamais de valeur de variable
+	// d'environnement).
+	Container    ContainerRef `json:",omitempty"`
+	LogExcerpt   []string     `json:",omitempty"` // fin du journal, nettoyée et masquée
 	ComposeDir   string
 	ComposeFiles []string
 }
@@ -50,7 +55,17 @@ type LastDiagnosis struct {
 const (
 	KindError   = "error"
 	KindCmdline = "cmdline"
+	KindExited  = "exited"
 )
+
+// MaxLogExcerpt est le nombre de lignes de journal affichées et conservées (FR-006).
+const MaxLogExcerpt = 20
+
+// ContainerRef désigne le conteneur d'une analyse.
+type ContainerRef struct {
+	Name string
+	ID   string // identifiant court (12 caractères)
+}
 
 // FindingRecord conserve un piège de ligne de commande pour « last » et « deepen ».
 type FindingRecord struct {
@@ -60,6 +75,9 @@ type FindingRecord struct {
 
 // IsCmdline indique si le dernier diagnostic est un avertissement sur la ligne de commande.
 func (d LastDiagnosis) IsCmdline() bool { return d.Kind == KindCmdline }
+
+// IsExited indique si le dernier diagnostic est l'analyse d'un conteneur arrêté (feature 004).
+func (d LastDiagnosis) IsExited() bool { return d.Kind == KindExited }
 
 // Store lit et écrit l'état dans un répertoire privé.
 type Store struct {
@@ -97,6 +115,9 @@ func (s Store) Save(d LastDiagnosis) error {
 	d.SchemaVersion = SchemaVersion
 	if len(d.Stderr) > MaxStderr {
 		d.Stderr = d.Stderr[len(d.Stderr)-MaxStderr:]
+	}
+	if len(d.LogExcerpt) > MaxLogExcerpt {
+		d.LogExcerpt = d.LogExcerpt[len(d.LogExcerpt)-MaxLogExcerpt:]
 	}
 	if d.Kind == "" {
 		d.Kind = KindError
