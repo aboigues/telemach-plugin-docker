@@ -33,24 +33,37 @@ var composeGlobalValueFlags = set("f", "file", "p", "project-name", "project-dir
 // Options qui attendent une valeur, par sous-commande. Les options absentes de ces listes
 // sont considérées comme booléennes, sauf si elles sont écrites sous la forme --nom=valeur.
 var valueFlags = map[string]map[string]bool{
-	"run": set("e", "env", "env-file", "p", "publish", "v", "volume", "w", "workdir", "u", "user",
-		"l", "label", "label-file", "m", "memory", "h", "hostname", "name", "network", "net", "entrypoint",
-		"mount", "platform", "restart", "cpus", "c", "cpu-shares", "add-host", "dns", "expose", "health-cmd",
-		"log-driver", "log-opt", "ulimit", "cap-add", "cap-drop", "device", "tmpfs", "pull", "gpus",
-		"cidfile", "stop-signal", "stop-timeout", "shm-size", "pid", "ipc", "runtime", "security-opt",
-		"sysctl", "volumes-from", "link", "network-alias", "ip", "mac-address", "a", "attach"),
-	"exec":  set("e", "env", "env-file", "u", "user", "w", "workdir"),
-	"build": set("t", "tag", "f", "file", "build-arg", "target", "platform", "label", "network", "secret", "ssh", "cache-from", "cache-to", "o", "output", "progress", "iidfile", "builder"),
-	"login": set("u", "username", "p", "password"),
-	"logs":  set("n", "tail", "since", "until"),
-	"push":  set(),
-	"pull":  set("platform"),
-	"rm":    set(),
-	"rmi":   set(),
-	"stop":  set("t", "time", "s", "signal"),
-	"start": set("detach-keys"),
-	"ps":    set("f", "filter", "format", "n", "last"),
+	// Liste relevée dans l'aide de Docker 29.8 (docker run --help) : une option à valeur
+	// absente d'ici ferait prendre sa valeur pour l'image (feature 003).
+	"run":    runValueFlags,
+	"create": runValueFlags,
+	"exec":   set("detach-keys", "e", "env", "env-file", "u", "user", "w", "workdir"),
+	"build":  set("t", "tag", "f", "file", "build-arg", "target", "platform", "label", "network", "secret", "ssh", "cache-from", "cache-to", "o", "output", "progress", "iidfile", "builder"),
+	"login":  set("u", "username", "p", "password"),
+	"logs":   set("n", "tail", "since", "until"),
+	"push":   set(),
+	"pull":   set("platform"),
+	"rm":     set(),
+	"rmi":    set(),
+	"stop":   set("t", "time", "s", "signal"),
+	"start":  set("detach-keys"),
+	"ps":     set("f", "filter", "format", "n", "last"),
 }
+
+// Options de docker run et docker create qui attendent une valeur (Docker 29.8).
+var runValueFlags = set("a", "attach", "add-host", "annotation", "blkio-weight", "blkio-weight-device",
+	"c", "cpu-shares", "cap-add", "cap-drop", "cgroup-parent", "cgroupns", "cidfile", "cpu-period",
+	"cpu-quota", "cpu-rt-period", "cpu-rt-runtime", "cpus", "cpuset-cpus", "cpuset-mems", "detach-keys",
+	"device", "device-cgroup-rule", "device-read-bps", "device-read-iops", "device-write-bps",
+	"device-write-iops", "dns", "dns-option", "dns-search", "domainname", "e", "env", "entrypoint",
+	"env-file", "expose", "gpus", "group-add", "h", "hostname", "health-cmd", "health-interval",
+	"health-retries", "health-start-interval", "health-start-period", "health-timeout", "ip", "ip6",
+	"ipc", "isolation", "l", "label", "label-file", "link", "link-local-ip", "log-driver", "log-opt",
+	"m", "memory", "mac-address", "memory-reservation", "memory-swap", "memory-swappiness", "mount",
+	"name", "network", "net", "network-alias", "oom-score-adj", "p", "publish", "pid", "pids-limit",
+	"platform", "pull", "restart", "runtime", "security-opt", "shm-size", "stop-signal",
+	"stop-timeout", "storage-opt", "sysctl", "tmpfs", "u", "user", "ulimit", "umask", "userns", "uts",
+	"v", "volume", "volume-driver", "volumes-from", "w", "workdir")
 
 // Commandes dont les arguments après le premier argument positionnel appartiennent au
 // conteneur (ils ne sont pas analysés comme des options).
@@ -112,6 +125,47 @@ func Parse(args []string) Command {
 	parseRest(&cmd, args[i:], valueFlags[word])
 	cmd.Interactive = isInteractive(cmd)
 	return cmd
+}
+
+// Layout situe les éléments d'une ligne docker : sous-commande, premier argument après la
+// sous-commande et cible (image pour run/create, conteneur pour exec).
+type Layout struct {
+	Subcommand string
+	OptsStart  int // indice du premier argument après la sous-commande
+	Target     int // indice du premier argument positionnel (image, conteneur…) ; -1 si absent
+}
+
+// Locate situe la sous-commande et sa cible dans args, sans masquer ni modifier les
+// arguments (les indices désignent args tel quel).
+func Locate(args []string) Layout {
+	l := Layout{Target: -1}
+	i := skipFlags(args, 0, globalValueFlags, nil)
+	if i >= len(args) {
+		return l
+	}
+	word := args[i]
+	i++
+	if word == "container" && i < len(args) && !strings.HasPrefix(args[i], "-") {
+		word = args[i]
+		i++
+	}
+	l.Subcommand, l.OptsStart = word, i
+	values := valueFlags[word]
+	for j := i; j < len(args); j++ {
+		a := args[j]
+		if a == "--" {
+			if j+1 < len(args) {
+				l.Target = j + 1
+			}
+			return l
+		}
+		if !strings.HasPrefix(a, "-") || a == "-" {
+			l.Target = j
+			return l
+		}
+		j += consumeFlag(args, j, values, func(string, string) {})
+	}
+	return l
 }
 
 // Image renvoie l'image visée par la commande, si la sous-commande en désigne une.
@@ -222,3 +276,6 @@ func set(items ...string) map[string]bool {
 	}
 	return m
 }
+
+// TakesValue indique si l'option name (sans tirets) de la sous-commande attend une valeur.
+func TakesValue(subcommand, name string) bool { return valueFlags[subcommand][name] }

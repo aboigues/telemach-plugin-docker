@@ -19,7 +19,7 @@ import (
 func (a *app) lastCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "last",
-		Short: "Réaffiche l'explication complète de la dernière erreur",
+		Short: "Réaffiche l'explication complète de la dernière erreur ou du dernier avertissement",
 		Args:  cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
 			theme, w, width := a.output(a.stderr)
@@ -29,6 +29,11 @@ func (a *app) lastCommand() *cobra.Command {
 				fmt.Fprintln(w, render.Wrap("Dès qu'une commande docker échoue avec l'intégration shell activée, "+
 					"« docker telemach last » réaffiche son explication complète.", width, "   "))
 				return nil
+			}
+			if last.IsCmdline() {
+				// Avertissement d'une commande réussie (feature 003) : même rendu que lint.
+				fmt.Fprintln(w, theme.Dim(lastHeader(last, a.now())))
+				return render.RenderFindings(w, findingItems(last.Findings), render.Options{Theme: theme, Width: width})
 			}
 			cmd := command.Command{
 				Family:       command.Family(last.Family),
@@ -61,10 +66,43 @@ func (a *app) lastCommand() *cobra.Command {
 				Theme: theme, Width: width, DockerVersion: last.DockerVersion,
 				Interactive: last.Interactive, ExitCode: last.ExitCode,
 			}
+			// Même affichage que explain : le piège de la ligne de commande, cause probable,
+			// avant l'explication de l'erreur, ou à sa place si l'erreur n'est pas reconnue.
+			items := findingItems(last.Findings)
+			if len(items) > 0 && d.Entry == nil && cmd.Family != command.FamilyCompose {
+				fmt.Fprintln(w)
+				if err := render.RenderFindings(w, items, opts); err != nil {
+					return err
+				}
+				return render.RenderOriginal(w, last.Stderr, opts)
+			}
+			if len(items) > 0 {
+				if err := render.RenderInline(w, items, opts); err != nil {
+					return err
+				}
+			}
 			_, err := a.renderDiagnosis(w, in, d, last.Stderr, opts)
 			return err
 		},
 	}
+}
+
+// findingItems reconstruit les pièges enregistrés (captures déjà nettoyées et masquées).
+func findingItems(records []state.FindingRecord) []render.LintItem {
+	if len(records) == 0 {
+		return nil
+	}
+	cat, err := catalog.Default()
+	if err != nil {
+		return nil
+	}
+	var items []render.LintItem
+	for _, r := range records {
+		if e, ok := cat.Get(r.EntryID); ok {
+			items = append(items, render.LintItem{Entry: e, Captures: r.Captures})
+		}
+	}
+	return items
 }
 
 // maxHeaderCommand limite la longueur de la commande affichée dans l'en-tête.
@@ -87,8 +125,12 @@ func lastHeader(last state.LastDiagnosis, now time.Time) string {
 	if last.RecordedAt.IsZero() {
 		return render.LabelLast + " de la dernière erreur enregistrée : " + command
 	}
+	what := "erreur enregistrée"
+	if last.IsCmdline() {
+		what = "avertissement enregistré"
+	}
 	at := last.RecordedAt.In(now.Location())
-	return fmt.Sprintf("%s — erreur enregistrée le %s à %s (%s) : %s", render.LabelLast,
+	return fmt.Sprintf("%s — %s le %s à %s (%s) : %s", render.LabelLast, what,
 		at.Format("02/01/2006"), at.Format("15:04"), age(now.Sub(last.RecordedAt)), command)
 }
 

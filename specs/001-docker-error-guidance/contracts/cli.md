@@ -126,6 +126,13 @@ docker telemach deepen [--exercise]
 
 ---
 
+## `lint` — ligne de commande (feature 003)
+
+Vérification d'une ligne `docker run|create|exec`, à la main ou après une commande réussie
+(`--after`) : voir `specs/003-command-line-analysis/contracts/cli-lint.md`.
+
+---
+
 ## `shell-init` — intégration shell (R2)
 
 ```text
@@ -145,6 +152,9 @@ Garanties du code généré (vérifiées par les tests) :
    `command docker --version` (lecture seule, sans contact avec le démon), stockée dans
    `__telemach_docker_version` et transmise par `--docker-version`. Aucune autre commande
    n'est exécutée.
+
+Garanties 8 à 10 (appel de `lint` après une commande `run|create|exec` réussie,
+`TELEMACH_LINT=0`) : voir `specs/003-command-line-analysis/contracts/cli-lint.md`.
 
 Shell non pris en charge → message d'erreur en français, code `2`.
 

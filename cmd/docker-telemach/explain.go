@@ -85,15 +85,37 @@ func (a *app) explain(f explainFlags, args []string) error {
 		Theme: theme, Width: width, DockerVersion: dockerVersion, Repeated: repeated,
 		Interactive: in.Interactive, ExitCode: f.exitCode,
 	}
-	entryID, err := a.renderDiagnosis(w, in, d, stderr, opts)
-	if err != nil {
-		return err
+	// Feature 003 : pièges de la ligne de commande, cause probable de l'échec (FR-010).
+	items, records := a.cmdlineWarnings(args)
+	var entryID string
+	if len(items) > 0 && d.Entry == nil && cmd.Family != command.FamilyCompose && !repeated {
+		// Erreur non reconnue : le piège devient l'explication principale.
+		fmt.Fprintln(w)
+		if err := render.RenderFindings(w, items, opts); err != nil {
+			return err
+		}
+		if err := render.RenderOriginal(w, stderr, opts); err != nil {
+			return err
+		}
+	} else {
+		// Le piège, cause la plus probable, passe avant l'explication générique de l'erreur
+		// (souvent opaque dans ce cas, par exemple « exec: "-it": executable file not found »).
+		if len(items) > 0 && !repeated {
+			if err := render.RenderInline(w, items, opts); err != nil {
+				return err
+			}
+		}
+		var err error
+		if entryID, err = a.renderDiagnosis(w, in, d, stderr, opts); err != nil {
+			return err
+		}
 	}
 	last := state.LastDiagnosis{
 		Fingerprint: d.Fingerprint, EntryID: entryID, Captures: d.Captures, RecordedAt: now,
 		Origin: string(d.Origin), Confidence: string(d.Confidence), ExitCode: f.exitCode,
 		Interactive: in.Interactive, DockerVersion: dockerVersion, Stderr: stderr,
 		Family: string(cmd.Family), Subcommand: cmd.Subcommand, Args: cleanArgs(args),
+		Findings: records,
 	}
 	if d.Entry != nil {
 		last.MatchedEntryID = d.Entry.ID

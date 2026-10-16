@@ -1,0 +1,16 @@
+⚠ Option Docker placée après l'image : -e API_TOKEN=•••••• a été transmis au conteneur, pas à
+   Docker.
+
+📘 Concept — ordre des arguments de docker run
+   docker run [OPTIONS] IMAGE [COMMANDE] [ARG...] : les options de Docker se placent avant l'image ;
+   tout ce qui suit l'image est donné au programme du conteneur.
+
+🔎 Cause probable
+   Docker arrête de lire ses options au nom de l'image.
+
+💡 Correction
+   Placer les options avant l'image.
+   docker run -e API_TOKEN=•••••• nginx
+   Remplace •••••• par ta valeur, ou mieux : passe-la avec --env-file.
+
+➜ Pour aller plus loin : docker telemach deepen

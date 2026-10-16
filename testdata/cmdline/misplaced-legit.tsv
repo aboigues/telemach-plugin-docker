@@ -1,0 +1,38 @@
+# Lignes correctes : aucune option Docker mal placée, y compris quand le programme du
+# conteneur reçoit des options qui ressemblent à celles de Docker.
+-	-	-	run --rm postgres:18-alpine postgres -p 5433
+-	-	-	run --rm postgres:18-alpine -c max_connections=200
+-	-	-	run --rm redis:8-alpine redis-server --port 7000
+-	-	-	run --rm alpine:3.24 ls -d /tmp
+-	-	-	run --rm alpine:3.24 sh -c 'echo -e x'
+-	-	-	run --rm curlimages/curl:8.23.0 -v https://example.org
+-	-	-	run --rm curlimages/curl:8.23.0 -H 'Accept: text/plain' https://example.org
+-	-	-	run --rm nginx:1.30-alpine nginx -g 'daemon off;'
+-	-	-	run --rm nginx:1.30-alpine nginx -t
+-	-	-	run --rm node:26-alpine node -e "console.log(1)"
+-	-	-	run --rm node:26-alpine node -p 1+1
+-	-	-	run --rm python:3.15-alpine python -m http.server 8000
+-	-	-	run --rm python:3.15-alpine python -c 'print(1)'
+-	-	-	run --rm python:3.15-alpine python -v -c 'pass'
+-	-	-	run --rm alpine:3.24 tar -C /tmp -xf x.tar
+-	-	-	run --rm alpine:3.24 grep -e motif -r /etc
+-	-	-	run --rm alpine:3.24 nc -l -p 8080
+-	-	-	run --rm alpine:3.24 env DEBUG=1
+-	-	-	run --rm alpine:3.24 sh -c 'printenv HOME'
+-	-	-	exec web ls -l
+-	-	-	exec web sh -c 'env'
+-	-	-	exec -it web sh
+-	-	-	exec -e A=1 web env
+-	-	-	container run -it alpine:3.24 sh
+-	-	-	run --rm alpine:3.24 -- -p 8080:80
+-	-	-	run -d
+-	-	-	run --rm -p 8080:80 -d nginx:1.30-alpine
+-	-	-	run --cpuset-cpus 0 -p 8080:80 nginx:1.30-alpine
+-	-	-	run --memory-swap 1g --pids-limit 100 --rm alpine:3.24 true
+-	-	-	run --gpus all --health-interval 5s --rm alpine:3.24 true
+-	-	-	run --rm --name web nginx:1.30-alpine
+-	-	-	create --name web -v ./data:/data redis:8-alpine
+-	-	-	run --rm -e DEBUG=1 alpine:3.24 env
+-	-	-	run -it --rm alpine:3.24 sh
+-	-	-	run --rm --network bridge -p 8080:80 nginx:1.30-alpine
+-	-	-	ps -a

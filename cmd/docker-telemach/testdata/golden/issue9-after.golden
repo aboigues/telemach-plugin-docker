@@ -1,0 +1,20 @@
+⚠ Option Docker placée après l'image : -p 8090:80 a été transmis au conteneur, pas à Docker.
+   Le conteneur a pu démarrer, mais le port 8090 de ta machine n'est pas publié.
+
+📘 Concept — ordre des arguments de docker run
+   docker run [OPTIONS] IMAGE [COMMANDE] [ARG...] : les options de Docker se placent avant le nom de l'image ; tout ce qui suit l'image est donné au programme du conteneur.
+
+🔎 Cause probable
+   Docker arrête de lire ses propres options dès qu'il rencontre le nom de l'image (nginx). Ce qui suit est considéré comme la commande du conteneur et ses arguments : Docker ne l'interprète pas, et
+   ne signale donc aucune erreur.
+
+💡 Correction
+   Placer les options de Docker avant le nom de l'image.
+   docker run -d -p 8090:80 nginx
+   Si le conteneur a été créé sans ces options, l'arrêter et le supprimer, puis le relancer avec la commande corrigée.
+   docker stop <conteneur> && docker rm <conteneur>
+
+ℹ Image sans tag explicite : nginx désigne nginx:latest, qui change à chaque publication.
+   💡 Préfère un tag précis, choisi sur la page de l'image (Docker Hub), par exemple nginx:<version>.
+
+➜ Pour aller plus loin : docker telemach deepen

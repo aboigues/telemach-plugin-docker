@@ -67,6 +67,27 @@ Deux valeurs de `fallback` existent pour des entrées sans motif :
   conteneur ;
 - `compose-issue` : pédagogie d'un problème détecté par l'analyseur Compose
   (`compose.<type>`) ; ses `tests` désignent alors des dossiers de `testdata/compose/`.
+- `cmdline` : piège de la ligne de commande (`cmdline.<piège>`), une écriture que Docker
+  accepte mais qui ne fait pas ce qui est voulu ; voir ci-dessous.
+
+## Ajouter un piège de la ligne de commande
+
+Les pièges sont repérés par `internal/lint`, sans rien exécuter, sur `docker run`, `create` et
+`exec` (même quand la commande réussit, ou à la main avec `docker telemach lint -- …`).
+
+1. **Écrire les cas** dans `testdata/cmdline/` (format dans son `README.md`) : des lignes
+   fautives dans un fichier `*-faulty.tsv` et des lignes **correctes voisines** dans un
+   `*-legit.tsv`. En cas de doute, le piège doit se taire : une ligne correcte signalée est
+   un défaut.
+2. **Écrire la règle** dans `internal/lint/pitfalls.go` (une fonction enregistrée dans
+   `init`) : elle lit les options placées avant l'image, renvoie des captures nettoyées et
+   masquées et une empreinte qui ne contient **jamais** de valeur saisie.
+3. **Ajouter l'entrée** dans `internal/catalog/data/cmdline.yaml`, avec `fallback: cmdline`,
+   `severity: warning` (⚠) ou `severity: info` (ℹ), sans `patterns`, et `tests` qui nomme
+   le fichier de corpus (sans `.tsv`). Captures disponibles en plus de celles de la règle :
+   `{{.cleanup}}` et `{{.cleanup_command}}`, renseignées seulement après exécution
+   (conseil de suppression du conteneur déjà créé).
+4. **Lancer les tests** : `go test ./internal/lint/ ./internal/catalog/ ./cmd/...`.
 
 ## Règles vérifiées automatiquement
 

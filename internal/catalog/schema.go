@@ -8,7 +8,7 @@ type Category string
 // Catégories autorisées.
 var Categories = map[Category]bool{
 	"network": true, "image": true, "container": true, "volume": true, "daemon": true,
-	"permission": true, "build": true, "compose": true, "runtime": true,
+	"permission": true, "build": true, "compose": true, "runtime": true, "cmdline": true,
 }
 
 // Entry est une entrée du catalogue d'erreurs. Les textes sont en français et peuvent
@@ -18,7 +18,8 @@ type Entry struct {
 	Category    Category         `yaml:"category"`
 	Applies     []string         `yaml:"applies"`
 	ExitCodes   []int            `yaml:"exit_codes"`
-	Fallback    string           `yaml:"fallback"` // « application » : repli pour cette origine ; « compose-issue » : pédagogie d'un problème Compose
+	Fallback    string           `yaml:"fallback"` // « application » : repli pour cette origine ; « compose-issue » : pédagogie d'un problème Compose ; « cmdline » : piège de ligne de commande
+	Severity    string           `yaml:"severity"` // pièges de ligne de commande seulement : « warning » ou « info »
 	Patterns    []string         `yaml:"patterns"`
 	Concept     ConceptRef       `yaml:"concept"`
 	Summary     string           `yaml:"summary"`

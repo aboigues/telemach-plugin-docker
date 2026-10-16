@@ -72,6 +72,41 @@ func TestValidationRules(t *testing.T) {
 	}
 }
 
+// cmdlineEntry est une entrée minimale de piège de ligne de commande (feature 003).
+var cmdlineEntry = strings.NewReplacer(
+	"id: run.port-already-allocated", "id: cmdline.option-after-image",
+	"category: network", "category: cmdline",
+	"patterns: ['port is already allocated']", "fallback: cmdline\n  severity: warning",
+).Replace(validEntry)
+
+func TestCmdlineEntries(t *testing.T) {
+	if err := load(t, cmdlineEntry); err != nil {
+		t.Fatalf("entrée cmdline valide refusée : %v", err)
+	}
+	info := strings.Replace(cmdlineEntry, "severity: warning", "severity: info", 1)
+	if err := load(t, info); err != nil {
+		t.Fatalf("entrée cmdline « info » refusée : %v", err)
+	}
+	tests := []struct{ name, from, to, wantErr string }{
+		{"sans niveau", "\n  severity: warning", "", "severity"},
+		{"niveau inconnu", "severity: warning", "severity: grave", "severity"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := load(t, strings.Replace(cmdlineEntry, tt.from, tt.to, 1))
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Errorf("erreur contenant %q attendue, obtenu %v", tt.wantErr, err)
+			}
+		})
+	}
+	t.Run("niveau hors cmdline", func(t *testing.T) {
+		err := load(t, strings.Replace(validEntry, "category: network", "category: network\n  severity: info", 1))
+		if err == nil || !strings.Contains(err.Error(), "severity") {
+			t.Errorf("severity doit être refusée hors cmdline, obtenu %v", err)
+		}
+	})
+}
+
 func TestDuplicateID(t *testing.T) {
 	if err := load(t, validEntry+strings.TrimPrefix(validEntry, "\n")); err == nil || !strings.Contains(err.Error(), "en double") {
 		t.Errorf("identifiant en double non détecté : %v", err)
@@ -96,6 +131,17 @@ func TestEmbeddedCatalog(t *testing.T) {
 	}
 	for _, e := range c.Entries {
 		for _, name := range e.Tests {
+			if e.Fallback == "cmdline" {
+				// Piège de ligne de commande : le cas de test est un fichier de
+				// testdata/cmdline/ dont au moins une ligne attend cette entrée.
+				data, err := os.ReadFile(filepath.Join("..", "..", "testdata", "cmdline", name+".tsv"))
+				if err != nil {
+					t.Errorf("%s : corpus introuvable : %v", e.ID, err)
+				} else if !strings.Contains(string(data), e.ID) {
+					t.Errorf("%s : aucune ligne de %s.tsv n'attend cette entrée", e.ID, name)
+				}
+				continue
+			}
 			if e.Fallback == "compose-issue" {
 				// Pédagogie d'un problème détecté par l'analyseur Compose : le cas de test
 				// est un dossier de testdata/compose/.

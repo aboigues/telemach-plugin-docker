@@ -30,6 +30,7 @@ func (e exitError) Error() string { return fmt.Sprintf("code de sortie %d", e.co
 type app struct {
 	stdout, stderr io.Writer
 	getenv         func(string) string
+	lookupEnv      func(string) (string, bool) // présence d'une variable (feature 003)
 	now            func() time.Time
 	getwd          func() (string, error)
 	executable     func() string
@@ -42,11 +43,12 @@ type app struct {
 
 func newApp() *app {
 	return &app{
-		stdout: os.Stdout,
-		stderr: os.Stderr,
-		getenv: os.Getenv,
-		now:    time.Now,
-		getwd:  os.Getwd,
+		stdout:    os.Stdout,
+		stderr:    os.Stderr,
+		getenv:    os.Getenv,
+		lookupEnv: os.LookupEnv,
+		now:       time.Now,
+		getwd:     os.Getwd,
 		executable: func() string {
 			p, err := os.Executable()
 			if err != nil {
@@ -121,7 +123,7 @@ func (a *app) rootCommand() *cobra.Command {
 			return plugin.WriteMetadata(a.stdout, a.version)
 		},
 	})
-	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.lastCommand(), a.deepenCommand())
+	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.lastCommand(), a.deepenCommand(), a.lintCommand())
 	return root
 }
 

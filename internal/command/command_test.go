@@ -92,3 +92,40 @@ func TestImage(t *testing.T) {
 		t.Errorf("Image() = %q, attendu vide", got)
 	}
 }
+
+// create accepte les options à valeur de run ; une option à valeur peu courante ne doit
+// jamais faire prendre sa valeur pour l'image (feature 003, U1).
+func TestCreateAndRareValueFlags(t *testing.T) {
+	for _, args := range [][]string{
+		{"create", "-p", "8080:80", "--name", "web", "nginx"},
+		{"container", "create", "-p", "8080:80", "--name", "web", "nginx"},
+		{"run", "--cpuset-cpus", "0", "--memory-swap", "1g", "--pids-limit", "100", "nginx"},
+		{"run", "--gpus", "all", "--health-interval", "5s", "--group-add", "audio", "nginx"},
+	} {
+		if got := Parse(args).Image(); got != "nginx" {
+			t.Errorf("%v : image = %q, attendu nginx", args, got)
+		}
+	}
+}
+
+func TestLocate(t *testing.T) {
+	cases := []struct {
+		args   []string
+		sub    string
+		target int
+	}{
+		{[]string{"run", "-d", "nginx", "-p", "8090:80"}, "run", 2},
+		{[]string{"--context", "x", "run", "-p", "1:2", "nginx"}, "run", 5},
+		{[]string{"container", "run", "--rm", "alpine", "ls"}, "run", 3},
+		{[]string{"exec", "-it", "web", "sh"}, "exec", 2},
+		{[]string{"create", "--cpuset-cpus", "0", "nginx"}, "create", 3},
+		{[]string{"run", "-d"}, "run", -1},
+		{[]string{"ps", "-a"}, "ps", -1},
+	}
+	for _, c := range cases {
+		l := Locate(c.args)
+		if l.Subcommand != c.sub || l.Target != c.target {
+			t.Errorf("%v : %+v, attendu sous-commande %s et cible %d", c.args, l, c.sub, c.target)
+		}
+	}
+}
