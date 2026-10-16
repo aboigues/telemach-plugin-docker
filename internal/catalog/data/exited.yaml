@@ -1,0 +1,558 @@
+# Causes d'arrêt d'un conteneur (feature 004) : utilisées par « docker telemach ps » pour un
+# conteneur arrêté avec un code différent de 0. Les motifs portent sur l'erreur de démarrage
+# enregistrée par Docker et sur les 10 dernières lignes du journal ; l'ordre des entrées compte
+# (la première qui correspond l'emporte). Jamais utilisées pour le message d'une commande.
+
+- id: exited.missing-required-env
+  category: exited
+  fallback: exited
+  patterns:
+    - 'You must specify (?P<variable>POSTGRES_PASSWORD) to a non-empty value'
+    - 'You need to specify one of (?P<variable>MARIADB_ROOT_PASSWORD)'
+    - 'You need to specify one of the following as an environment variable:\s*-?\s*(?P<variable>MYSQL_ROOT_PASSWORD)'
+  concept:
+    name: variable d'environnement obligatoire
+    definition: >-
+      Certaines images refusent de démarrer sans une variable de configuration, par exemple le
+      mot de passe d'administration d'une base de données : leur programme s'arrête aussitôt.
+  summary: "L'image {{.image}} exige la variable {{.variable}}, absente au lancement."
+  cause: >-
+    Le conteneur a été lancé sans {{.variable}} : le script de démarrage de l'image l'a
+    constaté, l'a écrit dans le journal, puis s'est arrêté. « docker run -d » ne montre pas
+    cette erreur, car elle survient après le lancement.
+  fixes:
+    - description: >-
+        Mettre la variable dans un fichier lisible par toi seul (chmod 600), jamais ajouté à
+        git, puis le passer avec --env-file.
+      command: docker run -d --env-file db.env {{.image}}
+      safe: true
+    - description: >-
+        Ou monter le mot de passe comme un fichier et utiliser la variable {{.variable}}_FILE,
+        que les images officielles de bases de données acceptent.
+      safe: true
+  anti_pattern:
+    description: >-
+      Écrire le mot de passe dans la commande (-e {{.variable}}=…) le laisse dans l'historique
+      du shell et dans « docker inspect » ; désactiver le mot de passe (mode « trust ») ouvre
+      la base à tous.
+  deepen:
+    explanation: >-
+      Une image se configure par des variables d'environnement : les noms attendus sont décrits
+      sur sa page Docker Hub. Le journal du conteneur, lu par « docker logs », est le premier
+      endroit où regarder quand un conteneur lancé en arrière-plan s'arrête aussitôt.
+    example: |-
+      openssl rand -hex 16 > db.secret && chmod 600 db.secret
+      docker run -d --name essai-db -e POSTGRES_PASSWORD_FILE=/run/secrets/db -v ./db.secret:/run/secrets/db:ro postgres:18-alpine
+      docker logs essai-db
+      docker rm -f essai-db
+    exercise: >-
+      Lance « docker run -d --name essai-sans postgres:18-alpine », attends trois secondes,
+      puis lis la cause avec « docker logs essai-sans ». Supprime-le ensuite avec
+      « docker rm essai-sans ».
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/#env
+  tests: [missing-env-postgres, missing-env-mariadb]
+
+- id: exited.option-after-image
+  category: exited
+  fallback: exited
+  patterns:
+    - 'exec: (?:line \d+: )?illegal option (?P<option>-\S+)'
+    - 'exec: (?P<option>-[^:\s]+): not found'
+  concept:
+    name: ordre des arguments de docker run
+    definition: >-
+      docker run [OPTIONS] IMAGE [COMMANDE] [ARG...] : les options de Docker se placent avant
+      le nom de l'image ; tout ce qui suit l'image est donné au programme du conteneur.
+  summary: "L'option {{.option}} a été placée après l'image {{.image}} : le conteneur l'a prise pour sa commande."
+  cause: >-
+    Docker arrête de lire ses options au nom de l'image : {{.option}} et ce qui suit ont été
+    transmis au conteneur, dont le script de démarrage a essayé de les exécuter, puis s'est
+    arrêté. « docker run -d » a pourtant réussi, car l'erreur survient après le lancement.
+  fixes:
+    - description: "Relancer avec les options de Docker placées avant le nom de l'image ; pour vérifier une ligne sans l'exécuter :"
+      command: docker telemach lint -- run …
+      safe: true
+  deepen:
+    explanation: >-
+      La CLI Docker lit la ligne de gauche à droite : ses options, puis l'image, puis la commande
+      du conteneur avec ses arguments. Une option placée après l'image n'est jamais vue par
+      Docker ; avec l'intégration shell, TELEMACH le signale dès le lancement.
+    example: |-
+      docker telemach lint -- run -d nginxinc/nginx-unprivileged:1.30-alpine -p 8090:8080
+    exercise: >-
+      Lance l'exemple : TELEMACH propose la commande corrigée sans rien exécuter. Lance-la, puis
+      ouvre http://localhost:8090 ; supprime enfin le conteneur avec « docker rm -f ».
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [option-after-image, option-after-image-debian]
+
+- id: exited.code-126
+  category: exited
+  fallback: exited
+  exit_codes: [126]
+  patterns:
+    - 'exec: "(?P<command>[^"]+)": permission denied'
+  concept:
+    name: exit code 126
+    definition: >-
+      Le code 126 signifie que la commande a été trouvée mais n'a pas pu être exécutée : ce
+      n'est pas un programme, ou il n'a pas le droit d'exécution.
+  summary: "La commande {{.command}} n'est pas exécutable dans l'image {{.image}}."
+  cause: >-
+    Docker a trouvé {{.command}} dans l'image, mais ce fichier n'a pas le droit d'exécution (ou
+    n'est pas un programme) : le conteneur n'a pas pu démarrer.
+  fixes:
+    - description: Vérifier la commande lancée et le type du fichier dans l'image.
+      command: docker run --rm --user 1000:1000 --entrypoint ls {{.image}} -l {{.command}}
+      safe: true
+    - description: Dans un Dockerfile, rendre le script exécutable (RUN chmod +x) ou le lancer par son interpréteur (sh script.sh).
+      safe: true
+  deepen:
+    explanation: >-
+      Le code de sortie d'un conteneur est celui de son premier programme. Les codes 126 et 127
+      viennent du shell ou de Docker : la commande n'a pas pu être lancée du tout.
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 sh -c '/etc/hostname'; echo "code $?"
+    exercise: >-
+      Compare le code de « docker run --rm --user 1000:1000 alpine:3.24 sh -c '/etc/hostname' »
+      (fichier non exécutable) avec celui de « … sh -c 'commande-inexistante' » (introuvable).
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/#exit-status
+  tests: [not-executable]
+
+- id: exited.code-127
+  category: exited
+  fallback: exited
+  exit_codes: [127]
+  patterns:
+    - 'exec: "(?P<command>[^"]+)": executable file not found'
+    - 'sh: (?P<command>\S+): not found'
+    - 'exec: (?P<command>[^-:\s"][^:\s"]*): not found'
+  concept:
+    name: exit code 127
+    definition: >-
+      Le code 127 signifie que la commande demandée n'existe pas dans l'image (ou n'est pas dans
+      son PATH).
+  summary: "La commande {{.command}} est introuvable dans l'image {{.image}}."
+  cause: >-
+    Docker a cherché {{.command}} dans l'image sans le trouver : nom mal écrit, programme non
+    installé dans cette image, ou option de docker run placée après l'image et prise pour la
+    commande.
+  fixes:
+    - description: Vérifier l'orthographe, et que les options de Docker sont placées avant le nom de l'image.
+      safe: true
+    - description: Lister les programmes disponibles dans l'image.
+      command: docker run --rm --user 1000:1000 --entrypoint ls {{.image}} /usr/local/bin /usr/bin
+      safe: true
+  deepen:
+    explanation: >-
+      Une image ne contient que les programmes qu'on y a installés : une image minimale comme
+      alpine n'a ni bash, ni curl par défaut. Ce qui suit le nom de l'image dans docker run est
+      la commande à lancer dans le conteneur.
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 which sh bash
+    exercise: >-
+      Avec l'exemple, repère que sh existe dans alpine mais pas bash ; relance la commande avec
+      « bash -c 'echo bonjour' » pour voir le code 127.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/#exit-status
+  tests: [command-not-found]
+
+- id: exited.exec-format
+  category: exited
+  fallback: exited
+  patterns:
+    - 'exec format error'
+  concept:
+    name: image architecture
+    definition: >-
+      Une image est construite pour une architecture de processeur (amd64, arm64…) : un
+      programme compilé pour une autre architecture ne peut pas s'exécuter.
+  summary: "L'image {{.image}} n'est pas construite pour l'architecture de ta machine."
+  cause: >-
+    Le programme du conteneur a été compilé pour une autre architecture de processeur que celle
+    de ta machine : le noyau refuse de l'exécuter (« exec format error »).
+  fixes:
+    - description: Vérifier l'architecture de l'image et celle de ta machine.
+      command: docker image inspect --format '{{"{{"}}.Architecture{{"}}"}}' {{.image}}
+      safe: true
+    - description: Utiliser une version multi-architecture de l'image, ou la reconstruire avec docker buildx build --platform.
+      safe: true
+  deepen:
+    explanation: >-
+      Les images officielles sont publiées pour plusieurs architectures : Docker choisit
+      automatiquement celle de ta machine. Une image construite sur un Mac récent (arm64) peut ne
+      contenir que cette architecture.
+    example: |-
+      docker image inspect --format '{{"{{"}}.Os{{"}}"}}/{{"{{"}}.Architecture{{"}}"}}' alpine:3.24
+    exercise: >-
+      Lance l'exemple, puis « uname -m » sur ta machine : les deux architectures doivent
+      correspondre (x86_64 = amd64, aarch64 = arm64).
+  doc_url: https://docs.docker.com/build/building/multi-platform/
+  tests: [exec-format]
+
+- id: exited.permission-denied
+  category: exited
+  fallback: exited
+  patterns:
+    - '(?i)permission denied'
+  concept:
+    name: file permissions
+    definition: >-
+      Dans un conteneur, un programme a les droits de son utilisateur : un utilisateur non-root
+      ne peut pas écrire partout, et un dossier monté garde les droits de ta machine.
+  summary: "Le programme du conteneur {{.name}} s'est arrêté sur un accès refusé."
+  cause: >-
+    Le journal montre « {{.line}} » juste avant l'arrêt : le programme n'avait pas le droit de
+    lire ou d'écrire à cet endroit, souvent parce qu'il tourne sans les droits root (ce qui est
+    une bonne pratique) ou qu'un dossier monté appartient à un autre utilisateur.
+  fixes:
+    - description: Écrire dans un dossier prévu pour l'application (/tmp, un volume, un dossier qui appartient à son utilisateur) plutôt que dans /etc ou /usr.
+      safe: true
+    - description: Pour un dossier monté, lui donner le bon propriétaire sur ta machine, ou lancer le conteneur avec ton utilisateur.
+      command: docker run --user "$(id -u):$(id -g)" -v ./data:/data {{.image}}
+      safe: true
+  anti_pattern:
+    description: >-
+      Lancer le conteneur en root (--user root) ou ouvrir les droits à tous (chmod 777) fait
+      disparaître l'erreur en supprimant une protection : cherche plutôt quel fichier est en
+      cause.
+  deepen:
+    explanation: >-
+      Un conteneur n'est pas une machine à part : ses fichiers ont un propriétaire et des droits,
+      comme sur ta machine. Les images bien faites tournent sans root ; elles ont donc besoin
+      d'un endroit à elles pour écrire.
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 sh -c 'touch /tmp/ok && echo écrit dans /tmp; touch /etc/ko'
+    exercise: >-
+      Lance l'exemple : l'écriture dans /tmp réussit, celle dans /etc échoue. Lance
+      « docker run --rm --user 1000:1000 alpine:3.24 ls -ld /tmp /etc » pour comparer les droits.
+  doc_url: https://docs.docker.com/engine/containers/run/#user
+  tests: [permission-denied]
+
+- id: exited.address-in-use
+  category: exited
+  fallback: exited
+  patterns:
+    - '(?i)address already in use'
+    - 'Address in use'
+    - 'EADDRINUSE'
+    - 'could not bind'
+  concept:
+    name: port in use
+    definition: >-
+      Un seul programme peut écouter sur un port donné d'une même interface réseau : un second
+      programme qui essaie est refusé.
+  summary: "Le programme du conteneur {{.name}} n'a pas pu écouter sur son port : déjà utilisé."
+  cause: >-
+    Un autre programme écoute déjà sur ce port dans le même espace réseau : un second processus
+    lancé dans le même conteneur, un conteneur qui partage le réseau d'un autre
+    (--network container:…), ou le réseau host.
+  fixes:
+    - description: Voir quels conteneurs partagent ce réseau ou ce port.
+      command: docker ps --format '{{"{{"}}.Names{{"}}"}} {{"{{"}}.Ports{{"}}"}} {{"{{"}}.Networks{{"}}"}}'
+      safe: true
+    - description: Configurer l'application pour écouter sur un autre port, ou lancer le conteneur dans son propre réseau.
+      safe: true
+  deepen:
+    explanation: >-
+      Chaque conteneur a normalement son propre espace réseau, donc ses propres ports : deux
+      conteneurs peuvent écouter tous deux sur 8080. Le conflit apparaît quand ils partagent un
+      même espace réseau.
+    example: |-
+      docker run -d --name essai-a nginxinc/nginx-unprivileged:1.30-alpine
+      docker run -d --name essai-b nginxinc/nginx-unprivileged:1.30-alpine
+      docker ps --filter name=essai-
+      docker rm -f essai-a essai-b
+    exercise: >-
+      Avec l'exemple, les deux nginx écoutent sur 8080 sans conflit. Recommence en lançant le
+      second avec « --network container:essai-a » et lis son journal avec « docker logs essai-b ».
+  doc_url: https://docs.docker.com/engine/network/
+  tests: [address-in-use]
+
+- id: exited.file-not-found
+  category: exited
+  fallback: exited
+  patterns:
+    - '(?i)no such file or directory'
+  concept:
+    name: container filesystem
+    definition: >-
+      Un conteneur ne voit que les fichiers de son image et ceux qu'on y monte (-v, --mount) : un
+      fichier de ta machine n'y est pas visible sans montage.
+  summary: "Le programme du conteneur {{.name}} n'a pas trouvé un fichier dont il avait besoin."
+  cause: >-
+    Le journal montre « {{.line}} » : le fichier n'existe pas dans le conteneur. Souvent, un
+    fichier de configuration attendu n'a pas été monté, ou le chemin est relatif au mauvais
+    dossier.
+  fixes:
+    - description: Monter le fichier ou le dossier attendu, avec un chemin explicite (./config ou un chemin absolu).
+      command: docker run -v ./config:/config:ro {{.image}}
+      safe: true
+    - description: Vérifier ce que le conteneur voit à cet endroit.
+      command: docker run --rm --user 1000:1000 --entrypoint ls {{.image}} -la /
+      safe: true
+  deepen:
+    explanation: >-
+      Le système de fichiers d'un conteneur vient de son image ; les montages y ajoutent des
+      fichiers de ta machine. Sans montage, le conteneur ne voit rien de ton dossier courant.
+    example: |-
+      mkdir -p essai-config && echo 'port: 8080' > essai-config/app.yaml
+      docker run --rm --user 1000:1000 -v ./essai-config:/config:ro alpine:3.24 cat /config/app.yaml
+    exercise: >-
+      Relance l'exemple sans « -v ./essai-config:/config:ro » : le fichier est introuvable, et
+      le code de sortie vaut 1.
+  doc_url: https://docs.docker.com/engine/storage/bind-mounts/
+  tests: [file-not-found]
+
+- id: exited.oom
+  category: exited
+  fallback: exited
+  concept:
+    name: memory limit
+    definition: >-
+      Avec --memory, un conteneur ne peut pas dépasser la mémoire fixée : au-delà, le noyau
+      arrête son programme (OOM, « out of memory »), avec le code 137.
+  summary: "Le conteneur {{.name}} a été arrêté par le noyau faute de mémoire (limite : {{.memory_limit}})."
+  cause: >-
+    Le programme a dépassé la mémoire autorisée ({{.memory_limit}}) : le noyau l'a arrêté
+    (SIGKILL, code 137). Docker l'a enregistré (OOMKilled) ; ce n'est donc pas un docker stop.
+  fixes:
+    - description: Relancer avec une limite plus haute, adaptée au programme.
+      command: docker run -d --memory 512m {{.image}}
+      safe: true
+    - description: Observer la consommation réelle d'un conteneur en cours d'exécution.
+      command: docker stats --no-stream
+      safe: true
+  deepen:
+    explanation: >-
+      Sans limite, un conteneur peut consommer toute la mémoire de la machine. Une limite le
+      protège, mais doit couvrir le besoin réel du programme, pics compris.
+    example: |-
+      docker run --rm --user 1000:1000 --memory 8m alpine:3.24 sh -c 'x=a; while :; do x=$x$x; done'; echo "code $?"
+    exercise: >-
+      Lance l'exemple, qui s'arrête avec le code 137 ; relance-le avec « --memory 64m » : il tient
+      un peu plus longtemps avant le même arrêt, car la boucle consomme sans fin.
+  doc_url: https://docs.docker.com/engine/containers/resource_constraints/#memory
+  tests: [oom]
+
+- id: exited.start-error
+  category: exited
+  fallback: exited
+  concept:
+    name: container start
+    definition: >-
+      Avant de lancer le programme d'un conteneur, Docker prépare son environnement
+      (utilisateur, dossiers, réseau) : une erreur à cette étape empêche tout démarrage.
+  summary: "Le conteneur {{.name}} n'a pas pu démarrer : erreur enregistrée par Docker."
+  cause: >-
+    Docker a enregistré l'erreur suivante au démarrage : « {{.error}} ». Le programme du
+    conteneur n'a jamais été lancé, son journal est donc vide.
+  fixes:
+    - description: Corriger l'option de docker run en cause (utilisateur, dossier de travail, montage…), puis relancer.
+      safe: true
+    - description: Relire l'erreur complète enregistrée par Docker.
+      command: docker inspect --format '{{"{{"}}.State.Error{{"}}"}}' {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un conteneur passe par les états created, running puis exited. S'il reste created avec une
+      erreur, c'est que le démarrage a échoué avant même le programme.
+    example: |-
+      docker create --name essai-etat --user 1000:1000 alpine:3.24 true
+      docker ps -a --filter name=essai-etat --format '{{"{{"}}.Status{{"}}"}}'
+      docker rm essai-etat
+    exercise: >-
+      Avec l'exemple, le conteneur est « Created » ; lance « docker start essai-etat » avant de le
+      supprimer, puis observe son nouveau statut.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/inspect/
+  tests: [start-error]
+
+- id: exited.code-1
+  category: exited
+  fallback: exited
+  exit_codes: [1]
+  concept:
+    name: exit code
+    definition: >-
+      Le code de sortie d'un conteneur est celui de son programme principal : 0 signifie
+      « terminé sans erreur », toute autre valeur une erreur ; 1 est l'erreur générale.
+  summary: "Le programme du conteneur {{.name}} s'est terminé en erreur (code 1)."
+  cause: >-
+    Le code 1 est le code d'erreur générique : l'application a rencontré un problème et s'est
+    arrêtée. Sa cause précise est dans son journal, ci-dessus ; TELEMACH n'y reconnaît pas de
+    cause connue.
+  fixes:
+    - description: Lire le journal complet du conteneur.
+      command: docker logs {{.name}}
+      safe: true
+    - description: Relancer le conteneur au premier plan pour voir l'erreur en direct.
+      command: docker start --attach {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un conteneur vit aussi longtemps que son programme principal : quand celui-ci se termine,
+      le conteneur s'arrête, avec le même code de sortie. Lancé avec -d, il s'arrête sans que tu
+      le voies.
+    example: |-
+      docker run --name essai-code --user 1000:1000 alpine:3.24 sh -c 'echo démarrage; exit 1'; echo "code $?"
+      docker ps -a --filter name=essai-code --format '{{"{{"}}.Status{{"}}"}}'
+      docker rm essai-code
+    exercise: >-
+      Relance l'exemple avec « exit 0 » : le statut devient « Exited (0) », et
+      « docker telemach ps » ne le signale plus.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/logs/
+  tests: [generic-1, restart-loop, address-retry-then-other]
+
+- id: exited.code-2
+  category: exited
+  fallback: exited
+  exit_codes: [2]
+  concept:
+    name: exit code 2
+    definition: >-
+      Par convention, le code 2 signale une mauvaise utilisation du programme : option inconnue,
+      argument manquant.
+  summary: "Le programme du conteneur {{.name}} a refusé ses arguments (code 2)."
+  cause: >-
+    Le programme s'est arrêté avec le code 2, signe habituel d'une option ou d'un argument
+    incorrect dans la commande du conteneur ({{.command}}).
+  fixes:
+    - description: Lire le message d'utilisation dans le journal, puis corriger les arguments placés après le nom de l'image.
+      command: docker logs {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      Tout ce qui suit le nom de l'image dans docker run est donné au programme du conteneur : une
+      option destinée à Docker placée là devient une option inconnue pour le programme.
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 ls --option-inconnue; echo "code $?"
+    exercise: >-
+      Compare le code de l'exemple avec celui de « docker run --rm --user 1000:1000 alpine:3.24 ls / ».
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/
+  tests: [usage-2]
+
+- id: exited.code-137
+  category: exited
+  fallback: exited
+  exit_codes: [137]
+  concept:
+    name: SIGKILL
+    definition: >-
+      Le code 137 (128 + 9) signifie que le programme a été tué par le signal SIGKILL, sans
+      pouvoir se terminer proprement.
+  summary: "Le conteneur {{.name}} a été arrêté de force (SIGKILL, code 137), sans manque de mémoire."
+  cause: >-
+    Docker n'a pas enregistré de manque de mémoire : le conteneur a probablement été arrêté de
+    l'extérieur, par « docker kill », ou par « docker stop » parce que son programme n'a pas
+    réagi à la demande d'arrêt dans le délai. C'est souvent normal.
+  fixes:
+    - description: "Si l'arrêt était voulu, rien à corriger ; pour relancer le conteneur :"
+      command: docker start {{.name}}
+      safe: true
+    - description: Si le programme met du temps à s'arrêter, allonger le délai de docker stop.
+      command: docker stop --time 30 {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      « docker stop » envoie SIGTERM, attend, puis envoie SIGKILL. Un programme lancé comme
+      premier processus du conteneur (PID 1) ignore SIGTERM s'il ne le gère pas : il finit donc
+      tué, avec le code 137.
+    example: |-
+      docker run -d --name essai-stop --user 1000:1000 alpine:3.24 sleep 300
+      docker stop --time 2 essai-stop
+      docker ps -a --filter name=essai-stop --format '{{"{{"}}.Status{{"}}"}}'
+      docker rm essai-stop
+    exercise: >-
+      Relance l'exemple avec « --init » : un petit programme d'init transmet SIGTERM à sleep, qui
+      s'arrête aussitôt, avec le code 143.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/stop/
+  tests: [stopped]
+
+- id: exited.code-139
+  category: exited
+  fallback: exited
+  exit_codes: [139]
+  concept:
+    name: SIGSEGV
+    definition: >-
+      Le code 139 (128 + 11) signifie que le programme a planté par une erreur de segmentation :
+      il a accédé à une zone de mémoire interdite.
+  summary: "Le programme du conteneur {{.name}} a planté (erreur de segmentation, code 139)."
+  cause: >-
+    Une erreur de segmentation est un défaut du programme lui-même, ou d'une bibliothèque qu'il
+    utilise (souvent une version incompatible), pas une erreur de Docker.
+  fixes:
+    - description: Lire la fin du journal, puis essayer une autre version (tag) de l'image.
+      command: docker logs {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un code supérieur à 128 indique un arrêt par un signal : on retrouve le signal en
+      retranchant 128 (137 → 9, SIGKILL ; 139 → 11, SIGSEGV ; 143 → 15, SIGTERM).
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 sh -c 'sh -c "kill -SEGV \$\$"; exit $?'; echo "code $?"
+    exercise: >-
+      Remplace SEGV par TERM dans l'exemple, et retrouve le signal à partir du code affiché.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/#exit-status
+  tests: [segfault]
+
+- id: exited.code-143
+  category: exited
+  fallback: exited
+  exit_codes: [143]
+  concept:
+    name: SIGTERM
+    definition: >-
+      Le code 143 (128 + 15) signifie que le programme s'est arrêté à la demande, sur le signal
+      SIGTERM envoyé par « docker stop ».
+  summary: "Le conteneur {{.name}} a été arrêté à la demande (SIGTERM, code 143)."
+  cause: >-
+    Le conteneur a reçu une demande d'arrêt (docker stop, docker compose down…) et son programme
+    s'est terminé proprement. C'est un arrêt normal, pas une panne.
+  fixes:
+    - description: Si l'arrêt n'était pas voulu, relancer le conteneur.
+      command: docker start {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un programme bien écrit intercepte SIGTERM pour terminer son travail en cours avant de
+      s'arrêter : c'est ce qui permet à « docker stop » d'arrêter un service sans perte.
+    example: |-
+      docker run -d --name essai-term --init --user 1000:1000 alpine:3.24 sleep 300
+      docker stop essai-term
+      docker ps -a --filter name=essai-term --format '{{"{{"}}.Status{{"}}"}}'
+      docker rm essai-term
+    exercise: >-
+      Avec l'exemple, note le code de sortie ; relance sans « --init » et compare le code et la
+      durée de « docker stop ».
+  doc_url: https://docs.docker.com/reference/cli/docker/container/stop/
+  tests: [sigterm]
+
+- id: exited.unknown
+  category: exited
+  fallback: exited
+  concept:
+    name: exit code
+    definition: >-
+      Le code de sortie d'un conteneur est celui de son programme principal ; en dehors de
+      quelques conventions (1, 2, 126, 127, codes supérieurs à 128), sa signification dépend du
+      programme.
+  summary: "Le conteneur {{.name}} s'est arrêté avec le code {{.code}}, dont TELEMACH ne connaît pas la cause."
+  cause: >-
+    Ni le code {{.code}} ni la fin du journal ne correspondent à une cause connue : TELEMACH
+    préfère ne pas deviner. La documentation de l'image décrit parfois ses codes de sortie.
+  fixes:
+    - description: Lire le journal complet du conteneur.
+      command: docker logs {{.name}}
+      safe: true
+    - description: Relancer le conteneur au premier plan pour voir l'erreur en direct.
+      command: docker start --attach {{.name}}
+      safe: true
+  deepen:
+    explanation: >-
+      Un programme choisit librement ses codes de sortie entre 1 et 125 ; seuls 0 (succès) et
+      quelques valeurs ont un sens général. Le journal reste la source la plus sûre.
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 sh -c 'exit 42'; echo "code $?"
+    exercise: >-
+      Change la valeur de « exit » dans l'exemple et vérifie que le code affiché la reprend.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/logs/
+  tests: [unknown-42]

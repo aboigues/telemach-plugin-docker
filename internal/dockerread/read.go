@@ -114,8 +114,13 @@ func (r Runner) Inspect(ids ...string) ([]Container, error) {
 	if err != nil {
 		return nil, err
 	}
+	return DecodeInspect(out)
+}
+
+// DecodeInspect décode une sortie JSON de « docker inspect » (variables réduites aux noms).
+func DecodeInspect(data []byte) ([]Container, error) {
 	var raw []inspectJSON
-	if err := json.Unmarshal(out, &raw); err != nil {
+	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("sortie de docker inspect illisible : %w", err)
 	}
 	cs := make([]Container, len(raw))

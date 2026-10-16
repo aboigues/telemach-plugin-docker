@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "cd0de66b18caf6e35cf4c1f451c33c8f7250b3aea976a780ad42287bfa1842c8",
+    "Name": "/telemach-exited-oom",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "x=a; while :; do x=$x$x; done"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:27.626652576Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": true,
+      "ExitCode": 137,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:27.74508789Z",
+      "FinishedAt": "2026-10-16T13:17:28.244114954Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 8388608,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

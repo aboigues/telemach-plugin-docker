@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "278bd24207925efe63e086e55c6101a01d496fef0aef2e0e774750a9301b016e",
+    "Name": "/telemach-exited-address-retry-then-other",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo \"bind: address already in use, nouvelle tentative\"; i=0; while [ $i -lt 15 ]; do echo \"traitement $i\"; i=$((i+1)); done; echo \"erreur : base de données injoignable\"; exit 1"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:40.895666631Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:41.153902382Z",
+      "FinishedAt": "2026-10-16T13:17:41.32980691Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

@@ -1,0 +1,36 @@
+[
+  {
+    "Id": "c807930b7c2902356ea37a495b4395ccea94f9f2d6a973a48228f688c6da96b1",
+    "Name": "/telemach-exited-start-error",
+    "Path": "true",
+    "Args": [],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:27.0883743Z",
+    "State": {
+      "Status": "created",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 128,
+      "Error": "unable to find user utilisateur-inexistant: no matching entries in passwd file",
+      "StartedAt": "0001-01-01T00:00:00Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

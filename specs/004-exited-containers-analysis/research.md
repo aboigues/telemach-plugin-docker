@@ -128,14 +128,25 @@ Mesures et essais réalisés le 2026-10-16 sur WSL2, Docker 29.8.0 (Docker Deskt
 
 ## R7 — Diagnostic d'un conteneur arrêté (FR-004, FR-005, FR-007)
 
-- **Décision** : nouveau paquet `internal/exited`, pur (sans accès au démon) : entrée = état
-  décodé + lignes de journal masquées ; sortie = entrée de catalogue + captures. Ordre :
-  1. motifs de journal (entrées `fallback: exited` avec `patterns`, appliqués aux 200 dernières
-     lignes, la ligne la plus récente qui correspond l'emporte) ;
-  2. état : `OOMKilled` → manque de mémoire ; `State.Error` non vide → erreur de démarrage
-     enregistrée par Docker ; redémarrages > 0 → mention de la politique de redémarrage ;
-  3. code de sortie : entrées `exited.code-<n>` (1, 2, 125, 126, 127, 137, 139, 143) ;
-  4. sinon `exited.unknown` : extrait du journal, signification générique, `docker logs`.
+- **Décision** (révisée à l'implémentation, 2026-10-16) : nouveau paquet `internal/exited`, pur
+  (sans accès au démon) : entrée = état décodé + lignes de journal masquées ; sortie = entrée de
+  catalogue + captures. Ordre :
+  1. `OOMKilled` → manque de mémoire : c'est un **fait** enregistré par le noyau, alors qu'un
+     motif de journal n'est qu'un indice (l'ordre initial « journal d'abord » est abandonné) ;
+  2. motifs sur `State.Error` (erreur de démarrage enregistrée par Docker) ;
+  3. motifs sur les **10 dernières lignes** du journal, de la plus récente à la plus ancienne
+     (une ligne plus ancienne explique rarement l'arrêt : cas légitime voisin
+     `address-retry-then-other`, LL-010) ;
+  4. `State.Error` sans motif → erreur de démarrage générique ;
+  5. code de sortie : entrées `exited.code-<n>` (1, 2, 126, 127, 137, 139, 143) ; pas d'entrée
+     125, aucun cas réel n'étant reproductible (les erreurs 125 viennent de Docker lui-même et
+     sont expliquées par `explain`) ;
+  6. sinon `exited.unknown`.
+  Les redémarrages et le projet Compose sont des captures de contexte, pas des causes.
+- **Variantes réelles** : l'issue #9 vue après coup (`docker run -d nginx -p 8090:80`) donne
+  « exec: -p: not found » et le code 127 avec l'entrypoint Debian, « exec: line 47: illegal
+  option -p » et le code 2 avec l'entrypoint busybox : une entrée dédiée
+  `exited.option-after-image` les reconnaît avant les codes.
   Le code 137 sans `OOMKilled` et le code 143 sont présentés comme un arrêt de l'extérieur
   (`docker stop`, `docker kill`), souvent normal. Vérifié le 2026-10-16 : `--memory 8m` avec
   une boucle qui consomme → 137, `OOMKilled` vrai ; `alpine:3.24 sleep 300` puis `docker stop`

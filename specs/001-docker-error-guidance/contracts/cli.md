@@ -126,6 +126,13 @@ docker telemach deepen [--exercise]
 
 ---
 
+## `ps` et `watch` — conteneurs arrêtés en erreur (feature 004)
+
+Seules sous-commandes qui interrogent le démon, en lecture seule (`ps`, `inspect`,
+`logs --tail`, `events --until`) : voir `specs/004-exited-containers-analysis/contracts/cli-ps.md`.
+
+---
+
 ## `lint` — ligne de commande (feature 003)
 
 Vérification d'une ligne `docker run|create|exec`, à la main ou après une commande réussie

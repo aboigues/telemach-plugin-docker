@@ -51,15 +51,16 @@ statut qui ne correspond pas à ce motif (dont « Created ») est inspecté (pas
 | `Captures` | valeurs pour les gabarits (nom, image, code, délai, variable attendue, ligne du journal en cause…), nettoyées et masquées |
 | `Others` | jusqu'à 10 autres conteneurs en erreur : nom, code, ancienneté, résumé d'une ligne |
 
-Ordre de décision (research R7) : motif de journal (ligne la plus récente qui correspond) →
-état (`OOMKilled`, `Error`) → code (`exited.code-<n>`) → `exited.unknown`. Une entrée de motif
-peut exiger un code (par exemple « permission denied » seulement si `ExitCode` ≠ 0) et une
-image (par exemple les messages de Postgres ou de MariaDB).
+Ordre de décision (research R7, révisé) : `OOMKilled` → motifs sur `State.Error` → motifs
+sur les 10 dernières lignes du journal (la plus récente d'abord) → `State.Error` sans motif →
+code (`exited.code-<n>`) → `exited.unknown`. Dans une même ligne, la première entrée du
+catalogue qui correspond l'emporte : les entrées spécifiques sont placées avant les générales.
 
 ## Entrées de catalogue `exited.*` (fichier `exited.yaml`)
 
 | Identifiant | Source | Condition (résumé) |
 |---|---|---|
+| `exited.option-after-image` | log | « exec: -p: not found » ou « exec: … illegal option -p » : option de docker run placée après l'image (issue #9 vue après coup) ; capture `option` |
 | `exited.missing-required-env` | log | message d'une image officielle qui exige une variable (Postgres `POSTGRES_PASSWORD`, MariaDB/MySQL mot de passe root) ; capture `variable` ; correction par `--env-file` ou variable `*_FILE` |
 | `exited.permission-denied` | log | « permission denied » / « Permission denied » et code ≠ 0 |
 | `exited.address-in-use` | log | « address already in use » / « EADDRINUSE » |
@@ -69,7 +70,6 @@ image (par exemple les messages de Postgres ou de MariaDB).
 | `exited.start-error` | état | `State.Error` non vide (erreur enregistrée au démarrage) |
 | `exited.code-1` | code | erreur générale de l'application |
 | `exited.code-2` | code | usage incorrect du programme (arguments) |
-| `exited.code-125` | code | erreur de Docker à la création ou au démarrage |
 | `exited.code-126` | code | commande trouvée mais non exécutable |
 | `exited.code-127` | code | commande introuvable dans l'image |
 | `exited.code-137` | code | arrêt forcé (SIGKILL) : `docker kill`, ou `docker stop` après délai |

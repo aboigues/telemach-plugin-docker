@@ -1,0 +1,1 @@
+/docker-entrypoint.sh: 47: exec: -p: not found

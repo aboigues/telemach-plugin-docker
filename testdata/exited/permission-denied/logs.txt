@@ -1,0 +1,2 @@
+sh: can't create /etc/app.conf: Permission denied
+démarrage

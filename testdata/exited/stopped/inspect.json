@@ -1,0 +1,38 @@
+[
+  {
+    "Id": "a9eebc3b965d6024715e52979889de8b50d3772aad2183cb4998cedeadb4b472",
+    "Name": "/telemach-exited-stopped",
+    "Path": "sleep",
+    "Args": [
+      "300"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:28.661302393Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 137,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:28.787949615Z",
+      "FinishedAt": "2026-10-16T13:17:31.077669445Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

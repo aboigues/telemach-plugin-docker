@@ -1,0 +1,36 @@
+[
+  {
+    "Id": "9fd48adfdc2f5ac00d872714a348ecfa947919b30fb3aa82ecd0e66daeb624e2",
+    "Name": "/telemach-exited-command-not-found",
+    "Path": "commande-inexistante",
+    "Args": [],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:26.412308219Z",
+    "State": {
+      "Status": "created",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 127,
+      "Error": "failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"commande-inexistante\": executable file not found in $PATH",
+      "StartedAt": "0001-01-01T00:00:00Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

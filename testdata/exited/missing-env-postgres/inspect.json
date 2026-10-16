@@ -1,0 +1,45 @@
+[
+  {
+    "Id": "dcf35af3e3c5f0a1383340dff9220a9d0dd08f48a06239a14953cc2d4bcdf43d",
+    "Name": "/telemach-exited-missing-env-postgres",
+    "Path": "docker-entrypoint.sh",
+    "Args": [
+      "postgres"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:17.090502337Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 1,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:17.200564115Z",
+      "FinishedAt": "2026-10-16T13:17:17.408835273Z"
+    },
+    "Config": {
+      "Image": "postgres:18-alpine",
+      "Env": [
+        "PATH",
+        "GOSU_VERSION",
+        "LANG",
+        "PG_MAJOR",
+        "PG_VERSION",
+        "PG_SHA256",
+        "DOCKER_PG_LLVM_DEPS",
+        "PGDATA"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

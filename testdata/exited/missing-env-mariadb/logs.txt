@@ -1,0 +1,6 @@
+2026-10-16 13:17:18+00:00 [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:13.0.2+maria~ubu2604 started.
+2026-10-16 13:17:18+00:00 [Warn] [Entrypoint]: /sys/fs/cgroup///memory.pressure not writable, functionality unavailable to MariaDB
+2026-10-16 13:17:18+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
+2026-10-16 13:17:18+00:00 [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:13.0.2+maria~ubu2604 started.
+2026-10-16 13:17:18+00:00 [ERROR] [Entrypoint]: Database is uninitialized and password option is not specified
+	You need to specify one of MARIADB_ROOT_PASSWORD, MARIADB_ROOT_PASSWORD_HASH, MARIADB_ALLOW_EMPTY_ROOT_PASSWORD and MARIADB_RANDOM_ROOT_PASSWORD

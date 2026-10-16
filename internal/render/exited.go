@@ -116,7 +116,11 @@ func writeLogTail(b *strings.Builder, v ExitedView, t Theme, width int) {
 		b.WriteString("\n" + t.Dim(title+" : vide") + "\n")
 		return
 	}
-	title += fmt.Sprintf(" (%d dernières lignes) ", len(v.Log))
+	if len(v.Log) == 1 {
+		title += " (dernière ligne) "
+	} else {
+		title += fmt.Sprintf(" (%d dernières lignes) ", len(v.Log))
+	}
 	b.WriteString("\n" + t.Dim(title+strings.Repeat("─", max(3, width-utf8.RuneCountInString(title)))) + "\n")
 	for _, line := range v.Log {
 		b.WriteString(truncate(indent+line, width) + "\n")

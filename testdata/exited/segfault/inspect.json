@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "863a65889db5560a1d17cce812786c6b39c17f4362243a941acf197b3b860cf3",
+    "Name": "/telemach-exited-segfault",
+    "Path": "sh",
+    "Args": [
+      "-c",
+      "echo calcul; sh -c \"kill -SEGV \\$\\$\"; exit $?"
+    ],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:34.22249643Z",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 139,
+      "Error": "",
+      "StartedAt": "2026-10-16T13:17:34.317362834Z",
+      "FinishedAt": "2026-10-16T13:17:34.485782563Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

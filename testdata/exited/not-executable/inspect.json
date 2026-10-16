@@ -1,0 +1,36 @@
+[
+  {
+    "Id": "f345bde25a73b851deb3a9ab5d746a0b24b1b09a4792d504c7b920790b705f05",
+    "Name": "/telemach-exited-not-executable",
+    "Path": "/etc/hostname",
+    "Args": [],
+    "RestartCount": 0,
+    "Created": "2026-10-16T13:17:25.642477201Z",
+    "State": {
+      "Status": "created",
+      "Running": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "ExitCode": 126,
+      "Error": "failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"/etc/hostname\": permission denied",
+      "StartedAt": "0001-01-01T00:00:00Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "Config": {
+      "Image": "alpine:3.24",
+      "Env": [
+        "PATH"
+      ],
+      "Labels": {}
+    },
+    "HostConfig": {
+      "RestartPolicy": {
+        "Name": "no"
+      },
+      "Memory": 0,
+      "LogConfig": {
+        "Type": "json-file"
+      }
+    }
+  }
+]

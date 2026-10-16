@@ -1,0 +1,4 @@
+entry_id: exited.option-after-image
+source: log
+captures:
+  option: "-p"

@@ -61,6 +61,7 @@ func (e *EnvNames) UnmarshalJSON(data []byte) error {
 type Container struct {
 	ID, Name, Image, Command string
 	ExitCode                 int
+	Created                  time.Time
 	StartedAt, FinishedAt    time.Time
 	OOMKilled                bool
 	Error                    string
@@ -76,11 +77,12 @@ type Container struct {
 }
 
 type inspectJSON struct {
-	ID           string   `json:"Id"`
-	Name         string   `json:"Name"`
-	Path         string   `json:"Path"`
-	Args         []string `json:"Args"`
-	RestartCount int      `json:"RestartCount"`
+	ID           string    `json:"Id"`
+	Name         string    `json:"Name"`
+	Path         string    `json:"Path"`
+	Args         []string  `json:"Args"`
+	RestartCount int       `json:"RestartCount"`
+	Created      time.Time `json:"Created"`
 	State        struct {
 		Status     string    `json:"Status"`
 		Restarting bool      `json:"Restarting"`
@@ -114,6 +116,7 @@ func (j inspectJSON) container() Container {
 		Image:          clean(j.Config.Image),
 		Command:        cleanArgs(cmd),
 		ExitCode:       j.State.ExitCode,
+		Created:        j.Created,
 		StartedAt:      j.State.StartedAt,
 		FinishedAt:     j.State.FinishedAt,
 		OOMKilled:      j.State.OOMKilled,
