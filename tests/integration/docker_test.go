@@ -178,6 +178,19 @@ func TestV4SilentPitfalls(t *testing.T) {
 		})
 	}
 
+	// SC-001 : les commandes corrigées produisent l'effet voulu.
+	if err := os.WriteFile(filepath.Join(work, "data", "message.txt"), []byte("bonjour\n"), 0o644); err != nil { // #nosec G306 -- lu par l'utilisateur 1000 du conteneur
+		t.Fatal(err)
+	}
+	out, _ := h.shell(t, `cd "$WORK" && docker run --rm --user 1000:1000 -v ./data:/d alpine:3.24 ls /d`, "WORK="+work)
+	if !strings.Contains(out, "message.txt") {
+		t.Errorf("le dossier local doit être monté par la commande corrigée : %q", out)
+	}
+	out, _ = h.shell(t, `docker run --rm --user 1000:1000 -e DB_HOST=db alpine:3.24 printenv DB_HOST`)
+	if strings.TrimSpace(out) != "db" {
+		t.Errorf("la variable doit être présente avec la commande corrigée : %q", out)
+	}
+
 	// Le secret n'est écrit nulle part dans l'état de TELEMACH.
 	_ = filepath.WalkDir(h.state, func(path string, d os.DirEntry, err error) error {
 		if err == nil && !d.IsDir() {

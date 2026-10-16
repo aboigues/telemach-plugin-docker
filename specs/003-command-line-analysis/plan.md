@@ -52,7 +52,7 @@ démarrage, 32 ms pour un rendu complet) ; aucun appel du plugin pour les autres
 présence d'une variable d'environnement (jamais sa valeur), existence d'un dossier dans le
 dossier courant ; secrets masqués partout ; sorties et code de Docker inchangés.
 
-**Scale/Scope**: 8 pièges (1 + 7), ~10 règles Go, 8 entrées de catalogue, ~100 lignes de corpus.
+**Scale/Scope**: 8 pièges (options mal placées + 7), 8 règles Go, 9 entrées de catalogue (options mal placées : une entrée pour `run`/`create`, une pour `exec`), ~120 lignes de corpus.
 
 ## Constitution Check
 
@@ -99,7 +99,7 @@ internal/lint/                 # NOUVEAU : analyse pure de la ligne de commande
 
 internal/catalog/
 ├── schema.go                  # + champ Severity, fallback « cmdline »
-└── data/cmdline.yaml          # NOUVEAU : 8 entrées cmdline.*
+└── data/cmdline.yaml          # NOUVEAU : 9 entrées cmdline.*
 
 internal/render/               # + rendu avertissement / information / rappel / section « Dans ta commande »
 internal/state/                # + Findings dans LastDiagnosis, + hints.json (HintStore)
@@ -111,7 +111,7 @@ cmd/docker-telemach/
 ├── explain.go                 # + pièges intégrés (FR-010)
 └── last.go                    # + réaffichage d'un avertissement
 
-testdata/cmdline/              # NOUVEAU : faulty.txt, legit.txt (une ligne par cas, attendu)
+testdata/cmdline/              # NOUVEAU : misplaced-*.tsv, pitfalls-*.tsv (fautifs / légitimes)
 tests/shell/                   # + cas lint (bash et zsh)
 tests/integration/             # + issue #9 et commandes corrigées exécutées, délai
 README.md, docs/catalogue.md   # documentation (avertissements, TELEMACH_LINT, lint à la main)

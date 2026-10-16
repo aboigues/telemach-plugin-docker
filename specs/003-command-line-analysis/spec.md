@@ -89,7 +89,8 @@ attendu) et des lignes correctes voisines (aucun avertissement).
    du conteneur et propose `-e DB_HOST=<valeur>` ; si la variable est définie, aucun
    avertissement.
 4. **Given** `docker run nginx` ou `docker run nginx:latest`, **When** la commande réussit,
-   **Then** TELEMACH informe qu'un tag explicite (`nginx:1.30-alpine`) rend la commande
+   **Then** TELEMACH informe qu'un tag explicite (`nginx:<version>`, choisi sur la page de
+   l'image ; aucun tag précis n'est suggéré, il vieillirait, LL-004) rend la commande
    reproductible ; cette information n'est pas répétée pour la même image avant 24 heures.
 5. **Given** `docker run -d --network host -p 8080:80 nginx:1.30-alpine`, **When** la commande
    réussit, **Then** TELEMACH avertit que `-p` est ignoré en réseau `host` (le conteneur utilise
@@ -154,8 +155,9 @@ explications d'erreur.
   explicite, l'explication d'erreur existante s'applique ; pas d'avertissement supplémentaire.
 - **Caractères spéciaux et séquences de contrôle** dans les arguments : nettoyés avant tout
   affichage, comme pour les messages d'erreur.
-- **Lignes très longues** : la commande corrigée reste affichée en entier ; si elle dépasse
-  la largeur du terminal, elle est repliée proprement.
+- **Lignes très longues** : la commande corrigée reste affichée en entier, sur une ligne à
+  part, et n'est **jamais** repliée par TELEMACH (elle doit rester copiable telle quelle) ; seul
+  le texte explicatif est replié à la largeur du terminal.
 
 ## Requirements *(mandatory)*
 
@@ -179,15 +181,21 @@ explications d'erreur.
   1. **volume nommé au lieu du dossier local** (⚠) : source de `-v`/`--volume` sans `/` ni `.`
      initial, alors qu'un dossier de ce nom existe dans le dossier courant ;
   2. **port de la machine aléatoire** (ℹ) : publication de port sans port de la machine
-     (`-p 80`, `-p 80/udp`) ;
+     (`-p 80`, `-p 80/udp`) ; les intervalles (`-p 8000-8010`) et la forme `-p IP::PORT` ne
+     sont pas signalés (doute : silence) ;
   3. **variable d'environnement non définie** (⚠) : `-e NOM`/`--env NOM` sans valeur, alors
      que `NOM` n'est pas définie dans l'environnement de l'apprenant ;
   4. **image sans tag explicite** (ℹ) : image sans tag ni digest, ou avec le tag `latest` ;
      non répétée pour la même image avant 24 heures ;
   5. **ports ignorés en réseau `host`** (⚠) : `--network host` (ou `--net host`) combiné à une
-     publication de port ;
-  6. **secret en clair dans la commande** (⚠) : valeur de `-e`/`--env` reconnue comme secret
-     par les règles de masquage existantes ;
+     publication de port ; le piège 2 n'est alors pas signalé en plus (la publication est
+     ignorée de toute façon) ;
+  6. **secret en clair dans la commande** (⚠) : valeur de `-e`/`--env` masquée par les règles
+     de masquage existantes **et**, sans ambiguïté, secrète : nom contenant un mot entier qui
+     désigne un secret (`PASSWORD`, `SECRET`, `TOKEN`, `KEY`, `AUTH`…, `DB_PASSWORD`, `apiKey`),
+     sauf s'il se termine par un mot de référence (`_FILE`, `_PATH`, `_URL`, `_ID`…), ou valeur
+     reconnaissable par elle-même (jeton connu, identifiants dans une URL). `MONKEY`, `AUTHOR` ou
+     `KEYCLOAK_URL` ne sont pas signalés, même si leur valeur reste masquée à l'affichage ;
   7. **privilèges excessifs** (⚠, anti-pattern) : `--privileged`, ou montage du socket Docker
      (`/var/run/docker.sock`).
   Le catalogue MUST être extensible : ajouter un piège ne demande qu'une entrée et ses cas de
@@ -256,11 +264,16 @@ explications d'erreur.
 - **SC-002**: Sur un corpus d'au moins 50 lignes correctes, dont au moins 20 qui passent des
   options légitimes au programme du conteneur, **aucun** avertissement n'est affiché.
 - **SC-003**: Le délai ajouté à une commande analysée est imperceptible pour l'apprenant : moins
-  de 50 ms dans 95 % des cas ; les autres commandes Docker ne subissent aucun délai mesurable.
-- **SC-004**: Dans 100 % des cas du corpus, la sortie standard, la sortie d'erreur de Docker et
-  le code de sortie sont identiques avec et sans TELEMACH, sous bash et sous zsh.
+  de 50 ms dans 95 % des cas, mesuré sur un poste de développement ; les autres commandes Docker
+  ne subissent aucun délai mesurable. En CI, dont les runners sont plus lents et variables, le
+  même test sert de garde-fou de non-régression avec un seuil de 100 ms.
+- **SC-004**: Dans 100 % des cas des tests de l'intégration shell (`run`, `create`, `exec` et
+  `container …` réussies, en échec et interactives, avec et sans piège, autres commandes), la
+  sortie standard, la sortie d'erreur de Docker et le code de sortie sont identiques avec et
+  sans TELEMACH, sous bash et sous zsh.
 - **SC-005**: Un débutant qui lit l'avertissement de l'issue #9 sait corriger sa commande du
-  premier coup (validé sur l'exemple de l'issue par l'auteur de l'issue).
+  premier coup (validé sur l'exemple de l'issue par l'auteur de l'issue, porteur du projet,
+  lors de la validation manuelle du quickstart V1 après publication).
 
 ## Assumptions
 

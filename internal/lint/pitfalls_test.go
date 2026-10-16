@@ -88,3 +88,16 @@ func TestPitfallNilEnvIsSilent(t *testing.T) {
 		t.Errorf("aucun piège attendu sans lecture locale : %+v", f)
 	}
 }
+
+func TestSecretName(t *testing.T) {
+	for name, want := range map[string]bool{
+		"DB_PASSWORD": true, "apiKey": true, "AWS_SECRET_ACCESS_KEY": true, "GITHUB_TOKEN": true,
+		"BASIC_AUTH": true, "db.password": true,
+		"MONKEY": false, "AUTHOR": false, "KEYCLOAK_URL": false, "SECRETS_DIR": false,
+		"SSH_KEY_PATH": false, "TOKEN_URL": false, "AWS_ACCESS_KEY_ID": false, "KEYBOARD_LAYOUT": false,
+	} {
+		if got := secretName(name); got != want {
+			t.Errorf("secretName(%q) = %v, attendu %v", name, got, want)
+		}
+	}
+}

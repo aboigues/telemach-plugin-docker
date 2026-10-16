@@ -11,8 +11,8 @@
 💡 Correction
    Placer les options de Docker avant le nom de l'image.
    docker run -d -p 8090:80 nginx
-   Si le conteneur a été créé sans ces options, le supprimer puis le relancer avec la commande corrigée.
-   docker rm -f <conteneur>
+   Si le conteneur a été créé sans ces options, l'arrêter et le supprimer, puis le relancer avec la commande corrigée.
+   docker stop <conteneur> && docker rm <conteneur>
 
 ℹ Image sans tag explicite : nginx désigne nginx:latest, qui change à chaque publication.
    💡 Préfère un tag précis, choisi sur la page de l'image (Docker Hub), par exemple nginx:<version>.

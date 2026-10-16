@@ -33,7 +33,7 @@ Codes de sortie : `0` aucun piège ou informations seulement ; `1` au moins un a
    l'image ; tout ce qui suit l'image est donné au programme du conteneur.
 
 💡 Correction
-   docker rm -f <conteneur>          (arrête le conteneur lancé sans le bon port)
+   docker stop <conteneur> && docker rm <conteneur>   (arrête puis supprime le conteneur lancé sans le bon port)
    docker run -d -p 8090:80 nginx
 
 ➜ Pour aller plus loin : docker telemach deepen

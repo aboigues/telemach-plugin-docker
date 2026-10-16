@@ -84,9 +84,8 @@ sortir avant le chargement du catalogue.
 ## R5 — Commande en échec avec piège (FR-010)
 
 - **Décision** : `explain` appelle `lint.Analyze` sur les mêmes arguments. Si au moins un piège
-  de niveau ⚠ est trouvé : l'explication de l'erreur est affichée normalement, suivie d'une
-  section « ⚠ Dans ta commande » qui présente le piège comme **cause probable** (résumé,
-  concept, correction) ; si l'erreur n'est pas reconnue (bloc « non reconnue »), le piège
+  de niveau ⚠ est trouvé : une section « ⚠ Dans ta commande — cause probable » (résumé,
+  concept, correction) est affichée **avant** l'explication de l'erreur, qui suit normalement ; si l'erreur n'est pas reconnue (bloc « non reconnue »), le piège
   devient le contenu principal. Les informations (ℹ) ne sont pas ajoutées à une explication
   d'erreur.
 - **Justification** : un seul affichage, pas de contradiction ; la cause la plus utile en

@@ -125,7 +125,7 @@
     - description: Monter le dossier local en écrivant un chemin relatif.
       command: "{{.fixed_command}}"
       safe: true
-    - description: "{{if .cleanup}}Le conteneur déjà créé garde cette configuration : le supprimer, puis le relancer avec la commande corrigée.{{end}}"
+    - description: "{{if .cleanup}}Le conteneur déjà créé garde cette configuration : l'arrêter et le supprimer, puis le relancer avec la commande corrigée.{{end}}"
       command: "{{.cleanup_command}}"
       safe: true
   deepen:
@@ -196,7 +196,7 @@
     - description: Donner la valeur dans la commande (ou définir la variable dans ton shell avant).
       command: "{{.fixed_command}}"
       safe: true
-    - description: "{{if .cleanup}}Le conteneur déjà créé garde cette configuration : le supprimer, puis le relancer avec la commande corrigée.{{end}}"
+    - description: "{{if .cleanup}}Le conteneur déjà créé garde cette configuration : l'arrêter et le supprimer, puis le relancer avec la commande corrigée.{{end}}"
       command: "{{.cleanup_command}}"
       safe: true
   deepen:

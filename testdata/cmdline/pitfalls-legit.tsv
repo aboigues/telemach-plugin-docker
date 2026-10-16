@@ -30,6 +30,14 @@
 # (6) Secrets
 -	-	-	run --env-file .env postgres:18-alpine
 -	-	-	run -e POSTGRES_PASSWORD_FILE=/run/secrets/db postgres:18-alpine
+# Noms qui contiennent KEY, AUTH ou SECRET sans désigner un secret (analyse F1).
+-	-	-	run -e KEYCLOAK_URL=http://kc:8080 alpine:3.24 env
+-	-	-	run -e MONKEY=1 alpine:3.24 env
+-	-	-	run -e AUTHOR=alex alpine:3.24 env
+-	-	-	run -e SECRETS_DIR=/run/secrets alpine:3.24 env
+-	-	-	run -e SSH_KEY_PATH=/home/app/.ssh/id_ed25519 alpine:3.24 env
+-	-	-	run -e TOKEN_URL=https://auth.example.org/token alpine:3.24 env
+-	-	-	run -e KEYBOARD_LAYOUT=fr alpine:3.24 env
 # (7) Privilèges
 -	-	-	run --cap-add NET_ADMIN alpine:3.24 ip link
 -	-	-	run --privileged=false alpine:3.24 sh

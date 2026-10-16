@@ -16,7 +16,7 @@ docker run -d nginx:1.30-alpine -p 8090:80
 
 **Attendu** : identifiant du conteneur sur stdout (comme sans TELEMACH), puis l'avertissement
 « Option Docker placée après l'image » avec `docker run -d -p 8090:80 nginx:1.30-alpine` ;
-`echo $?` → 0. Exécuter la commande corrigée (après `docker rm -f` du premier) :
+`echo $?` → 0. Exécuter la commande corrigée (après `docker stop` puis `docker rm` du premier) :
 `curl -sI http://localhost:8090` répond. Relancer la commande fautive dans les 10 minutes →
 rappel d'une ligne. `docker telemach last` → l'avertissement complet, avec date et commande.
 

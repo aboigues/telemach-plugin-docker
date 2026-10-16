@@ -78,7 +78,7 @@ func TestLintIssue9Phrasing(t *testing.T) {
 		"Option Docker placée après l'image : -p 8090:80 a été transmis au conteneur",
 		"le port 8090 de ta machine n'est pas publié",
 		"docker run -d -p 8090:80 nginx",
-		"docker rm -f <conteneur>",
+		"docker stop <conteneur> && docker rm <conteneur>",
 		"Image sans tag explicite",
 	} {
 		if !strings.Contains(after, want) {
@@ -98,7 +98,7 @@ func TestLintIssue9Phrasing(t *testing.T) {
 			t.Errorf("à la main : %q absent :\n%s", want, manual)
 		}
 	}
-	if strings.Contains(manual, "docker rm -f") || strings.Contains(manual, "…") {
+	if strings.Contains(manual, "docker rm") || strings.Contains(manual, "…") {
 		t.Errorf("à la main : pas de conseil de suppression ni de capture manquante :\n%s", manual)
 	}
 	if _, ok := a2.store.Load(); ok {

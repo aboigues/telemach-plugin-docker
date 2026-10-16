@@ -246,8 +246,15 @@ func secretInCommand(l *line) (Finding, bool) {
 		if !o.is("e", "env") || !o.hasValue {
 			continue
 		}
-		name, _, ok := strings.Cut(o.value, "=")
+		name, value, ok := strings.Cut(o.value, "=")
 		if !ok || redact.Redact(o.value) == o.value {
+			continue
+		}
+		// Le masquage reste large (mieux vaut masquer à tort qu'afficher un secret), mais
+		// l'avertissement exige un nom sans ambiguïté ou une valeur reconnaissable par
+		// elle-même (jeton connu, identifiants dans une URL) : MONKEY, AUTHOR ou
+		// KEYCLOAK_URL ne sont pas des secrets.
+		if !secretName(name) && redact.Redact(value) == value {
 			continue
 		}
 		return Finding{
@@ -257,6 +264,36 @@ func secretInCommand(l *line) (Finding, bool) {
 		}, true
 	}
 	return Finding{}, false
+}
+
+// Mots qui désignent un secret quand ils apparaissent entiers dans un nom de variable
+// (DB_PASSWORD, apiKey, AWS_SECRET_ACCESS_KEY), et derniers mots qui en font une simple
+// référence (SSH_KEY_PATH, TOKEN_URL, AWS_ACCESS_KEY_ID).
+var (
+	secretWords = map[string]bool{
+		"PASSWORD": true, "PASSWD": true, "PASSPHRASE": true, "SECRET": true, "TOKEN": true,
+		"KEY": true, "APIKEY": true, "CREDENTIAL": true, "CREDENTIALS": true, "AUTH": true,
+	}
+	referenceWords = map[string]bool{
+		"FILE": true, "PATH": true, "DIR": true, "URL": true, "URI": true, "HOST": true,
+		"PORT": true, "NAME": true, "ID": true, "TYPE": true, "SIZE": true, "LENGTH": true,
+	}
+	camelBoundary = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+	nameSeparator = regexp.MustCompile(`[^A-Za-z0-9]+`)
+)
+
+// secretName indique si un nom de variable désigne sans ambiguïté un secret.
+func secretName(name string) bool {
+	words := nameSeparator.Split(strings.ToUpper(camelBoundary.ReplaceAllString(name, "${1}_${2}")), -1)
+	if len(words) == 0 || referenceWords[words[len(words)-1]] {
+		return false
+	}
+	for _, w := range words {
+		if secretWords[w] {
+			return true
+		}
+	}
+	return false
 }
 
 // privileged : --privileged, ou montage du socket Docker ; le conteneur obtient un contrôle

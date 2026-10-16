@@ -33,6 +33,39 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-011 — Propositions d'analyse perdues entre deux sessions
+
+- **Date** : 2026-10-16
+- **Catégorie** : processus
+- **Contexte** : feature 003 ; `/speckit-analyze` avait proposé 10 corrections le 2026-10-15,
+  et l'implémentation avait été lancée sans les valider toutes.
+- **Cause racine** : le rapport d'analyse n'existe que dans la conversation (commande en lecture
+  seule) ; l'état de reprise notait seulement « I1, I2, I4 non appliqués », sans leur contenu.
+- **Impact** : trois corrections de texte perdues à la reprise ; il a fallu relancer l'analyse.
+- **Correctif** : analyse relancée, toutes ses recommandations appliquées (F1 à F13).
+- **Règle préventive** : toute proposition non tranchée (analyse, revue) est recopiée **en
+  entier** dans l'état de reprise de `tasks.md` avant la fin de la session, jamais par son seul
+  identifiant.
+- **Suivi** : non automatisable (geste de fin de session).
+
+### LL-010 — Faux positifs d'un piège fondé sur une heuristique large
+
+- **Date** : 2026-10-16
+- **Catégorie** : bug
+- **Contexte** : feature 003, piège « secret écrit en clair » (FR-004.6), qui réutilisait les
+  règles de masquage de `internal/redact`.
+- **Cause racine** : les règles de masquage reconnaissent `KEY`, `AUTH` ou `SECRET` n'importe où
+  dans un nom ; c'est voulu pour masquer (mieux vaut masquer à tort), mais pas pour avertir. Le
+  corpus légitime ne contenait que des exemples de la spec, aucun nom piégeux.
+- **Impact** : `-e MONKEY=1`, `-e AUTHOR=alex`, `-e KEYCLOAK_URL=…` déclenchaient un
+  avertissement (SC-002 violé) ; détecté par `/speckit-analyze` avant toute PR.
+- **Correctif** : avertissement limité aux noms sans ambiguïté (`secretName`) ou aux valeurs
+  reconnaissables seules ; 7 lignes légitimes piégeuses et 4 lignes fautives ajoutées au corpus.
+- **Règle préventive** : une règle qui réutilise une heuristique prévue pour un autre usage
+  reçoit, dans le corpus légitime, des cas **adversariaux** de cette heuristique (noms et valeurs
+  qui la déclenchent sans être fautifs) avant d'être considérée comme terminée.
+- **Suivi** : automatisé — `testdata/cmdline/pitfalls-legit.tsv` et `TestSecretName`.
+
 ### LL-009 — Vérification affichée comme réussie sans avoir rien comparé (zsh)
 
 - **Date** : 2026-10-15

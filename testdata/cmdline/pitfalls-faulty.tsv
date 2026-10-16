@@ -28,6 +28,10 @@ cmdline.secret-in-command	-	-	run -e DB_PASSWORD=Secret123 postgres:18-alpine
 cmdline.secret-in-command	-	-	run --env API_TOKEN=abc alpine:3.24 env
 cmdline.secret-in-command	-	-	run -e AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI alpine:3.24 env
 cmdline.secret-in-command	-	-	create --env=POSTGRES_PASSWORD=motdepasse postgres:18-alpine
+cmdline.secret-in-command	-	-	run -e apiKey=abc123 alpine:3.24 env
+cmdline.secret-in-command	-	-	run -e BASIC_AUTH=user:motdepasse alpine:3.24 env
+cmdline.secret-in-command	-	-	run -e DATABASE_URL=postgres://app:motdepasse@db/app alpine:3.24 env
+cmdline.secret-in-command	-	-	run -e GH=ghp_0123456789abcdefghijklmnopqrstuvwxyz alpine:3.24 env
 # (7) Privilèges excessifs : --privileged ou socket Docker monté.
 cmdline.privileged	-	-	run --privileged alpine:3.24 sh
 cmdline.privileged	-	-	run -v /var/run/docker.sock:/var/run/docker.sock alpine:3.24 sh

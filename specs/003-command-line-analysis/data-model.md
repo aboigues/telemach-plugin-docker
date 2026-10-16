@@ -24,7 +24,7 @@ toutes les options concernées).
 | `cmdline.env-unset` | warning | `-e NOM` sans `=` **et** `NOM` absente de l'environnement | `name`, `fixed_command` |
 | `cmdline.image-without-tag` | info | image sans tag ni digest, ou `:latest` ; 24 h par image | `image` |
 | `cmdline.ports-ignored-host-network` | warning | `--network host`/`--net host` **et** `-p`/`-P`/`--publish` | `options`, `fixed_command` |
-| `cmdline.secret-in-command` | warning | valeur de `-e`/`--env` masquée par `redact` | `name` (jamais la valeur) |
+| `cmdline.secret-in-command` | warning | valeur de `-e`/`--env` masquée par `redact` **et** nom sans ambiguïté (mot entier `PASSWORD`, `SECRET`, `TOKEN`, `KEY`, `AUTH`…, sauf dernier mot `FILE`, `PATH`, `URL`, `ID`…) ou valeur reconnaissable seule (jeton, URL avec identifiants) | `name` (jamais la valeur) |
 | `cmdline.privileged` | warning (anti-pattern) | `--privileged`, ou source de montage `/var/run/docker.sock` (ou `/run/docker.sock`) | `option` |
 
 Validation du catalogue (tests) : toute entrée `cmdline.*` a `fallback: cmdline`, une

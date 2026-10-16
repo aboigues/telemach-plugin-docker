@@ -133,8 +133,9 @@ func lintCaptures(c map[string]string, after bool) map[string]string {
 	}
 	out["transmis"] = "a été transmis"
 	if after {
-		out["cleanup"] = "Si le conteneur a été créé sans ces options, le supprimer puis le relancer avec la commande corrigée."
-		out["cleanup_command"] = "docker rm -f <conteneur>"
+		out["cleanup"] = "Si le conteneur a été créé sans ces options, l'arrêter et le supprimer, puis le relancer avec la commande corrigée."
+		// stop laisse au programme le temps de se terminer ; rm -f est un anti-pattern du catalogue.
+		out["cleanup_command"] = "docker stop <conteneur> && docker rm <conteneur>"
 	} else {
 		out["effect"] = c["effect_cond"]
 		out["transmis"] = "serait transmis"
