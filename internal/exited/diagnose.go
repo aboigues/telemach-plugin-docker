@@ -144,9 +144,12 @@ func baseCaptures(c dockerread.Container, now time.Time) map[string]string {
 	return caps
 }
 
-// Duration exprime une durée courte en français : « 3 s », « 2 min », « 4 h », « 2 j ».
+// Duration exprime une durée courte en français : « moins d'une seconde », « 3 s », « 2 min »,
+// « 4 h », « 2 j ».
 func Duration(d time.Duration) string {
 	switch {
+	case d < time.Second:
+		return "moins d'une seconde"
 	case d < time.Minute:
 		return fmt.Sprintf("%d s", int(d.Seconds()))
 	case d < time.Hour:

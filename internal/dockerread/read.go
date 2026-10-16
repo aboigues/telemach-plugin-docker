@@ -163,13 +163,22 @@ func (r Runner) Events(since, until string) ([]Event, error) {
 	}
 	var evs []Event
 	for _, line := range lines(out) {
-		var j eventJSON
-		if err := json.Unmarshal([]byte(line), &j); err != nil {
-			return nil, fmt.Errorf("sortie de docker events illisible : %w", err)
+		e, err := DecodeEvent([]byte(line))
+		if err != nil {
+			return nil, err
 		}
-		evs = append(evs, j.event())
+		evs = append(evs, e)
 	}
 	return evs, nil
+}
+
+// DecodeEvent décode une ligne JSON de « docker events ».
+func DecodeEvent(line []byte) (Event, error) {
+	var j eventJSON
+	if err := json.Unmarshal(line, &j); err != nil {
+		return Event{}, fmt.Errorf("sortie de docker events illisible : %w", err)
+	}
+	return j.event(), nil
 }
 
 func lines(b []byte) []string {

@@ -39,6 +39,7 @@ type app struct {
 	version        string
 	dockerGlobal   []string // options globales de Docker reçues avant « telemach » (feature 004)
 	dockerBin      string   // CLI docker pour les lectures du démon (« docker », dans le PATH)
+	sleep          func(time.Duration)
 
 	colorFlag string
 	width     int
@@ -52,6 +53,7 @@ func newApp() *app {
 		lookupEnv: os.LookupEnv,
 		now:       time.Now,
 		getwd:     os.Getwd,
+		sleep:     time.Sleep,
 		executable: func() string {
 			p, err := os.Executable()
 			if err != nil {
@@ -139,7 +141,7 @@ func (a *app) rootCommand() *cobra.Command {
 			return plugin.WriteMetadata(a.stdout, a.version)
 		},
 	})
-	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.lastCommand(), a.deepenCommand(), a.lintCommand(), a.psCommand())
+	root.AddCommand(a.shellInitCommand(), a.explainCommand(), a.checkCommand(), a.lastCommand(), a.deepenCommand(), a.lintCommand(), a.psCommand(), a.watchCommand())
 	return root
 }
 

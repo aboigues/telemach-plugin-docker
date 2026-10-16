@@ -32,6 +32,7 @@ func testApp(t *testing.T, env map[string]string) (*app, *bytes.Buffer, *bytes.B
 		getwd:      os.Getwd,
 		// Jamais le vrai démon dans les tests : chaque test qui lit le démon fournit un faux docker.
 		dockerBin: "/nonexistent/docker-de-test",
+		sleep:     func(time.Duration) {},
 		store:     state.Store{Dir: filepath.Join(t.TempDir(), "telemach")},
 		version:   "1.2.3",
 	}, &out, &errb

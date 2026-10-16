@@ -165,6 +165,8 @@ Garanties du code généré (vérifiées par les tests) :
 
 Garanties 8 à 10 (appel de `lint` après une commande `run|create|exec` réussie,
 `TELEMACH_LINT=0`) : voir `specs/003-command-line-analysis/contracts/cli-lint.md`.
+Garanties 11 à 14 (vérification après un `docker run -d` réussi, crochet d'invite,
+`TELEMACH_WATCH=0`) : voir `specs/004-exited-containers-analysis/contracts/cli-ps.md`.
 
 Shell non pris en charge → message d'erreur en français, code `2`.
 

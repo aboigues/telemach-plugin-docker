@@ -35,6 +35,13 @@ exit "${FAKE_RC:-0}"
 // stderr, puis échoue (son code de sortie doit être ignoré).
 const fakeTelemach = `#!/bin/sh
 echo "telemach $*" >> "$CALL_LOG"
+# Feature 004 : « watch » journalise où pointent ses entrées et sorties, puis dort (le shell ne
+# doit jamais l'attendre).
+if [ "$1" = "watch" ]; then
+  for fd in 0 1 2; do echo "watch-fd$fd=$(readlink /proc/$$/fd/$fd)" >> "$CALL_LOG"; done
+  sleep "${FAKE_WATCH_SLEEP:-0}"
+  echo "watch-fin" >> "$CALL_LOG"
+fi
 prev=""
 for a in "$@"; do
   if [ "$prev" = "--stderr-file" ]; then
@@ -74,10 +81,31 @@ func setup(t *testing.T, withTelemach bool) env {
 // run évalue le script d'intégration puis exécute body dans le shell donné.
 func run(t *testing.T, shell string, e env, extraEnv []string, body string) (stdout, stderr string, err error) {
 	t.Helper()
+	return runShell(t, shell, nil, e, extraEnv, body)
+}
+
+// runInteractive est run dans une session interactive (« -i ») : seule une session interactive
+// lance la vérification de la feature 004 et installe le crochet d'invite.
+func runInteractive(t *testing.T, shell string, e env, extraEnv []string, body string) (stdout, stderr string, err error) {
+	t.Helper()
+	return runShell(t, shell, interactiveFlags(shell), e, extraEnv, body)
+}
+
+// interactiveFlags : session interactive, sans les fichiers de démarrage du système (le
+// message « sudo » de /etc/bash.bashrc d'Ubuntu, par exemple) ni ceux de l'utilisateur.
+func interactiveFlags(shell string) []string {
+	if shell == "zsh" {
+		return []string{"-f", "-i"}
+	}
+	return []string{"--norc", "-i"}
+}
+
+func runShell(t *testing.T, shell string, flags []string, e env, extraEnv []string, body string) (stdout, stderr string, err error) {
+	t.Helper()
 	if _, lookErr := exec.LookPath(shell); lookErr != nil {
 		t.Skipf("%s non installé", shell)
 	}
-	script, scriptErr := shellinit.Script(shell, os.Getenv("TELEMACH_TEST_BIN"), "9.9.9")
+	script, scriptErr := shellinit.Script(shell, os.Getenv("TELEMACH_TEST_BIN"), "9.9.9", e.runtime+"/telemach")
 	if scriptErr != nil {
 		t.Fatal(scriptErr)
 	}
@@ -85,7 +113,7 @@ func run(t *testing.T, shell string, e env, extraEnv []string, body string) (std
 	if err := os.WriteFile(scriptFile, []byte(script), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(shell, "-c", `eval "$(cat "$INIT")"`+"\n"+body) //nolint:gosec // test
+	cmd := exec.Command(shell, append(flags, "-c", `eval "$(cat "$INIT")"`+"\n"+body)...) //nolint:gosec // test
 	cmd.Env = append([]string{
 		"PATH=" + e.bin + ":/usr/bin:/bin",
 		"CALL_LOG=" + e.log,
@@ -180,7 +208,7 @@ func TestInterruptCleansUp(t *testing.T) {
 		if _, err := exec.LookPath(shell); err != nil {
 			t.Skipf("%s non installé", shell)
 		}
-		script, _ := shellinit.Script(shell, "", "9.9.9")
+		script, _ := shellinit.Script(shell, "", "9.9.9", "/tmp/telemach-test")
 		initFile := filepath.Join(t.TempDir(), "init.sh")
 		if err := os.WriteFile(initFile, []byte(script), 0o600); err != nil {
 			t.Fatal(err)
@@ -297,7 +325,7 @@ func TestVersionReadOnce(t *testing.T) {
 }
 
 func TestUnsupportedShell(t *testing.T) {
-	if _, err := shellinit.Script("fish", "", "9.9.9"); err == nil || !strings.Contains(err.Error(), "non pris en charge") {
+	if _, err := shellinit.Script("fish", "", "9.9.9", ""); err == nil || !strings.Contains(err.Error(), "non pris en charge") {
 		t.Errorf("erreur en français attendue pour fish, obtenu %v", err)
 	}
 }

@@ -78,8 +78,9 @@ docker-telemach watch --since T0 --shell-pid PID -- <arguments de docker run…>
 - Sort aussitôt, sans rien lire, si la ligne n'est pas un `run` (ou `container run`) en
   arrière-plan (`-d`, `--detach`), si `TELEMACH_WATCH=0` ou `TELEMACH_DISABLE=1`.
 - Sinon attend 3 s, lit `events --since T0 --until <maintenant>` (types `create` et `die`), et,
-  si le conteneur lancé (research R5) s'est arrêté avec un code ≠ 0, ajoute une ligne au fichier
-  `pending-PID` — seulement si le shell `PID` est vivant.
+  si le conteneur lancé (research R5) s'est arrêté avec un code ≠ 0, écrit **un fichier par
+  signal**, `pending-PID-<horodatage>`, de façon atomique (fichier temporaire puis renommage) —
+  seulement si le shell `PID` est vivant.
 - `T0` : secondes depuis l'époque, décimales séparées par `.` ou `,`.
 - Code de sortie toujours `0` ; aucune sortie (stdin, stdout et stderr reliés à `/dev/null` par
   le script).
@@ -105,12 +106,14 @@ S'ajoutent aux garanties 1 à 10 (001 et 003) :
     lance `watch` en arrière-plan, stdin, stdout et stderr redirigés vers `/dev/null` ; aucun
     message de tâche, aucune attente ;
 12. un crochet d'invite (`precmd` en zsh via `add-zsh-hook`, `PROMPT_COMMAND` en bash, forme
-    chaîne ou tableau) affiche sur stderr puis supprime `pending-$$` ; s'il n'existe pas, il ne
-    lance aucun processus ; le chargement répété de `shell-init` n'ajoute pas le crochet deux
-    fois ;
-13. au chargement, les fichiers `pending-*` de shells qui ne sont plus vivants sont supprimés ;
-14. `TELEMACH_WATCH=0` supprime le lancement de `watch` ; `TELEMACH_DISABLE=1` reste
-    prioritaire ; un shell non interactif ne lance jamais `watch`.
+    chaîne ou tableau) affiche sur stderr puis supprime les fichiers `pending-$$-*` ; sans
+    fichier, il ne lance aucun processus ; il préserve le code de retour de la dernière
+    commande ; le chargement répété de `shell-init` n'ajoute pas le crochet deux fois ;
+13. au chargement (`shell-init`), les fichiers `pending-*` de shells qui ne sont plus vivants
+    sont supprimés ;
+14. `TELEMACH_WATCH=0` supprime le lancement de `watch` ; `TELEMACH_LINT=0` ne le supprime
+    pas (désactivations séparées, FR-016) ; `TELEMACH_DISABLE=1` reste prioritaire ; un shell non
+    interactif ne lance jamais `watch`.
 
 ## `last` et `deepen`
 

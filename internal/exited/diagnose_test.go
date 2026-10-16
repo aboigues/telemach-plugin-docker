@@ -150,3 +150,14 @@ func TestCaptures(t *testing.T) {
 		t.Errorf("valeur de variable dans les captures : %s", b)
 	}
 }
+
+func TestDuration(t *testing.T) {
+	for d, want := range map[time.Duration]string{
+		400 * time.Millisecond: "moins d'une seconde", 3 * time.Second: "3 s", 2 * time.Minute: "2 min",
+		5 * time.Hour: "5 h", 50 * time.Hour: "2 j",
+	} {
+		if got := Duration(d); got != want {
+			t.Errorf("Duration(%v) = %q, attendu %q", d, got, want)
+		}
+	}
+}

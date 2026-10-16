@@ -85,10 +85,10 @@ cas du corpus `testdata/exited/`.
 
 | Champ | Règle |
 |---|---|
-| emplacement | `$XDG_RUNTIME_DIR/telemach/pending-<pid du shell>` (repli : dossier d'état) ; dossier `0700`, fichier `0600` |
-| contenu | une ligne par conteneur signalé, déjà rendue (texte nettoyé et masqué, sans couleur si `NO_COLOR`) |
-| écriture | par `watch`, en ajout atomique, seulement si le shell `pid` est vivant |
-| lecture | par le crochet d'invite du shell `pid`, qui affiche puis supprime |
+| emplacement | `$XDG_RUNTIME_DIR/telemach/pending-<pid du shell>-<horodatage>` (repli : `<dossier d'état>/pending/`) ; dossier `0700`, fichier `0600` |
+| contenu | un fichier par signal : une ligne déjà rendue (texte nettoyé et masqué, sans couleur si `NO_COLOR`) |
+| écriture | par `watch`, atomique (fichier temporaire puis renommage), seulement si le shell `pid` est vivant |
+| lecture | par le crochet d'invite du shell `pid`, qui affiche puis supprime ses fichiers |
 | nettoyage | au chargement de `shell-init` : fichiers des `pid` qui ne sont plus vivants |
 
 ## LastDiagnosis (extension de `internal/state`)
