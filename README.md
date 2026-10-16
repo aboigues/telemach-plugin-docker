@@ -242,7 +242,7 @@ macOS, un fichier téléchargé par un navigateur peut être bloqué au premier 
 Linux et WSL2 :
 
 ```bash
-VERSION=0.2.0
+VERSION=0.3.0
 ARCH=$(uname -m); case "$ARCH" in x86_64) ARCH=amd64 ;; aarch64|arm64) ARCH=arm64 ;; esac
 FICHIER=docker-telemach_${VERSION}_linux_${ARCH}
 curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/${FICHIER}"
@@ -256,7 +256,7 @@ docker telemach --version
 macOS :
 
 ```bash
-VERSION=0.2.0
+VERSION=0.3.0
 ARCH=$(uname -m); case "$ARCH" in x86_64) ARCH=amd64 ;; aarch64|arm64) ARCH=arm64 ;; esac
 FICHIER=docker-telemach_${VERSION}_darwin_${ARCH}
 curl -fsSLO "https://github.com/aboigues/telemach-plugin-docker/releases/download/v${VERSION}/${FICHIER}"
@@ -305,14 +305,14 @@ Linux et WSL2 :
 
 ```bash
 mkdir -p ~/.docker/cli-plugins
-docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install
+docker run --rm --user "$(id -u):$(id -g)" -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.3.0 install
 ```
 
 macOS (Docker Desktop) :
 
 ```bash
 mkdir -p ~/.docker/cli-plugins
-docker run --rm --user "$(id -u):$(id -g)" -e HOST_OS=darwin -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.2.0 install
+docker run --rm --user "$(id -u):$(id -g)" -e HOST_OS=darwin -v ~/.docker/cli-plugins:/sortie telemachlearning/telemach:0.3.0 install
 ```
 
 Ce que fait chaque option, et ce qu'elle t'apprend de Docker :
@@ -324,7 +324,7 @@ Ce que fait chaque option, et ce qu'elle t'apprend de Docker :
 | `--user "$(id -u):$(id -g)"` | le conteneur s'exécute avec **ton identité** : il peut écrire dans ton dossier et le fichier t'appartient |
 | `-e HOST_OS=darwin` | **variable d'environnement** : indique que ta machine est un Mac (binaire macOS au lieu de Linux) |
 | `--rm` | supprime le conteneur une fois l'installation terminée |
-| `:0.2.0` | **tag explicite** : tu sais exactement quelle version tu installes |
+| `:0.3.0` | **tag explicite** : tu sais exactement quelle version tu installes |
 
 L'image existe aussi sous le tag `latest`, mais préfère un tag de version : `latest` change
 à chaque publication, et une même commande pourrait installer deux versions différentes.
@@ -335,7 +335,7 @@ L'image est minimale (`FROM scratch` : ni shell, ni gestionnaire de paquets), s'
 privilèges et est signée. Vérification avec cosign v3 :
 
 ```bash
-cosign verify telemachlearning/telemach:0.2.0 \
+cosign verify telemachlearning/telemach:0.3.0 \
   --certificate-identity-regexp '^https://github\.com/aboigues/telemach-plugin-docker/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
@@ -346,7 +346,7 @@ Pour voir ce que TELEMACH dit de ton fichier Compose sans rien installer, lance 
 le dossier de ton projet :
 
 ```bash
-docker run --rm -t -v "$PWD":/projet:ro telemachlearning/telemach:0.2.0 check /projet
+docker run --rm -t -v "$PWD":/projet:ro telemachlearning/telemach:0.3.0 check /projet
 ```
 
 - `-v "$PWD":/projet:ro` monte le dossier courant dans le conteneur, en **lecture seule**
@@ -356,7 +356,7 @@ docker run --rm -t -v "$PWD":/projet:ro telemachlearning/telemach:0.2.0 check /p
 Les variables d'environnement de ton shell ne sont pas visibles dans le conteneur : si ton
 fichier Compose utilise `${NOM_VARIABLE}`, TELEMACH la signalera comme non définie.
 Transmets-la avec `-e`, par exemple
-`docker run --rm -t -e NOM_VARIABLE -v "$PWD":/projet:ro telemachlearning/telemach:0.2.0 check /projet`.
+`docker run --rm -t -e NOM_VARIABLE -v "$PWD":/projet:ro telemachlearning/telemach:0.3.0 check /projet`.
 
 L'essai ne couvre que la vérification des fichiers Compose : l'explication automatique des
 erreurs de `docker` demande d'installer le plugin.
