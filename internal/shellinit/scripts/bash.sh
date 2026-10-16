@@ -8,6 +8,11 @@
 # script (souvent ~/.docker/cli-plugins/, qui n'est pas dans le PATH).
 __telemach_bin=__TELEMACH_BIN__
 
+# Intégration active et version du plugin qui l'a générée : « docker telemach last » repère
+# ainsi un terminal sans intégration, ou dont la fonction date d'une version antérieure
+# (issue #7). Seule variable exportée par ce script.
+export TELEMACH_SHELL=__TELEMACH_SHELL__
+
 # Version du client Docker, lue une seule fois (commande locale, sans contact avec le démon).
 __telemach_docker_version="$(command docker --version 2>/dev/null | sed -n 's/^Docker version \([^,]*\),.*/\1/p')"
 

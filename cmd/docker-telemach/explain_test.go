@@ -8,12 +8,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aboigues/telemach-plugin-docker/internal/shellinit"
 	"github.com/aboigues/telemach-plugin-docker/internal/state"
 )
 
 func testApp(t *testing.T, env map[string]string) (*app, *bytes.Buffer, *bytes.Buffer) {
 	t.Helper()
 	var out, errb bytes.Buffer
+	if _, ok := env[shellinit.EnvVar]; !ok {
+		// Par défaut, terminal dont l'intégration shell est à jour (voir shellstatus_test.go).
+		e := map[string]string{shellinit.EnvVar: "zsh:1.2.3"}
+		for k, v := range env {
+			e[k] = v
+		}
+		env = e
+	}
 	return &app{
 		stdout:     &out,
 		stderr:     &errb,

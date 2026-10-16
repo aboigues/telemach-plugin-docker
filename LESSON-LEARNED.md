@@ -33,6 +33,29 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-013 — Intégration shell inactive ou périmée sans aucun signal
+
+- **Date** : 2026-10-16
+- **Catégorie** : bug
+- **Contexte** : issue #7 (2026-10-15) : une erreur de port n'est pas expliquée, et
+  `docker telemach last` réaffiche une erreur de la veille.
+- **Cause racine** : la fonction `docker` est chargée une fois, à l'ouverture du terminal. Un
+  terminal ouvert avant l'ajout de la ligne `eval`, ou avec la version d'avant LL-006 (qui se
+  désactivait silencieusement), ou avant une mise à jour, garde cet état ; réinstaller le
+  plugin n'y change rien, et rien ne le signale. Diagnostic par la chronologie de l'historique
+  du shell : dernière erreur enregistrée le 14/10 à 17:03, aucune depuis.
+- **Impact** : l'apprenant croit que TELEMACH ignore son erreur, et `last` lui montre une
+  explication sans rapport.
+- **Correctif** : `shell-init` exporte `TELEMACH_SHELL=<shell>:<version>` ; `last` et `deepen`
+  signalent par un ⚠, avant tout le reste, une intégration absente ou d'une autre version, avec
+  la commande d'activation ; README : relancer ses terminaux après une mise à jour (PR de #7).
+- **Règle préventive** : tout état chargé une fois dans le shell de l'utilisateur (fonction,
+  variable) porte sa version, et le plugin vérifie qu'elle correspond à la sienne avant de
+  présenter un résultat qui en dépend ; un mécanisme qui se désactive ne le fait jamais sans
+  qu'une commande de l'utilisateur puisse le révéler.
+- **Suivi** : automatisé — `TestShellStatusWarning` (cmd) et `TestShellVariableExported`
+  (bash et zsh).
+
 ### LL-012 — Objectif de performance annoncé sans test qui le mesure
 
 - **Date** : 2026-10-16
