@@ -112,11 +112,11 @@ func writeInfo(b *strings.Builder, it LintItem, t Theme, width int) {
 	b.WriteString(t.Hint(wrapRest(SymbolInfo+" "+catalog.Render(e.Summary, c), width, indent)) + "\n")
 	if len(e.Fixes) > 0 {
 		f := e.Fixes[0]
-		text := "💡 " + catalog.Render(f.Description, c)
+		b.WriteString(wrap("💡 "+catalog.Render(f.Description, c), width, indent) + "\n")
 		if f.Command != "" {
-			text += " " + catalog.Render(f.Command, c)
+			// Sur sa propre ligne, jamais repliée : elle doit rester copiable.
+			b.WriteString(indent + t.Highlight(catalog.Render(f.Command, c), "bash") + "\n")
 		}
-		b.WriteString(wrap(text, width, indent) + "\n")
 	}
 }
 

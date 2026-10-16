@@ -103,4 +103,231 @@
       Lance « docker pull alpine:3.24 », puis « docker image ls alpine » : la colonne TAG
       indique exactement la version que tu utilises.
   doc_url: https://docs.docker.com/reference/cli/docker/image/tag/
-  tests: [misplaced-faulty]
+  tests: [pitfalls-faulty, misplaced-faulty]
+
+- id: cmdline.named-volume-not-dir
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: named volume
+    definition: >-
+      Dans « -v SOURCE:/chemin », une source sans « / » ni « . » initial est le nom d'un volume
+      géré par Docker ; pour monter un dossier de ta machine, la source doit être un chemin
+      (« ./data », « /srv/data »).
+  summary: "« {{.name}} » désigne un volume nommé géré par Docker, pas le dossier ./{{.name}} de ton dossier courant."
+  cause: >-
+    Docker a trouvé « {{.name}} » sans « ./ » devant : il utilise (ou crée) un volume vide de
+    ce nom et le monte sur {{.target}}. Les fichiers du dossier ./{{.name}} ne sont pas
+    visibles dans le conteneur.
+  fixes:
+    - description: Monter le dossier local en écrivant un chemin relatif.
+      command: "{{.fixed_command}}"
+      safe: true
+    - description: "{{if .cleanup}}Le conteneur déjà créé garde cette configuration : le supprimer, puis le relancer avec la commande corrigée.{{end}}"
+      command: "{{.cleanup_command}}"
+      safe: true
+  deepen:
+    explanation: >-
+      Un volume nommé est un espace de stockage géré par Docker, indépendant de tes dossiers :
+      il survit à la suppression du conteneur et se liste avec « docker volume ls ». Un
+      montage de dossier (bind mount) montre au conteneur un dossier existant de ta machine.
+      Docker distingue les deux uniquement par l'écriture de la source.
+    example: |-
+      mkdir -p essai-montage && echo bonjour > essai-montage/message.txt
+      docker run --rm --user 1000:1000 -v ./essai-montage:/donnees alpine:3.24 cat /donnees/message.txt
+    exercise: >-
+      Après l'exemple, lance la même commande avec « -v essai-montage:/donnees » : le fichier
+      est introuvable, car Docker a créé un volume vide. Supprime-le ensuite avec
+      « docker volume rm essai-montage ».
+  doc_url: https://docs.docker.com/engine/storage/bind-mounts/
+  tests: [pitfalls-faulty]
+
+- id: cmdline.random-host-port
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: info
+  concept:
+    name: port publishing
+    definition: >-
+      « -p PORT_MACHINE:PORT_CONTENEUR » relie un port de ta machine à un port du conteneur ;
+      sans port de la machine, Docker en choisit un au hasard.
+  summary: "Port de la machine choisi au hasard : -p {{.cport}} publie le port {{.cport}} du conteneur sur un port libre quelconque."
+  cause: >-
+    Sans port de la machine, Docker prend un port libre au hasard, différent à chaque
+    lancement : l'adresse à ouvrir dans le navigateur change.
+  fixes:
+    - description: "Pour connaître le port choisi : docker port <conteneur>. Pour le fixer :"
+      command: "{{.fixed_command}}"
+      safe: true
+  deepen:
+    explanation: >-
+      Un port publié ouvre une porte de ta machine vers le conteneur. Docker refuse deux
+      publications sur le même port de la machine ; c'est pourquoi il sait aussi en choisir
+      un libre au hasard, pratique pour des tests en parallèle, déroutant pour débuter.
+    example: |-
+      docker run -d --name essai-port -p 8080 nginxinc/nginx-unprivileged:1.30-alpine
+      docker port essai-port
+      docker rm -f essai-port
+    exercise: >-
+      Relance l'exemple deux fois de suite (en supprimant le conteneur entre les deux) et
+      compare le port affiché par « docker port essai-port » : il change.
+  doc_url: https://docs.docker.com/engine/network/port-publishing/
+  tests: [pitfalls-faulty]
+
+- id: cmdline.env-unset
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: environment variable
+    definition: >-
+      « -e NOM=valeur » donne une variable au conteneur ; « -e NOM » seul recopie la variable
+      NOM de ton shell, si elle existe.
+  summary: "Variable {{.name}} absente : -e {{.name}} recopie la variable de ton shell, qui n'est pas définie."
+  cause: >-
+    Avec « -e {{.name}} » sans valeur, Docker cherche {{.name}} dans ton environnement. Elle
+    n'y est pas définie : le conteneur démarre sans elle, et le programme utilise sa valeur
+    par défaut ou échoue plus tard.
+  fixes:
+    - description: Donner la valeur dans la commande (ou définir la variable dans ton shell avant).
+      command: "{{.fixed_command}}"
+      safe: true
+    - description: "{{if .cleanup}}Le conteneur déjà créé garde cette configuration : le supprimer, puis le relancer avec la commande corrigée.{{end}}"
+      command: "{{.cleanup_command}}"
+      safe: true
+  deepen:
+    explanation: >-
+      Un conteneur ne voit pas les variables de ton shell : il ne reçoit que celles passées par
+      « -e » ou « --env-file ». La forme « -e NOM » sans valeur est un raccourci pour
+      transmettre une variable déjà définie, sans la réécrire.
+    example: |-
+      export MESSAGE=bonjour
+      docker run --rm --user 1000:1000 -e MESSAGE alpine:3.24 printenv MESSAGE
+    exercise: >-
+      Lance « unset MESSAGE », puis la commande de l'exemple : printenv ne renvoie rien, car la
+      variable n'existe plus dans ton shell.
+  doc_url: https://docs.docker.com/reference/cli/docker/container/run/#env
+  tests: [pitfalls-faulty]
+
+- id: cmdline.ports-ignored-host-network
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: host network
+    definition: >-
+      En réseau host, le conteneur partage directement le réseau de ta machine : il n'a pas de
+      ports à publier, ses programmes écoutent sur les ports de la machine.
+  summary: "Ports ignorés en réseau host : {{.options}} est sans effet avec --network host."
+  cause: >-
+    La publication de ports (-p, -P) ne s'applique qu'aux réseaux isolés comme bridge. En
+    réseau host, Docker l'ignore : le programme écoute directement sur le port qu'il a
+    choisi, pas sur celui que tu as demandé.
+  fixes:
+    - description: Retirer la publication, inutile en réseau host.
+      command: "{{.fixed_command}}"
+      safe: true
+    - description: Ou, mieux pour la sécurité, rester sur le réseau par défaut et garder -p.
+      safe: true
+  deepen:
+    explanation: >-
+      Le réseau par défaut (bridge) donne au conteneur sa propre adresse : -p choisit quels
+      ports de ta machine mènent à lui. Le réseau host supprime cette isolation ; c'est
+      rarement nécessaire et cela expose tous les ports du conteneur.
+    example: |-
+      docker run -d --name essai-bridge -p 8080:8080 nginxinc/nginx-unprivileged:1.30-alpine
+      docker port essai-bridge
+      docker rm -f essai-bridge
+    exercise: >-
+      Dans l'exemple, « docker port » montre la correspondance 8080 → 8080 : c'est cette
+      correspondance que le réseau host supprime.
+  doc_url: https://docs.docker.com/engine/network/drivers/host/
+  tests: [pitfalls-faulty]
+
+- id: cmdline.secret-in-command
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: secret
+    definition: >-
+      Un secret (mot de passe, jeton, clé) écrit dans une commande reste lisible dans
+      l'historique du shell et dans « docker inspect ».
+  summary: "Secret écrit en clair : la valeur de {{.name}} est visible dans l'historique du shell et dans docker inspect."
+  cause: >-
+    Une valeur passée par « -e {{.name}}=… » est enregistrée par ton shell et conservée dans
+    la configuration du conteneur, lisible par toute personne qui peut lancer
+    « docker inspect ».
+  fixes:
+    - description: >-
+        Mettre la variable dans un fichier lisible par toi seul (chmod 600), puis le passer
+        avec --env-file ; ne jamais l'ajouter à git.
+      command: docker run --env-file app.env …
+      safe: true
+    - description: Avec docker compose ou Swarm, préférer un secret Docker (variable *_FILE quand l'image la prend en charge).
+      safe: true
+  anti_pattern:
+    description: >-
+      Considère le secret déjà tapé comme exposé : s'il protège quelque chose de réel,
+      change-le, et efface la ligne de l'historique de ton shell.
+  deepen:
+    explanation: >-
+      Les variables d'environnement d'un conteneur font partie de sa configuration : « docker
+      inspect » les affiche en clair. Un fichier --env-file évite l'historique du shell ; un
+      secret Docker évite aussi « docker inspect », car il est monté comme un fichier.
+    example: |-
+      printf 'MESSAGE=bonjour\n' > app.env && chmod 600 app.env
+      docker run --rm --user 1000:1000 --env-file app.env alpine:3.24 printenv MESSAGE
+    exercise: >-
+      Lance « docker run -d --name essai-env --user 1000:1000 -e COULEUR=bleu alpine:3.24 sleep 60 »,
+      puis « docker inspect essai-env » : cherche COULEUR, elle est en clair. Supprime ensuite
+      le conteneur avec « docker rm -f essai-env ».
+  doc_url: https://docs.docker.com/compose/how-tos/use-secrets/
+  tests: [pitfalls-faulty]
+
+- id: cmdline.privileged
+  category: cmdline
+  applies: [run, create]
+  fallback: cmdline
+  severity: warning
+  concept:
+    name: privileged container
+    definition: >-
+      Un conteneur privilégié, ou qui monte le socket Docker, peut contrôler toute la
+      machine : il n'est plus isolé.
+  summary: "Privilèges excessifs : avec {{.option}}, le conteneur obtient un contrôle quasi total de ta machine."
+  cause: >-
+    --privileged lève les protections du noyau (capacités, appareils, profils de sécurité) ;
+    le socket Docker permet de lancer d'autres conteneurs, donc de monter tout le disque de
+    la machine. Dans les deux cas, une faille du programme devient une faille de la machine.
+  fixes:
+    - description: >-
+        N'ajouter que la capacité nécessaire, par exemple --cap-add NET_ADMIN pour configurer
+        le réseau.
+      safe: true
+    - description: >-
+        Pour piloter Docker depuis un conteneur, préférer une API distante protégée (TLS) ou un
+        proxy du socket limité aux appels nécessaires.
+      safe: true
+  anti_pattern:
+    description: >-
+      --privileged ou le socket Docker monté « pour que ça marche » est un anti-pattern : à
+      réserver aux outils d'administration dont c'est le rôle, jamais à une application.
+  deepen:
+    explanation: >-
+      Par défaut, Docker retire au conteneur la plupart des capacités de root (changer
+      l'heure, charger un module, configurer le réseau…). --cap-add en rend une seule ;
+      --privileged les rend toutes et donne accès aux appareils de la machine.
+    example: |-
+      docker run --rm --user 1000:1000 alpine:3.24 cat /proc/self/status
+    exercise: >-
+      Dans la sortie de l'exemple, repère la ligne CapEff : elle vaut 0, aucune capacité
+      n'est accordée à un utilisateur ordinaire du conteneur.
+  doc_url: https://docs.docker.com/engine/containers/run/#runtime-privilege-and-linux-capabilities
+  tests: [pitfalls-faulty]

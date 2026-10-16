@@ -1,0 +1,37 @@
+# Lignes correctes voisines des pièges de FR-004 : aucun avertissement attendu.
+# (1) Volumes
+-	-	-	run -v data:/app/data alpine:3.24 ls /app/data
+-	-	data	run -v ./data:/app/data alpine:3.24 ls /app/data
+-	-	data	run -v /srv/data:/d alpine:3.24 ls /d
+-	-	data	run -v mon-volume:/d alpine:3.24 ls /d
+-	-	data	run --mount type=volume,source=data,target=/d alpine:3.24 ls /d
+-	-	data	run --rm alpine:3.24 ls data
+# (2) Ports
+-	-	-	run -d -p 8080:80 nginx:1.30-alpine
+-	-	-	run -d -P nginx:1.30-alpine
+-	-	-	run -d -p 127.0.0.1:8080:80 nginx:1.30-alpine
+-	-	-	run --rm -p 8080:80/udp alpine:3.24 sleep 1
+-	-	-	run --rm alpine:3.24 sh -c 'echo -p 80'
+# (3) Variables
+-	DB_HOST	-	run -e DB_HOST mon-app:1.0
+-	-	-	run -e DB_HOST=db mon-app:1.0
+-	-	-	run --env-file .env mon-app:1.0
+-	DB_PASSWORD	-	run -e DB_PASSWORD postgres:18-alpine
+-	-	-	run -e LOG_LEVEL=debug alpine:3.24 env
+# (4) Images
+-	-	-	run nginx:1.30-alpine
+-	-	-	run nginx@sha256:0d17b565c37bcbd895e9d92315a05c1c3c9a29f762b011a10c54a66cd53c9b31
+-	-	-	run registry:5000/app:1.0
+-	-	-	run --rm localhost:5000/outils/alpine:3.24 sh
+# (5) Réseau
+-	-	-	run -d --network bridge -p 8080:80 nginx:1.30-alpine
+-	-	-	run -d --network host nginx:1.30-alpine
+-	-	-	run -d --network=mon-reseau -p 8080:80 nginx:1.30-alpine
+# (6) Secrets
+-	-	-	run --env-file .env postgres:18-alpine
+-	-	-	run -e POSTGRES_PASSWORD_FILE=/run/secrets/db postgres:18-alpine
+# (7) Privilèges
+-	-	-	run --cap-add NET_ADMIN alpine:3.24 ip link
+-	-	-	run --privileged=false alpine:3.24 sh
+-	-	-	run -v /var/run/app.sock:/s alpine:3.24 ls /s
+-	-	-	run --rm alpine:3.24 ls /var/run/docker.sock

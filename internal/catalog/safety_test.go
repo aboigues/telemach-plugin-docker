@@ -32,7 +32,7 @@ var (
 var runValueFlags = map[string]bool{
 	"-p": true, "--publish": true, "-v": true, "--volume": true, "--name": true, "-e": true, "--env": true,
 	"--user": true, "-u": true, "--network": true, "--mount": true, "--entrypoint": true, "--memory": true,
-	"--platform": true, "-w": true, "--workdir": true,
+	"--platform": true, "-w": true, "--workdir": true, "--env-file": true,
 }
 
 type allowed struct{ needsUser bool }

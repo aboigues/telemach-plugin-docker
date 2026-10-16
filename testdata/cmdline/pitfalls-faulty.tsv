@@ -1,0 +1,40 @@
+# Pièges silencieux de FR-004 (options placées avant l'image, donc lues par Docker).
+# (1) Volume nommé alors qu'un dossier du même nom existe dans le dossier courant.
+cmdline.named-volume-not-dir	-	data	run -v data:/app/data alpine:3.24 ls /app/data
+cmdline.named-volume-not-dir	-	config	run --rm --volume config:/etc/app:ro alpine:3.24 ls /etc/app
+cmdline.named-volume-not-dir	-	site	create --volume=site:/usr/share/nginx/html nginxinc/nginx-unprivileged:1.30-alpine
+cmdline.named-volume-not-dir	-	pgdata,data	run -d -v pgdata:/var/lib/postgresql/data postgres:18-alpine
+# (2) Port de la machine choisi au hasard.
+cmdline.random-host-port	-	-	run -d -p 80 nginx:1.30-alpine
+cmdline.random-host-port	-	-	run -d -p 53/udp alpine:3.24 sleep 60
+cmdline.random-host-port	-	-	create --publish 443 nginx:1.30-alpine
+cmdline.random-host-port	-	-	run -d --publish=8080 nginxinc/nginx-unprivileged:1.30-alpine
+# (3) Variable d'environnement transmise sans valeur, absente du shell.
+cmdline.env-unset	-	-	run -e DB_HOST mon-app:1.0
+cmdline.env-unset	OTHER	-	run --rm --env API_URL alpine:3.24 env
+cmdline.env-unset	-	-	create --env=LOG_LEVEL redis:8-alpine
+# (4) Image sans tag explicite, ou latest.
+cmdline.image-without-tag	-	-	run nginx
+cmdline.image-without-tag	-	-	run --rm nginx:latest
+cmdline.image-without-tag	-	-	create library/redis
+cmdline.image-without-tag	-	-	run -d registry.example.com:5000/app
+# (5) Ports publiés ignorés en réseau host.
+cmdline.ports-ignored-host-network	-	-	run -d --network host -p 8080:80 nginx:1.30-alpine
+cmdline.ports-ignored-host-network	-	-	run -d --net=host -P nginx:1.30-alpine
+cmdline.ports-ignored-host-network	-	-	create --network=host --publish 9000:9000 alpine:3.24
+cmdline.ports-ignored-host-network	-	-	run -d --network host -p 80 nginx:1.30-alpine
+# (6) Secret écrit en clair dans la commande.
+cmdline.secret-in-command	-	-	run -e DB_PASSWORD=Secret123 postgres:18-alpine
+cmdline.secret-in-command	-	-	run --env API_TOKEN=abc alpine:3.24 env
+cmdline.secret-in-command	-	-	run -e AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI alpine:3.24 env
+cmdline.secret-in-command	-	-	create --env=POSTGRES_PASSWORD=motdepasse postgres:18-alpine
+# (7) Privilèges excessifs : --privileged ou socket Docker monté.
+cmdline.privileged	-	-	run --privileged alpine:3.24 sh
+cmdline.privileged	-	-	run -v /var/run/docker.sock:/var/run/docker.sock alpine:3.24 sh
+cmdline.privileged	-	-	run --mount type=bind,source=/run/docker.sock,target=/s alpine:3.24 sh
+cmdline.privileged	-	-	create --volume=/run/docker.sock:/var/run/docker.sock:ro alpine:3.24
+# Plusieurs pièges dans une même ligne : ensemble exact.
+cmdline.secret-in-command,cmdline.image-without-tag	-	-	run -e DB_PASSWORD=Secret123 postgres
+cmdline.privileged,cmdline.env-unset	-	-	run --privileged -e DEBUG alpine:3.24 sh
+cmdline.option-after-image,cmdline.random-host-port	-	-	run -p 80 nginx:1.30-alpine --rm
+cmdline.named-volume-not-dir,cmdline.secret-in-command	-	data	run -v data:/d -e API_KEY=xyz alpine:3.24 ls /d

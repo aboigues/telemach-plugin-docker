@@ -121,3 +121,20 @@ func TestLastOldStateWithoutArgs(t *testing.T) {
 		t.Errorf("en-tête inattendu : %q", header)
 	}
 }
+
+// Erreur non reconnue dont la cause probable est un piège de la ligne de commande :
+// « last » réaffiche le même rendu qu'explain.
+func TestLastReprintsCmdlineCause(t *testing.T) {
+	a, _, errb := testApp(t, nil)
+	f := writeStderr(t, "quelque chose d'inattendu\n")
+	run(a, []string{"explain", "--color=never", "--exit-code", "1", "--stderr-file", f, "--", "run", "nginx:1.30-alpine", "--rm", "-p", "8090:80"})
+	full := errb.String()
+	if !strings.Contains(full, "Option Docker placée après l'image") {
+		t.Fatalf("piège attendu comme explication principale :\n%s", full)
+	}
+	errb.Reset()
+	run(a, []string{"last", "--color=never"})
+	if _, body, _ := strings.Cut(errb.String(), "\n"); body != full {
+		t.Errorf("last doit reproduire l'explication.\n--- explain ---\n%s\n--- last ---\n%s", full, body)
+	}
+}

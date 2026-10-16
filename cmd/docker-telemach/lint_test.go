@@ -105,3 +105,53 @@ func TestLintIssue9Phrasing(t *testing.T) {
 		t.Error("une vérification à la main ne doit pas remplacer le dernier diagnostic")
 	}
 }
+
+// T025 : seules lectures locales, la présence d'une variable (jamais sa valeur) et
+// l'existence d'un dossier de nom simple dans le dossier courant.
+func TestLintLocalReads(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "data"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "fichier"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(dir)
+	t.Setenv("TELEMACH_TEST_SET", "x")
+	t.Setenv("TELEMACH_TEST_EMPTY", "")
+
+	cases := []struct {
+		args []string
+		want string // identifiant attendu dans la sortie, ou "" pour aucune sortie
+	}{
+		{[]string{"run", "-v", "data:/d", "alpine:3.24"}, "volume nommé"},
+		{[]string{"run", "-v", "autre:/d", "alpine:3.24"}, ""},
+		{[]string{"run", "-v", "fichier:/d", "alpine:3.24"}, ""},
+		{[]string{"run", "-e", "TELEMACH_TEST_SET", "alpine:3.24"}, ""},
+		{[]string{"run", "-e", "TELEMACH_TEST_EMPTY", "alpine:3.24"}, ""},
+		{[]string{"run", "-e", "TELEMACH_TEST_ABSENT", "alpine:3.24"}, "Variable TELEMACH_TEST_ABSENT absente"},
+	}
+	for _, c := range cases {
+		a, _, errb := testApp(t, nil)
+		a.lookupEnv = os.LookupEnv
+		run(a, append([]string{"lint", "--color=never", "--width", "200", "--"}, c.args...))
+		got := errb.String()
+		if c.want == "" && got != "" || c.want != "" && !strings.Contains(got, c.want) {
+			t.Errorf("docker %s : %q attendu, obtenu :\n%s", strings.Join(c.args, " "), c.want, got)
+		}
+		if strings.Contains(got, "TELEMACH_TEST_SET=x") {
+			t.Errorf("la valeur d'une variable ne doit jamais être affichée :\n%s", got)
+		}
+	}
+
+	a, _, _ := testApp(t, nil)
+	env := a.lintEnv()
+	for _, name := range []string{"..", ".", "data/", "../data", "/tmp", ""} {
+		if env.DirExists(name) {
+			t.Errorf("DirExists(%q) doit être faux : nom relatif simple uniquement", name)
+		}
+	}
+	if !env.DirExists("data") {
+		t.Error("DirExists(\"data\") attendu vrai")
+	}
+}

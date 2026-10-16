@@ -61,10 +61,43 @@ func (a *app) lastCommand() *cobra.Command {
 				Theme: theme, Width: width, DockerVersion: last.DockerVersion,
 				Interactive: last.Interactive, ExitCode: last.ExitCode,
 			}
+			// Même affichage que explain : le piège de la ligne de commande, cause probable,
+			// avant l'explication de l'erreur, ou à sa place si l'erreur n'est pas reconnue.
+			items := findingItems(last.Findings)
+			if len(items) > 0 && d.Entry == nil && cmd.Family != command.FamilyCompose {
+				fmt.Fprintln(w)
+				if err := render.RenderFindings(w, items, opts); err != nil {
+					return err
+				}
+				return render.RenderOriginal(w, last.Stderr, opts)
+			}
+			if len(items) > 0 {
+				if err := render.RenderInline(w, items, opts); err != nil {
+					return err
+				}
+			}
 			_, err := a.renderDiagnosis(w, in, d, last.Stderr, opts)
 			return err
 		},
 	}
+}
+
+// findingItems reconstruit les pièges enregistrés (captures déjà nettoyées et masquées).
+func findingItems(records []state.FindingRecord) []render.LintItem {
+	if len(records) == 0 {
+		return nil
+	}
+	cat, err := catalog.Default()
+	if err != nil {
+		return nil
+	}
+	var items []render.LintItem
+	for _, r := range records {
+		if e, ok := cat.Get(r.EntryID); ok {
+			items = append(items, render.LintItem{Entry: e, Captures: r.Captures})
+		}
+	}
+	return items
 }
 
 // maxHeaderCommand limite la longueur de la commande affichée dans l'en-tête.
