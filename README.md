@@ -445,6 +445,9 @@ la fonction `docker` de l'ancienne version. `docker telemach last` te le signale
 | `docker telemach shell-init bash\|zsh` | Affiche le code d'intégration à évaluer dans ton shell |
 | `docker telemach explain …` | Utilisée par l'intégration shell (tu n'as pas à l'appeler) |
 
+La complétion de Docker (`docker completion bash|zsh`) propose aussi les sous-commandes et les
+options de `docker telemach`.
+
 ## Confidentialité et sécurité
 
 - Fonctionne **100 % en local**, sans aucun accès réseau (hormis la connexion à ton démon
