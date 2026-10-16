@@ -125,3 +125,9 @@ Ces entrées ne servent jamais à expliquer le message d'erreur d'une commande.
   - une image sans tag explicite, ou en `latest`, produit un **avertissement non bloquant**.
 - **Versions** : avant d'écrire un tag d'image, vérifie sur Docker Hub la dernière version
   stable (voir `LESSON-LEARNED.md`, LL-004).
+
+## Quelles erreurs ajouter ?
+
+L'étude [`couverture-catalogue.md`](couverture-catalogue.md) mesure ce que le catalogue couvre
+déjà. Elle classe aussi par priorité les erreurs Docker fréquentes qui n'y figurent pas
+encore. Commence par celles-là.
