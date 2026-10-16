@@ -202,8 +202,10 @@ par US1.
 **Sélection**
 
 - **FR-001**: TELEMACH MUST fournir la sous-commande `docker telemach ps`, qui repère les
-  conteneurs arrêtés avec un code de sortie différent de 0, ainsi que les conteneurs en boucle
-  de redémarrage dont le dernier arrêt a un code différent de 0.
+  conteneurs arrêtés avec un code de sortie différent de 0, les conteneurs en boucle de
+  redémarrage dont le dernier arrêt a un code différent de 0, et les conteneurs dont le
+  démarrage a échoué (créés mais jamais démarrés, avec une erreur enregistrée par Docker, par
+  exemple une commande introuvable dans l'image).
 - **FR-002**: Sans argument, la commande MUST analyser le conteneur en erreur arrêté le plus
   récemment et lister les autres (au plus 10, du plus récent au plus ancien) ; avec un nom ou un
   préfixe d'identifiant, elle MUST analyser ce conteneur, et le dire clairement s'il n'existe
