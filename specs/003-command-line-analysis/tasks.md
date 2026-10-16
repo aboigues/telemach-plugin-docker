@@ -64,7 +64,8 @@ doivent d'abord échouer.
   légitimes silencieuses. `last` réaffiche désormais les pièges enregistrés avec une erreur
   (anticipe une partie de T029 : régression révélée par `TestLastReprintsFullExplanation`).
   Les informations (ℹ) affichent leur commande sur une ligne à part, jamais repliée.
-- Reste : T026, US3 (T027–T030),
+- T017 et T026 écrits mais non exécutés en local (pas de démon Docker dans WSL) : à valider par le job `integration` de la CI.
+- Reste : US3 (T027–T030, `last` pour les erreurs avec piège déjà fait),
   phase 6 (T031–T036).
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -138,7 +139,7 @@ doivent d'abord échouer.
 - [X] T023 [US2] Implémenter dans `internal/lint/pitfalls.go` les règles 1 à 7 selon `data-model.md` (conditions exactes du tableau « Entrées de catalogue ») : source de volume `^[A-Za-z0-9][A-Za-z0-9_.-]*$` **et** `env.DirExists(source)` ; `-p` sans `:` ; `-e NOM` sans `=` **et** `!env.HasVar(NOM)` ; image sans tag ni digest (le dernier segment après `/` ne contient pas `:`, pas de `@`) ou `:latest` ; `--network|--net host` (formes `=` comprises) avec `-p|--publish|-P|--publish-all` ; valeur de `-e/--env` modifiée par `redact.Redact` ; `--privileged` ou source de montage `/var/run/docker.sock`/`/run/docker.sock` (`-v` et `--mount source=`/`src=`). Empreintes : identifiant + noms d'options (+ image pour la règle 4), **jamais** de valeur. Faire passer T016 pour les fichiers `pitfalls-*`.
 - [X] T024 [P] [US2] Ajouter les 7 entrées correspondantes à `internal/catalog/data/cmdline.yaml` (niveaux de `data-model.md` ; `cmdline.privileged` avec `anti_pattern` et alternatives `--cap-add` ciblé, API distante protégée ; `cmdline.secret-in-command` : `--env-file` avec droits `0600`, secrets Docker, jamais la valeur ; `cmdline.image-without-tag` : rappel du principe « tag explicite » ; chaque entrée avec deepen exécutable et images taguées non-root) ; mettre à jour `docs/catalogue.md`. Les tests de sécurité du catalogue (`internal/catalog/safety_test.go`) passent.
 - [X] T025 [US2] Brancher la lecture locale dans `cmd/docker-telemach/lint.go` et `explain.go` : `Env.HasVar` = `os.LookupEnv` (présence seule), `Env.DirExists` = `os.Stat` d'un nom **relatif simple** (sans `/` ni `..`) dans le dossier courant, dossier uniquement ; tests avec `t.Setenv` et `t.Chdir` dans `cmd/docker-telemach/lint_test.go`.
-- [ ] T026 [US2] Ajouter à `tests/integration/docker_test.go` les cas de quickstart V4 exécutables sur le runner (volume nommé avec dossier `data` dans un dossier temporaire, `-p 80`, variable non définie, image sans tag répétée deux fois → information une seule fois, `--network host -p`, secret jamais présent dans `~/.local/state/telemach` (`grep` vide), `--privileged`) ; nettoyer conteneurs et volume `data`.
+- [X] T026 [US2] Ajouter à `tests/integration/docker_test.go` les cas de quickstart V4 exécutables sur le runner (volume nommé avec dossier `data` dans un dossier temporaire, `-p 80`, variable non définie, image sans tag répétée deux fois → information une seule fois, `--network host -p`, secret jamais présent dans `~/.local/state/telemach` (`grep` vide), `--privileged`) ; nettoyer conteneurs et volume `data`.
 
 **Checkpoint**: corpus pitfalls : 100 % détectés, 0 faux positif ; V4 passe.
 

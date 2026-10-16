@@ -125,3 +125,73 @@ func TestIssue9OptionAfterImage(t *testing.T) {
 		t.Errorf("port 18092 non publié par la commande corrigée : %v\n%s", err, out)
 	}
 }
+
+// V4 — pièges silencieux (US2) : la commande réussit, le piège est signalé après coup.
+func TestV4SilentPitfalls(t *testing.T) {
+	h := newHarness(t)
+	work := t.TempDir()
+	t.Cleanup(func() { _ = exec.Command("docker", "volume", "rm", "-f", "data").Run() })
+
+	cases := []struct {
+		name, body string
+		want       []string
+	}{
+		{
+			"volume nommé", `cd "$WORK" && mkdir -p data && docker run --rm --user 1000:1000 -v data:/d alpine:3.24 ls /d`,
+			[]string{"désigne un volume nommé", "docker run --rm --user 1000:1000 -v ./data:/d alpine:3.24 ls /d"},
+		},
+		{
+			"port aléatoire", `docker run --rm --user 1000:1000 -p 80 alpine:3.24 true`,
+			[]string{"Port de la machine choisi au hasard", "docker port <conteneur>"},
+		},
+		{
+			"variable non définie", `unset DB_HOST; docker run --rm --user 1000:1000 -e DB_HOST alpine:3.24 true`,
+			[]string{"Variable DB_HOST absente"},
+		},
+		{
+			"réseau host", `docker run --rm --user 1000:1000 --network host -p 8080:80 alpine:3.24 true`,
+			[]string{"Ports ignorés en réseau host"},
+		},
+		{
+			"secret en clair", `docker run --rm --user 1000:1000 -e DB_PASSWORD=Secret123 alpine:3.24 true`,
+			[]string{"Secret écrit en clair", "DB_PASSWORD"},
+		},
+		{
+			"privilèges", `docker run --rm --user 1000:1000 --privileged alpine:3.24 true`,
+			[]string{"Privilèges excessifs", "Anti-pattern"},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			stdout, stderr := h.shell(t, c.body+`; echo "rc=$?"`, "WORK="+work)
+			if !strings.Contains(stdout, "rc=0") {
+				t.Errorf("la commande doit réussir : %q\n%s", stdout, stderr)
+			}
+			for _, want := range c.want {
+				if !strings.Contains(stderr, want) {
+					t.Errorf("sortie sans %q :\n%s", want, stderr)
+				}
+			}
+			if strings.Contains(stderr, "Secret123") {
+				t.Errorf("le secret ne doit jamais être affiché :\n%s", stderr)
+			}
+		})
+	}
+
+	// Le secret n'est écrit nulle part dans l'état de TELEMACH.
+	_ = filepath.WalkDir(h.state, func(path string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if data, rerr := os.ReadFile(path); rerr == nil && bytes.Contains(data, []byte("Secret123")) { // #nosec G304 -- dossier de test
+				t.Errorf("secret écrit dans %s", path)
+			}
+		}
+		return nil
+	})
+
+	// Image sans tag : information la première fois seulement (24 h par image).
+	_, first := h.shell(t, `docker run --rm --user 1000:1000 alpine true`)
+	_, second := h.shell(t, `docker run --rm --user 1000:1000 alpine true`)
+	if !strings.Contains(first, "Image sans tag explicite") || strings.Contains(second, "Image sans tag explicite") {
+		t.Errorf("information attendue une seule fois :\n--- 1 ---\n%s\n--- 2 ---\n%s", first, second)
+	}
+}
