@@ -52,6 +52,12 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
   forme exacte que ce programme lui transmet (ici : options globales de Docker avant le nom du
   plugin), observée sur le vrai programme et non supposée.
 - **Suivi** : automatisé — `TestSplitPluginArgs` (`cmd/docker-telemach/main_test.go`).
+- **Variante manquée (2026-10-16)** : la complétion (`docker completion bash|zsh`) appelle le
+  plugin sous la forme `__complete telemach …` ; le nom du plugin n'étant pas en tête, il
+  n'était pas retiré, et Tab ne proposait rien après `docker telemach`. Corrigé, et `--help`
+  traduit pour toutes les sous-commandes. Règle complétée : relever **toutes** les formes
+  d'appel de l'autre programme (commande, options globales, complétion…), pas la première
+  observée ; ici, avec un faux plugin dans un `DOCKER_CONFIG` temporaire.
 
 ### LL-013 — Intégration shell inactive ou périmée sans aucun signal
 

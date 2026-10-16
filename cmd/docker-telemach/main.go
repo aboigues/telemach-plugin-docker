@@ -81,6 +81,11 @@ func main() {
 // aux lectures du démon, puis arguments du plugin. Appelé directement (intégration shell),
 // le binaire ne reçoit que ses propres arguments.
 func splitPluginArgs(args []string) (global, plugin []string) {
+	// Complétion (docker completion bash|zsh) : la CLI appelle « __complete telemach … »,
+	// options globales déjà retirées ; cobra attend « __complete … » sans le nom du plugin.
+	if len(args) >= 2 && args[0] == cobra.ShellCompRequestCmd && args[1] == "telemach" {
+		return nil, append([]string{cobra.ShellCompRequestCmd}, args[2:]...)
+	}
 	i := command.GlobalEnd(args)
 	if i < len(args) && args[i] == "telemach" {
 		if i > 0 {
@@ -160,7 +165,9 @@ Options :
 Options globales :
 {{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}
 `)
-	root.Flags().BoolP("help", "h", false, "affiche l'aide")
+	// Persistante : sinon cobra ajoute à chaque sous-commande son « help for … » en anglais
+	// (visible dans l'aide et dans la complétion).
+	root.PersistentFlags().BoolP("help", "h", false, "affiche l'aide")
 	root.Flags().BoolP("version", "v", false, "affiche la version, la licence et le site du projet")
 }
 
