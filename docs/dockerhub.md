@@ -1,5 +1,9 @@
 <!-- Description de la page Docker Hub telemachlearning/telemach.
-     À copier à la main dans Docker Hub (Repository › Description) à chaque changement.
+     À copier à la main dans Docker Hub (Repository › General) à chaque changement :
+     - Short description (100 caractères au plus) :
+       Plugin pédagogique : explique en français les erreurs Docker et Compose, et comment les corriger.
+     - Category : Developer tools
+     - Overview : tout ce qui suit ce commentaire.
      Le nom du sujet de provenance est celui de research.md R3 : docker.io/telemachlearning/telemach. -->
 
 # TELEMACH — explique en français les erreurs Docker
@@ -7,6 +11,20 @@
 **TELEMACH** est un plugin pédagogique pour Docker : quand une commande `docker` ou
 `docker compose` échoue, il t'explique **en français** ce qui s'est passé, le concept Docker
 en jeu, la cause probable et comment corriger.
+
+## Ce que fait le plugin
+
+- **Explique les erreurs** de `docker` et `docker compose`, avec la commande corrigée à copier.
+- **Vérifie un fichier Compose** avant de le lancer (`docker telemach check`) : clé inconnue,
+  tabulation, service non déclaré, secret en clair…, avec la ligne exacte.
+- **Repère les pièges** d'une commande qui réussit sans faire ce que tu voulais : option placée
+  après l'image (`docker run -d nginx -p 8080:80`), volume nommé au lieu du dossier local, port
+  ignoré en réseau `host`, secret dans la commande, `--privileged`…
+- **Explique un conteneur arrêté** (`docker telemach ps`) : après un `docker run -d` qui
+  s'arrête aussitôt, il te prévient à l'invite suivante, montre la fin du journal et donne la
+  cause (variable obligatoire absente, manque de mémoire, commande introuvable…).
+- **Ne fait que lire** : il ne modifie aucun fichier et ne démarre, n'arrête ni ne supprime
+  aucun conteneur ; les secrets sont masqués partout.
 
 Cette image sert à deux choses.
 
