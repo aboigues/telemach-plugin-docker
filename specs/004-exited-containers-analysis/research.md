@@ -35,7 +35,8 @@ Mesures et essais réalisés le 2026-10-16 sur WSL2, Docker 29.8.0 (Docker Deskt
   | `logs --tail 200 <id>` | fin du journal (stdout et stderr) |
   | `events --since <t0> --until <t1> --filter type=container --filter event=create --filter event=die --format '{{json .}}'` | vérification après `run -d` (R5) |
 
-  Chaque appel a un délai maximal (5 s) ; une erreur de la CLI (démon injoignable, permission
+  Chaque appel a un délai maximal (10 s : 5 s étaient dépassés juste après la création en
+  rafale de 200 conteneurs, T031) ; une erreur de la CLI (démon injoignable, permission
   refusée) est passée au diagnostic existant (`explain`) au lieu d'être réinterprétée.
 - **Justification** : une liste blanche testée rend FR-010 vérifiable (SC-002) ; `inspect`
   et `logs` ne modifient rien ; `events` avec `--until` lit l'historique et rend la main.
@@ -180,3 +181,18 @@ Mesures et essais réalisés le 2026-10-16 sur WSL2, Docker 29.8.0 (Docker Deskt
   nouveau test vérifie que `ps` et `watch` n'appellent que les lectures de R2.
 - Une intégration shell chargée par une version antérieure ne lance pas `watch` :
   l'avertissement de version de `last` et `deepen` (issue #7, LL-013) le signale.
+
+## R11 — Mesures de `ps` (T031, SC-004)
+
+- **Constat** : le démon (Docker Desktop, WSL2) met ~12 ms par conteneur **renvoyé** par
+  `docker ps`, quel que soit le format : 270 ms avec 34 conteneurs, ~3 s avec 215. Lire toute la
+  liste dépassait donc le délai de lecture dès 200 conteneurs.
+- **Décision** : deux lectures bornées côté démon, en parallèle — `--last 20` sur les conteneurs
+  arrêtés ou en boucle, `--last 10` sur les conteneurs créés (démarrages échoués) — puis
+  `inspect` de 12 candidats au plus (l'analyse et les 10 autres listés) ; les arrêts en erreur
+  passent avant les simples `docker create`. Limite assumée : un conteneur créé il y a longtemps
+  et arrêté récemment peut sortir de la liste ; `docker telemach ps <nom>` le trouve toujours.
+- **Mesures** (état stable, 235 conteneurs, journal de 120 000 lignes, 20 exécutions) :
+  20/12 → médiane 741 ms, p95 1 244 ms ; 30/15 → p95 1 450 ms ; 15/11 → p95 1 150 ms.
+  `TestSC004PSLatency` (après une mise en route) : **médiane 974 ms, p95 1,19 s**.
+

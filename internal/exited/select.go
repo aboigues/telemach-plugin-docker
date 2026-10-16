@@ -10,9 +10,9 @@ import (
 	"github.com/aboigues/telemach-plugin-docker/internal/textdist"
 )
 
-// MaxInspect est le nombre de candidats inspectés en un appel (research R4 : ~12 ms par
-// conteneur ; au-delà, SC-004 ne serait plus tenu avec des centaines de conteneurs).
-const MaxInspect = 25
+// MaxInspect est le nombre de candidats inspectés en un appel : de 12 à 25 ms par conteneur
+// selon la charge (research R4, T031) ; 12 couvrent l'analyse et les 10 autres listés.
+const MaxInspect = 12
 
 // Lister est la partie de dockerread.Runner utilisée pour choisir les conteneurs.
 type Lister interface {
@@ -42,17 +42,19 @@ func Select(r Lister) ([]dockerread.Container, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ids []string
+	// Le code de « Exited (n) » suffit à écarter les arrêts sans erreur. Un « Created » doit
+	// être inspecté pour savoir si son démarrage a échoué : il ne prend que les places
+	// restantes, pour que de simples « docker create » ne masquent pas de vrais arrêts.
+	var ids, created []string
 	for _, c := range cands {
-		// Le code de « Exited (n) » suffit à écarter les arrêts sans erreur ; un « Created »
-		// doit être inspecté pour savoir si son démarrage a échoué.
-		if (c.HasCode && c.Code != 0) || c.State == "created" {
+		switch {
+		case c.HasCode && c.Code != 0 && len(ids) < MaxInspect:
 			ids = append(ids, c.ID)
-		}
-		if len(ids) == MaxInspect {
-			break
+		case c.State == "created":
+			created = append(created, c.ID)
 		}
 	}
+	ids = append(ids, created[:min(len(created), MaxInspect-len(ids))]...)
 	if len(ids) == 0 {
 		return nil, nil
 	}

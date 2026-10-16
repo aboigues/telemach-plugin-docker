@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -19,9 +20,12 @@ func (h harness) ps(t *testing.T, args ...string) (stderr string, code int) {
 	t.Helper()
 	cmd := exec.Command(filepath.Join(h.bin, "docker-telemach"), append([]string{"ps", "--width", "200"}, args...)...) // #nosec G204 -- binaire compilé par le test
 	cmd.Env = append(os.Environ(), "XDG_STATE_HOME="+h.state, "NO_COLOR=1")
-	var errb bytes.Buffer
-	cmd.Stderr = &errb
+	var outb, errb bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &outb, &errb
 	err := cmd.Run()
+	if outb.Len() > 0 {
+		errb.WriteString("\n[stdout] " + outb.String())
+	}
 	if ee, ok := err.(*exec.ExitError); ok {
 		code = ee.ExitCode()
 	} else if err != nil {
@@ -120,4 +124,76 @@ func TestExitedScenarios(t *testing.T) {
 		}
 		return nil
 	})
+}
+
+// SC-004 — « ps » en moins de 2 s au p95 (4 s en CI, runners plus lents) avec 200 conteneurs
+// arrêtés, dont 20 en erreur, et un journal de 120 000 lignes (LL-012).
+func TestSC004PSLatency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("mesure longue")
+	}
+	h := newHarness(t)
+	const prefix = "telemach-sc004-"
+	// Nettoyage installé avant la création (LL-003).
+	cleanup := func() {
+		out, _ := exec.Command("docker", "ps", "-aq", "--filter", "name=^"+prefix).Output()
+		if ids := strings.Fields(string(out)); len(ids) > 0 {
+			_ = exec.Command("docker", append([]string{"rm", "-f"}, ids...)...).Run()
+		}
+	}
+	cleanup()
+	t.Cleanup(cleanup)
+
+	jobs := make(chan []string)
+	done := make(chan struct{})
+	for w := 0; w < 8; w++ {
+		go func() {
+			for args := range jobs {
+				_ = exec.Command("docker", args...).Run()
+			}
+			done <- struct{}{}
+		}()
+	}
+	u := []string{"--user", "1000:1000"}
+	for i := 0; i < 160; i++ { // simples « docker create » (state created, sans erreur)
+		jobs <- append([]string{"create", "--name", fmt.Sprintf("%screated-%03d", prefix, i)}, append(u, "alpine:3.24", "true")...)
+	}
+	for i := 0; i < 20; i++ { // arrêtés sans erreur
+		jobs <- append([]string{"run", "--name", fmt.Sprintf("%sok-%02d", prefix, i)}, append(u, "alpine:3.24", "true")...)
+	}
+	for i := 0; i < 19; i++ { // arrêtés en erreur
+		jobs <- append([]string{"run", "--name", fmt.Sprintf("%sko-%02d", prefix, i)}, append(u, "alpine:3.24", "sh", "-c", "exit 1")...)
+	}
+	close(jobs)
+	for w := 0; w < 8; w++ {
+		<-done
+	}
+	// Le dernier arrêté : un journal de 120 000 lignes.
+	_ = exec.Command("docker", append([]string{"run", "--name", prefix + "gros-journal"}, append(u, "alpine:3.24", "sh", "-c",
+		`i=0; while [ $i -lt 120000 ]; do echo "ligne $i"; i=$((i+1)); done; exit 1`)...)...).Run()
+
+	// Mise en route : laisser le démon absorber la création en rafale (un apprenant ne lance
+	// pas ps à la seconde où 200 conteneurs viennent d'être créés), deux exécutions à vide.
+	time.Sleep(20 * time.Second)
+	_, _ = h.ps(t)
+	_, _ = h.ps(t)
+	durations := make([]time.Duration, 20)
+	for i := range durations {
+		start := time.Now()
+		out, code := h.ps(t)
+		durations[i] = time.Since(start)
+		if code != 0 || !strings.Contains(out, prefix+"gros-journal") || !strings.Contains(out, "Autres conteneurs arrêtés en erreur") {
+			t.Fatalf("analyse inattendue (code %d, %v, %d octets) :\n%q", code, durations[i], len(out), out)
+		}
+	}
+	sort.Slice(durations, func(i, j int) bool { return durations[i] < durations[j] })
+	p95 := durations[len(durations)*95/100-1]
+	limit := 2 * time.Second
+	if os.Getenv("CI") != "" {
+		limit = 4 * time.Second
+	}
+	t.Logf("ps : médiane %v, p95 %v (limite %v)", durations[len(durations)/2], p95, limit)
+	if p95 > limit {
+		t.Errorf("SC-004 : p95 %v au-delà de %v", p95, limit)
+	}
 }

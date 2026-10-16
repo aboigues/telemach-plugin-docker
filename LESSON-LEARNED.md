@@ -145,6 +145,12 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
   n'a rien comparé est un échec, pas un succès.
 - **Suivi** : non automatisable (vérification manuelle post-publication) ; la comparaison
   FR-009 pourra devenir une étape du workflow `release` lors d'une prochaine évolution.
+- **Récidive (2026-10-16, feature 004, deux fois)** : une mesure de la recherche (`$ids` non
+  découpé, `inspect` d'un seul argument) puis une boucle de réglage (`set -- $cfg`) écrites
+  dans le shell zsh de l'outil ; la seconde a écrit « 30 15 » dans une constante Go et cassé
+  la compilation, détecté aussitôt. Règle complétée : **tout** script ad hoc de plus d'une
+  ligne est écrit dans un fichier et lancé par `bash fichier.sh` (ou `bash -c`), jamais tapé
+  directement dans le shell de l'outil, même pour une mesure « rapide ».
 
 ### LL-008 — Commit local malgré un lint en échec (enchaînement non bloquant)
 

@@ -20,8 +20,10 @@ import (
 // lectures. Ajouter une entrée ici demande de mettre à jour FR-010 et ses tests.
 var allowed = map[string]bool{"ps": true, "inspect": true, "logs": true, "events": true}
 
-// DefaultTimeout est le délai maximal d'une lecture.
-const DefaultTimeout = 5 * time.Second
+// DefaultTimeout est le délai maximal d'une lecture : de quoi absorber un démon chargé, sans
+// jamais laisser la commande bloquée (5 s étaient dépassés juste après la création de 200
+// conteneurs, T031).
+const DefaultTimeout = 10 * time.Second
 
 var (
 	// ErrNotAllowed signale une sous-commande hors de la liste fermée : rien n'est exécuté.
@@ -87,11 +89,45 @@ func (r Runner) exec(sub string, args ...string) (stdout, stderr []byte, err err
 	return out.Bytes(), errb.Bytes(), nil
 }
 
-// ListCandidates liste les conteneurs arrêtés, en boucle de redémarrage ou créés sans avoir
-// démarré, du plus récemment créé au plus ancien (ordre de « docker ps »).
+// Bornes de « docker ps » : le démon met ~12 ms par conteneur renvoyé (mesuré avec 215
+// conteneurs : 3 s sans borne), d'où une liste limitée aux plus récents (SC-004).
+const (
+	MaxStopped = 20 // conteneurs arrêtés ou en boucle de redémarrage
+	MaxCreated = 10 // conteneurs créés sans avoir démarré (démarrage échoué possible)
+)
+
+// ListCandidates liste les conteneurs arrêtés ou en boucle de redémarrage, puis ceux créés
+// sans avoir démarré, chacun du plus récemment créé au plus ancien, sans doublon.
 func (r Runner) ListCandidates() ([]Candidate, error) {
-	out, err := r.output("ps", "-a", "--no-trunc", "--filter", "status=exited", "--filter", "status=restarting",
-		"--filter", "status=created", "--format", "{{json .}}")
+	// Les deux lectures sont indépendantes : en parallèle, la plus courte ne s'ajoute pas.
+	var created []Candidate
+	var createdErr error
+	done := make(chan struct{})
+	go func() {
+		created, createdErr = r.listPS("--filter", "status=created", "--last", strconv.Itoa(MaxCreated))
+		close(done)
+	}()
+	stopped, err := r.listPS("--filter", "status=exited", "--filter", "status=restarting", "--last", strconv.Itoa(MaxStopped))
+	<-done
+	if err != nil {
+		return nil, err
+	}
+	if createdErr != nil {
+		return nil, createdErr
+	}
+	seen := map[string]bool{}
+	var cs []Candidate
+	for _, c := range append(stopped, created...) {
+		if !seen[c.ID] {
+			seen[c.ID] = true
+			cs = append(cs, c)
+		}
+	}
+	return cs, nil
+}
+
+func (r Runner) listPS(filters ...string) ([]Candidate, error) {
+	out, err := r.output("ps", append(append([]string{"-a", "--no-trunc"}, filters...), "--format", "{{json .}}")...)
 	if err != nil {
 		return nil, err
 	}

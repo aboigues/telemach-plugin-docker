@@ -103,12 +103,22 @@ func TestReadsUseOnlyAllowedArguments(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{
-		"--context essai ps -a --no-trunc --filter status=exited --filter status=restarting --filter status=created --format {{json .}}",
 		"--context essai inspect ccb3",
 		"--context essai logs --tail 200 ccb3",
 		"--context essai events --since 1792155660.5 --until 1792155670 --filter type=container --filter event=create --filter event=die --format {{json .}}",
 	}
-	if got := f.calls(t); !reflect.DeepEqual(got, want) {
+	// Les deux lectures de ps sont parallèles : leur ordre dans le journal varie.
+	ps := map[string]bool{
+		"--context essai ps -a --no-trunc --filter status=exited --filter status=restarting --last " + fmt.Sprint(MaxStopped) + " --format {{json .}}": true,
+		"--context essai ps -a --no-trunc --filter status=created --last " + fmt.Sprint(MaxCreated) + " --format {{json .}}":                           true,
+	}
+	got := f.calls(t)
+	if len(got) < 2 || !ps[got[0]] || !ps[got[1]] || got[0] == got[1] {
+		t.Errorf("lectures de ps : %q", got)
+	} else {
+		got = got[2:]
+	}
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("appels :\n%s\nattendu :\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }

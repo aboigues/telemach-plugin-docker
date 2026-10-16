@@ -124,3 +124,22 @@ func TestFind(t *testing.T) {
 		t.Errorf("en cours : ErrRunning attendu, obtenu %v", err)
 	}
 }
+
+// De simples « docker create » récents ne doivent pas prendre la place de vrais arrêts.
+func TestSelectCreatedDoNotCrowdOut(t *testing.T) {
+	f := &fakeLister{byID: map[string]dockerread.Container{}}
+	for i := 0; i < 40; i++ {
+		id := fmt.Sprintf("cr%02d", i)
+		f.cands = append(f.cands, dockerread.Candidate{ID: id, State: "created"})
+		f.byID[id] = ctr(id, 0, -1, "created")
+	}
+	f.cands = append(f.cands, dockerread.Candidate{ID: "vrai", State: "exited", HasCode: true, Code: 1})
+	f.byID["vrai"] = ctr("vrai", 1, 5, "exited")
+	got, err := Select(f)
+	if err != nil || len(got) != 1 || got[0].ID != "vrai" {
+		t.Errorf("le vrai arrêt en erreur doit être retenu : %+v, %v", got, err)
+	}
+	if n := len(f.inspected[0]); n != MaxInspect {
+		t.Errorf("%d inspectés, attendu %d", n, MaxInspect)
+	}
+}

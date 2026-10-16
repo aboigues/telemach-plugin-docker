@@ -31,7 +31,7 @@ Conteneurs retenus : arrêtés (`exited`) ou en boucle de redémarrage (`restart
 ≠ 0, et conteneurs `created` dont le démarrage a échoué (code ≠ 0 et erreur enregistrée).
 
 Lectures effectuées, et elles seules (research R2) : `ps -a … --format`, `inspect`,
-`logs --tail 200`. Chaque lecture a un délai maximal de 5 s.
+`logs --tail 200`. Chaque lecture a un délai maximal de 10 s.
 
 ### Rendu (exemple)
 

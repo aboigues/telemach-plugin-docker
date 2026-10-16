@@ -135,7 +135,7 @@ func (a *app) daemonError(w io.Writer, opts render.Options, err error) error {
 		return exitError{code: 1}
 	}
 	if errors.Is(err, dockerread.ErrTimeout) {
-		fmt.Fprintln(w, opts.Theme.Title(render.SymbolError+" Le démon Docker ne répond pas (délai de 5 s dépassé)."))
+		fmt.Fprintln(w, opts.Theme.Title(render.SymbolError+" Le démon Docker ne répond pas (délai de 10 s dépassé)."))
 		fmt.Fprintln(w, render.Wrap("Vérifie qu'il est démarré avec « docker info », puis relance la commande.", opts.Width, "   "))
 		return exitError{code: 1}
 	}
