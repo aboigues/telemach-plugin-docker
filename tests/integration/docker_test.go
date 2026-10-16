@@ -9,8 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 // harness compile docker-telemach et prépare un environnement isolé.
@@ -206,5 +208,38 @@ func TestV4SilentPitfalls(t *testing.T) {
 	_, second := h.shell(t, `docker run --rm --user 1000:1000 alpine true`)
 	if !strings.Contains(first, "Image sans tag explicite") || strings.Contains(second, "Image sans tag explicite") {
 		t.Errorf("information attendue une seule fois :\n--- 1 ---\n%s\n--- 2 ---\n%s", first, second)
+	}
+}
+
+// SC-003 — délai ajouté par lint après une commande réussie : p95 < 50 ms sur un poste de
+// développement, < 100 ms en CI (runners plus lents et variables).
+func TestSC003LintLatency(t *testing.T) {
+	h := newHarness(t)
+	limit := 50 * time.Millisecond
+	if os.Getenv("CI") != "" {
+		limit = 100 * time.Millisecond
+	}
+	bin := filepath.Join(h.bin, "docker-telemach")
+	for _, c := range []struct {
+		name string
+		args []string
+	}{
+		{"avec piège", []string{"lint", "--after", "--", "run", "-d", "nginx", "-p", "8090:80"}},
+		{"sans piège", []string{"lint", "--after", "--", "run", "-d", "-p", "8090:80", "nginx:1.30-alpine"}},
+	} {
+		durations := make([]time.Duration, 40)
+		for i := range durations {
+			cmd := exec.Command(bin, c.args...) // #nosec G204 -- binaire compilé par le test
+			cmd.Env = append(os.Environ(), "XDG_STATE_HOME="+t.TempDir(), "NO_COLOR=1")
+			start := time.Now()
+			_ = cmd.Run() // code 1 attendu avec piège
+			durations[i] = time.Since(start)
+		}
+		sort.Slice(durations, func(i, j int) bool { return durations[i] < durations[j] })
+		p95 := durations[len(durations)*95/100-1]
+		t.Logf("%s : médiane %v, p95 %v (limite %v)", c.name, durations[len(durations)/2], p95, limit)
+		if p95 > limit {
+			t.Errorf("%s : p95 %v au-delà de %v", c.name, p95, limit)
+		}
 	}
 }

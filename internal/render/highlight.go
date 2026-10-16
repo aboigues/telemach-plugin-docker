@@ -1,14 +1,48 @@
 package render
 
 import (
+	"embed"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
-	"github.com/alecthomas/chroma/v2/lexers"
-	"github.com/alecthomas/chroma/v2/styles"
 )
+
+// Seules les définitions utilisées sont embarquées et chargées à la première coloration :
+// les paquets lexers et styles de chroma enregistrent au démarrage plusieurs centaines de
+// définitions (environ 17 ms à chaque appel du plugin, voir SC-003 de la feature 003).
+//
+//go:embed syntax/*.xml
+var syntaxFiles embed.FS
+
+var (
+	syntaxOnce sync.Once
+	syntaxLex  *chroma.LexerRegistry
+	syntaxCSS  map[string]*chroma.Style
+)
+
+// loadSyntax charge les langages (bash, json, yaml, docker) et les styles (github, monokai).
+func loadSyntax() {
+	syntaxLex = chroma.NewLexerRegistry()
+	for _, name := range []string{"bash", "json", "yaml", "docker"} {
+		if l, err := chroma.NewXMLLexer(syntaxFiles, "syntax/"+name+".xml"); err == nil {
+			syntaxLex.Register(l)
+		}
+	}
+	syntaxCSS = map[string]*chroma.Style{}
+	for _, name := range []string{"github", "monokai"} {
+		f, err := syntaxFiles.Open("syntax/" + name + ".xml")
+		if err != nil {
+			continue
+		}
+		if st, err := chroma.NewXMLStyle(f); err == nil {
+			syntaxCSS[name] = st
+		}
+		_ = f.Close()
+	}
+}
 
 // TabMarker représente une tabulation dans les extraits affichés.
 const TabMarker = "→"
@@ -25,7 +59,8 @@ func (t Theme) Highlight(code, lexer string) string {
 	if !t.Color || code == "" {
 		return code
 	}
-	l := lexers.Get(lexer)
+	syntaxOnce.Do(loadSyntax)
+	l := syntaxLex.Get(lexer)
 	if l == nil {
 		return code
 	}
@@ -39,7 +74,11 @@ func (t Theme) Highlight(code, lexer string) string {
 		return code
 	}
 	var b strings.Builder
-	if err := formatters.TTY16m.Format(&b, styles.Get(styleName), it); err != nil {
+	style := syntaxCSS[styleName]
+	if style == nil {
+		return code
+	}
+	if err := formatters.TTY16m.Format(&b, style, it); err != nil {
 		return code
 	}
 	return strings.TrimSuffix(b.String(), "\n")

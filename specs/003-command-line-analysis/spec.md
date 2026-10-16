@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-15
 
-**Status**: Draft
+**Status**: Accepted
 
 **Input**: User description: "003-command-line-analysis — Analyser la ligne de commande docker tapée par l'apprenant, même quand elle réussit, pour repérer les erreurs d'écriture que Docker accepte sans broncher (issue GitHub #9). Exemple : `docker run -d nginx -p 8090:80` : le conteneur démarre (code 0), mais le mapping de port n'est pas pris en compte, car tout ce qui suit le nom de l'image est passé au conteneur comme commande. Attendu : TELEMACH avertit en français, de façon pédagogique (concept, cause, commande corrigée à copier), sans jamais bloquer, retarder sensiblement ni modifier la commande, ni changer son code de sortie ou ses sorties. Le plugin n'exécute aucune commande supplémentaire et reste hors ligne. Les secrets de la ligne de commande sont masqués."
 

@@ -141,3 +141,12 @@ sortir avant le chargement du catalogue.
   l'analyse ne trouve rien ; mesure dans les tests d'intégration (p95 < 50 ms, tolérance CI
   documentée) et contrôle qu'aucune commande hors `run|create|exec` n'appelle le plugin
   (test du script shell avec un faux binaire qui journalise ses appels).
+- **Mesures (T031, 2026-10-16, WSL2, Docker 29.8.0)** : la première mesure dépassait le
+  critère (avec piège : médiane 77 ms, p95 146 ms). Cause : le démarrage du binaire (35 ms en
+  médiane, contre 2 ms pour un binaire Go vide), dont ~17 ms d'initialisation des paquets
+  `lexers` et `styles` de chroma, qui enregistrent toutes leurs définitions à chaque appel.
+  Correctif : seules les définitions utilisées (bash, json, yaml, docker ; styles github et
+  monokai) sont embarquées dans `internal/render/syntax/` et chargées à la première
+  coloration. Après correctif, `TestSC003LintLatency` (40 exécutions) : **avec piège,
+  médiane 22 ms, p95 26 ms ; sans piège, médiane 11 ms, p95 14 ms**. L'initialisation restante
+  (~13 ms) vient surtout de `jsonschema`, tiré par `compose-go` (nécessaire à `check`).

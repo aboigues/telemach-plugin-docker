@@ -45,8 +45,8 @@ cobra.
 
 **Project Type**: CLI (plugin Docker).
 
-**Performance Goals**: délai ajouté < 50 ms au p95 pour `run|create|exec` (mesuré : 25 ms de
-démarrage, 32 ms pour un rendu complet) ; aucun appel du plugin pour les autres commandes.
+**Performance Goals**: délai ajouté < 50 ms au p95 pour `run|create|exec` (mesuré en T031 après
+correctif du démarrage : p95 26 ms avec piège, 14 ms sans, voir research R10) ; aucun appel du plugin pour les autres commandes.
 
 **Constraints**: aucune exécution de commande, aucun accès réseau ; seules lectures locales :
 présence d'une variable d'environnement (jamais sa valeur), existence d'un dossier dans le

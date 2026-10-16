@@ -71,7 +71,9 @@ doivent d'abord échouer.
 - US3 (2026-10-16) : T027–T030 faits. La répétition (T027) fonctionnait déjà depuis la
   phase 2 ; `last` affiche « avertissement enregistré » et le rendu de `lint`, `deepen`
   approfondit le premier piège affiché.
-- Reste : phase 6 (T031–T036).
+- Phase 6 (2026-10-16) : T031 a révélé un dépassement de SC-003 (p95 146 ms), corrigé en
+  chargeant la coloration chroma à la demande (p95 26 ms, LL-012) ; T032, T033, T036 faits.
+- Reste : T034 (PR), puis T035 (publication v0.3.0, sur confirmation après fusion).
 
 ## Phase 1: Setup (Shared Infrastructure)
 
@@ -172,12 +174,12 @@ doivent d'abord échouer.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T031 [P] Ajouter à `tests/integration/docker_test.go` la mesure SC-003 : 40 exécutions de `docker-telemach lint --after -- run -d nginx -p 8090:80` et 40 sans piège → p95 < 50 ms (marge documentée si le runner CI est plus lent : seuil CI 100 ms, seuil local 50 ms) ; rapporter les valeurs dans `specs/003-command-line-analysis/research.md`.
-- [ ] T032 [P] `go test -race ./...`, `go test -tags integration ./tests/integration/...` (Docker local), `golangci-lint run` (binaire compilé avec `GOTOOLCHAIN=go1.27.2`, LL-001), tests shell sous bash **et** zsh ; tout vert, validations enchaînées par `&&` (LL-008).
-- [ ] T033 Relire la documentation et le catalogue `cmdline.yaml` : français correct et accentué, commandes exécutables telles quelles avec tags explicites, ton pédagogique (« probablement »), aucun secret d'exemple réaliste.
+- [X] T031 [P] Ajouter à `tests/integration/docker_test.go` la mesure SC-003 : 40 exécutions de `docker-telemach lint --after -- run -d nginx -p 8090:80` et 40 sans piège → p95 < 50 ms (marge documentée si le runner CI est plus lent : seuil CI 100 ms, seuil local 50 ms) ; rapporter les valeurs dans `specs/003-command-line-analysis/research.md`.
+- [X] T032 [P] `go test -race ./...`, `go test -tags integration ./tests/integration/...` (Docker local), `golangci-lint run` (binaire compilé avec `GOTOOLCHAIN=go1.27.2`, LL-001), tests shell sous bash **et** zsh ; tout vert, validations enchaînées par `&&` (LL-008).
+- [X] T033 Relire la documentation et le catalogue `cmdline.yaml` : français correct et accentué, commandes exécutables telles quelles avec tags explicites, ton pédagogique (« probablement »), aucun secret d'exemple réaliste.
 - [ ] T034 Passer `spec.md` en `Status: Accepted`, pousser la branche et ouvrir la PR (corps : résumé, corpus SC-001/SC-002 chiffrés, mesures SC-003, « Closes #9 ») ; attendre les 11 checks verts ; l'utilisateur relit et fusionne.
 - [ ] T035 Après fusion, proposer à l'utilisateur la publication `v0.3.0` (**action irréversible : confirmation obligatoire**) ; si accord, tag annoté sur `main`, suivi du workflow `release`, vérifications post-publication de la 002 (quickstart 002 V1, V2, V5), puis validation manuelle du quickstart 003 V1 dans le terminal de l'utilisateur, auteur de l'issue #9 (SC-005).
-- [ ] T036 Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (principe V), dans la PR qui le corrige.
+- [X] T036 Consigner dans `LESSON-LEARNED.md` tout incident survenu pendant la feature (principe V), dans la PR qui le corrige.
 
 ---
 

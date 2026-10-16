@@ -33,6 +33,23 @@ Registre des incidents du projet et des leçons qui en découlent (principe V de
 
 ## Incidents
 
+### LL-012 — Objectif de performance annoncé sans test qui le mesure
+
+- **Date** : 2026-10-16
+- **Catégorie** : régression
+- **Contexte** : feature 003, mesure SC-003 (T031) : délai ajouté par `lint` < 50 ms au p95.
+- **Cause racine** : le plan citait un démarrage de 25 ms mesuré à la main, une seule fois ;
+  aucun test ne le vérifiait. Entre-temps, la coloration syntaxique (chroma) ajoutait ~17 ms
+  d'initialisation à **chaque** appel du plugin, y compris pour les explications d'erreur.
+- **Impact** : p95 de 146 ms au lieu de < 50 ms ; détecté par le premier test de mesure, avant
+  toute PR.
+- **Correctif** : définitions chroma utilisées embarquées et chargées à la demande
+  (`internal/render/syntax/`) ; p95 ramené à 26 ms.
+- **Règle préventive** : tout objectif chiffré (délai, taille, mémoire) reçoit un test qui le
+  mesure dans la tâche même où il est annoncé ; une nouvelle dépendance est vérifiée avec
+  `GODEBUG=inittrace=1` (coût d'initialisation) avant d'être adoptée.
+- **Suivi** : automatisé — `TestSC003LintLatency` (job `integration`, seuil 100 ms en CI).
+
 ### LL-011 — Propositions d'analyse perdues entre deux sessions
 
 - **Date** : 2026-10-16
