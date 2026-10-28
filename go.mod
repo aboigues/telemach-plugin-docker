@@ -8,7 +8,7 @@ require (
 	charm.land/lipgloss/v2 v2.0.6
 	github.com/alecthomas/chroma/v2 v2.27.0
 	github.com/charmbracelet/colorprofile v0.4.3
-	github.com/compose-spec/compose-go/v2 v2.16.1
+	github.com/compose-spec/compose-go/v2 v2.16.2
 	github.com/google/go-cmp v0.7.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
